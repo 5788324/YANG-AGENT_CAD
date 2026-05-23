@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from yang_cad_agent.accore import collect_dwgs
+from yang_cad_agent.accore import collect_dwgs, decode_process_output
 
 
 class AccoreTests(unittest.TestCase):
@@ -18,7 +18,10 @@ class AccoreTests(unittest.TestCase):
 
             self.assertEqual(result, [root / "a.dwg"])
 
+    def test_decode_utf16_output(self):
+        output = decode_process_output("MessageBox".encode("utf-16-le"), b"")
+        self.assertEqual(output, "MessageBox")
+
 
 if __name__ == "__main__":
     unittest.main()
-

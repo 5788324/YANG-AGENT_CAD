@@ -25,6 +25,20 @@ def collect_dwgs(folder: Path, pattern: str = "*.dwg", recursive: bool = False) 
     return sorted(path for path in folder.glob(pattern) if path.is_file())
 
 
+def decode_process_output(stdout: bytes, stderr: bytes) -> str:
+    data = stdout + stderr
+    if not data:
+        return ""
+    null_ratio = data.count(b"\x00") / max(len(data), 1)
+    encodings = ["utf-16-le", "utf-8", "mbcs"] if null_ratio > 0.05 else ["utf-8", "utf-16-le", "mbcs"]
+    for encoding in encodings:
+        try:
+            return data.decode(encoding, errors="replace")
+        except LookupError:
+            continue
+    return data.decode("utf-8", errors="replace")
+
+
 def run_accore_batch(
     project_root: Path,
     folder: Path,
@@ -109,14 +123,11 @@ def run_accore_batch(
             completed = subprocess.run(
                 command,
                 capture_output=True,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
                 timeout=timeout,
                 check=False,
             )
             elapsed = (datetime.now() - started).total_seconds()
-            output = completed.stdout + completed.stderr
+            output = decode_process_output(completed.stdout, completed.stderr)
             log_path = log_dir / f"{dwg.stem}.log"
             log_path.write_text(output, encoding="utf-8")
             results.append(

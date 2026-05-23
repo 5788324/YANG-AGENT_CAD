@@ -38,8 +38,8 @@
 
 ## 下一步
 
-1. 对 sample 目录做 dry-run 扫描。
-2. 复制 `sample\S001.dwg`，使用 `toolbox\plugins\batch_smoke\main.lsp` 做真实 accoreconsole 小测试。
+1. 解决 AutoCAD 2027 accoreconsole 首次配置/消息框初始化提示。
+2. 重新对 `.agent\tmp\sample-run\S001-test.dwg` 做真实 accoreconsole 小测试。
 3. 在真实 AutoCAD 中执行 `current_smoke` 插件测试。
 4. 给当前图 LISP 执行增加结果文件/完成标记监听。
 5. 增加更多实用插件，例如图层统计、块统计、图框属性读取。
@@ -47,5 +47,6 @@
 ## 风险
 
 - AutoCAD/accoreconsole 只能在本机实际安装环境中完整验证。
+- 当前 accoreconsole 真实执行遇到 AutoCAD 配置/消息框初始化提示，已验证备份和回滚安全链路可用。
 - ezdxf 不能直接读取 DWG，必须避免把它当 DWG 引擎。
 - AI 生成 LISP 有风险，必须先校验、记录、可回滚。

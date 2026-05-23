@@ -94,4 +94,12 @@
 - `current-lisp` dry-run 冒烟测试生成过 `.agent/tasks/20260523-235227-1facdea4.json`，该目录被 gitignore 忽略。
 - sample 目录中的 DWG 不要提交到 GitHub，`.gitignore` 已忽略 `*.dwg`。
 - 第一次真实 accoreconsole 测试建议只用 `S001.dwg` 的复制件，不要直接跑完整 sample 目录。
+- 已复制 `sample\S001.dwg` 到 `.agent\tmp\sample-run\S001-test.dwg` 做测试副本。
+- 真实 accoreconsole 小测试任务 `20260524-003535-27fae317` 已运行：
+  - 备份成功
+  - accoreconsole 返回 `ACCORE_NONZERO_EXIT`
+  - 日志显示 AutoCAD 配置/消息框初始化提示
+  - rollback dry-run 成功
+  - 真实 rollback 成功
+- 已修复后续 accoreconsole 日志 UTF-16 解码逻辑。
 - 新安装的 skills 需要重启 Codex 后才会完整生效。
