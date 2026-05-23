@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yang-cad-agent"
+version = "0.1.0"
+description = "AI-first AutoCAD agent with MCP, LISP, accoreconsole, toolbox, logging, and rollback workflows."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+yang-cad-agent = "yang_cad_agent.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+

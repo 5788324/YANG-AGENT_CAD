@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local agent runtime data
+.agent/tasks/
+.agent/backups/
+.agent/logs/
+.agent/tmp/
+
+# CAD/user artifacts
+*.dwg
+*.dwl
+*.dwl2
+*.bak
+*.sv$
+*.pdf
+*.plot.log
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
