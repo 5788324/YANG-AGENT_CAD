@@ -7,10 +7,12 @@ import json
 from pathlib import Path
 
 from .accore import run_accore_batch
+from .batch_workflow import run_batch_workflow
 from .backup import backup_files, rollback_task
 from .doctor import run_doctor
 from .ledger import create_task_record
 from .lisp_validator import validate_lisp_file
+from .toolbox import list_plugins, validate_plugin_manifest
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -56,6 +58,25 @@ def build_parser() -> argparse.ArgumentParser:
     accore.add_argument("--recursive", action="store_true", help="Search recursively.")
     accore.add_argument("--dry-run", action="store_true", help="Do not execute accoreconsole.")
     accore.add_argument("folder", help="Folder containing DWG files.")
+
+    batch = sub.add_parser("batch-task", help="Safe batch workflow with validation and backup.")
+    batch.add_argument("--script", required=True, help="LISP script path.")
+    batch.add_argument("--root", default=".", help="Project root.")
+    batch.add_argument("--pattern", default="*.dwg", help="DWG glob pattern.")
+    batch.add_argument("--recursive", action="store_true", help="Search recursively.")
+    batch.add_argument(
+        "--execute",
+        action="store_true",
+        help="Actually run accoreconsole. Omit for dry-run.",
+    )
+    batch.add_argument("folder", help="Folder containing DWG files.")
+
+    toolbox = sub.add_parser("toolbox-list", help="List toolbox plugins.")
+    toolbox.add_argument("--root", default=".", help="Project root.")
+    toolbox.add_argument("--json", action="store_true", help="Print JSON output.")
+
+    plugin = sub.add_parser("toolbox-validate", help="Validate a plugin.json manifest.")
+    plugin.add_argument("manifest", help="Path to plugin.json.")
 
     return parser
 
@@ -118,6 +139,33 @@ def main(argv: list[str] | None = None) -> int:
             recursive=args.recursive,
             dry_run=args.dry_run,
         )
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
+
+    if args.command == "batch-task":
+        result = run_batch_workflow(
+            project_root=Path(args.root),
+            folder=Path(args.folder),
+            script_path=Path(args.script),
+            pattern=args.pattern,
+            recursive=args.recursive,
+            execute=args.execute,
+        )
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
+
+    if args.command == "toolbox-list":
+        result = list_plugins(Path(args.root))
+        if args.json:
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        else:
+            for item in result["plugins"]:
+                status = "ok" if item["ok"] else "invalid"
+                print(f"{item.get('id', item['path'])} [{status}] {item.get('name', '')}")
+        return 0 if result["ok"] else 1
+
+    if args.command == "toolbox-validate":
+        result = validate_plugin_manifest(Path(args.manifest))
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["ok"] else 1
 

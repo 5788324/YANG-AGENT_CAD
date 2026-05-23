@@ -4,7 +4,7 @@
 
 ## 当前状态
 
-项目处于安全可回滚 MVP 阶段。AI-first 开发规范、安全工作流、最小 Python CLI、备份/回滚基础模块、LISP 静态校验器和 accoreconsole dry-run runner 已建立。
+项目处于安全可回滚 MVP 阶段。AI-first 开发规范、安全工作流、最小 Python CLI、备份/回滚基础模块、LISP 静态校验器、accoreconsole dry-run runner、完整批量任务入口和插件箱 manifest 校验已建立。
 
 ## 已确认需求
 
@@ -38,10 +38,10 @@
 ## 下一步
 
 1. 增加开发环境 bootstrap 脚本，让用户机器上的普通命令也能运行。
-2. 把 backup / rollback 和 accore runner 串成一个完整批量任务流程。
-3. 实现插件箱 manifest 校验和插件列表命令。
-4. 实现 MCP Server 最小工具：doctor、插件列表、任务查询。
-5. 准备一套不含真实客户图纸的本地 AutoCAD 测试样例。
+2. 实现 MCP Server 最小工具：doctor、插件列表、任务查询。
+3. 准备一套不含真实客户图纸的本地 AutoCAD 测试样例。
+4. 实现当前图 LISP 投喂原型。
+5. 增加首批实用插件，而不是测试插件。
 
 ## 风险
 

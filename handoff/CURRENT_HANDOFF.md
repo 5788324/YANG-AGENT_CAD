@@ -4,7 +4,7 @@
 
 ## 当前任务
 
-继续安全可回滚 MVP，建立备份/回滚、LISP 校验和 accoreconsole dry-run runner。
+继续安全可回滚 MVP，建立完整批量任务入口和插件箱 manifest 校验。
 
 ## 已完成
 
@@ -35,14 +35,23 @@
   - 自动扫描 DWG
   - 自动写 task ledger
 - 单元测试改为 Python 标准库 `unittest`，避免依赖 pytest。
+- 实现完整批量任务入口：
+  - `yang-cad-agent batch-task`
+  - 默认 dry-run
+  - 只有加 `--execute` 才会执行
+  - 执行前自动备份
+  - 无匹配 DWG 时拒绝继续
+- 实现插件箱 manifest 工具：
+  - `yang-cad-agent toolbox-list`
+  - `yang-cad-agent toolbox-validate`
 
 ## 下一步
 
 1. 增加开发环境 bootstrap 脚本，让用户机器上的普通命令也能运行。
-2. 把 backup / rollback 和 accore runner 串成完整批量任务流程。
-3. 实现插件箱 manifest 校验和插件列表命令。
-4. 实现 MCP Server 最小工具。
-5. 准备 AutoCAD 本地实测脚本和测试样例。
+2. 实现 MCP Server 最小工具。
+3. 准备 AutoCAD 本地实测脚本和测试样例。
+4. 实现当前图 LISP 投喂原型。
+5. 增加首批实用插件。
 
 ## 注意事项
 
@@ -53,4 +62,5 @@
   `C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe`
 - `yang-cad-agent doctor` 已发现 AutoCAD 2027 accoreconsole。
 - dry-run 冒烟测试生成过 `.agent/tasks/20260523-233502-d45edb72.json`，该目录被 gitignore 忽略。
+- `batch-task` dry-run 冒烟测试生成过 `.agent/tasks/20260523-234016-c9285ed6.json`，该目录被 gitignore 忽略。
 - 新安装的 skills 需要重启 Codex 后才会完整生效。
