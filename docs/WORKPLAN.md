@@ -24,10 +24,10 @@
 - 实现 CLI 入口 `yang-cad-agent doctor`。
 - 实现 AutoCAD 环境检测：AutoCAD、accoreconsole、Python、依赖、工作目录。
 - 实现 task ledger：每次任务生成 task_id 和 JSON 日志。
-- 实现备份和回滚模块。
-- 实现 LISP 静态校验器。
+- 实现备份和回滚模块。已完成基础版。
+- 实现 LISP 静态校验器。已完成基础版。
 - 实现当前图 LISP 投喂原型。
-- 实现 accoreconsole 批量执行原型。
+- 实现 accoreconsole 批量执行原型。已完成 dry-run scaffold。
 - 准备第一个端到端样例：查询/清理/批量 dry-run。
 
 验收标准：
@@ -85,4 +85,3 @@
 - MVP：5-7 个工作日。
 - Beta：2-3 周。
 - V1：4-6 周。
-

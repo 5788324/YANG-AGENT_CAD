@@ -41,3 +41,19 @@ def create_task_record(
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     return {**record, "ledger_path": str(path)}
 
+
+def task_record_path(project_root: Path, task_id: str) -> Path:
+    return project_root / ".agent" / "tasks" / f"{task_id}.json"
+
+
+def load_task_record(project_root: Path, task_id: str) -> dict:
+    path = task_record_path(project_root, task_id)
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def update_task_record(project_root: Path, task_id: str, **updates) -> dict:
+    path = task_record_path(project_root, task_id)
+    record = json.loads(path.read_text(encoding="utf-8"))
+    record.update(updates)
+    path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
+    return {**record, "ledger_path": str(path)}

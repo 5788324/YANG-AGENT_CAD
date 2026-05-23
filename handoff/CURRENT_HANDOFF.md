@@ -4,7 +4,7 @@
 
 ## 当前任务
 
-初始化 YANG AGENT CAD 仓库，建立 AI-first 开发工作流、安全规范和最小可运行代码骨架。
+继续安全可回滚 MVP，建立备份/回滚、LISP 校验和 accoreconsole dry-run runner。
 
 ## 已完成
 
@@ -23,14 +23,26 @@
   - 错误码常量
   - task ledger 基础写入
 - 使用 Codex runtime Python 验证 CLI 和语法检查。
+- 实现备份/回滚基础模块：
+  - `yang-cad-agent backup`
+  - `yang-cad-agent rollback --dry-run`
+- 实现 LISP 静态校验器：
+  - 允许 `(ssget "X" ...)`
+  - 禁止 accoreconsole 中的 `vla-*` / `vlax-*` / 交互输入
+- 实现 accoreconsole runner scaffold：
+  - `yang-cad-agent accore-run --dry-run`
+  - 自动校验 LISP
+  - 自动扫描 DWG
+  - 自动写 task ledger
+- 单元测试改为 Python 标准库 `unittest`，避免依赖 pytest。
 
 ## 下一步
 
-1. 增加开发环境说明或 bootstrap 脚本，让用户机器上的普通命令也能运行。
-2. 实现备份/回滚基础代码。
-3. 实现 LISP validator。
-4. 实现 accoreconsole runner 原型。
-5. 实现 MCP Server 最小工具。
+1. 增加开发环境 bootstrap 脚本，让用户机器上的普通命令也能运行。
+2. 把 backup / rollback 和 accore runner 串成完整批量任务流程。
+3. 实现插件箱 manifest 校验和插件列表命令。
+4. 实现 MCP Server 最小工具。
+5. 准备 AutoCAD 本地实测脚本和测试样例。
 
 ## 注意事项
 
@@ -40,5 +52,5 @@
 - 当前 PowerShell 中 `python` 和 `py` 不在 PATH。可临时使用 Codex runtime Python：
   `C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe`
 - `yang-cad-agent doctor` 已发现 AutoCAD 2027 accoreconsole。
+- dry-run 冒烟测试生成过 `.agent/tasks/20260523-233502-d45edb72.json`，该目录被 gitignore 忽略。
 - 新安装的 skills 需要重启 Codex 后才会完整生效。
-

@@ -12,6 +12,7 @@ venv/
 .agent/backups/
 .agent/logs/
 .agent/tmp/
+!/.agent/.gitkeep
 
 # CAD/user artifacts
 *.dwg
@@ -27,4 +28,3 @@ venv/
 Thumbs.db
 .idea/
 .vscode/
-

@@ -22,6 +22,20 @@ $env:PYTHONPATH='src'
 & 'C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m yang_cad_agent.cli doctor --json
 ```
 
+运行测试：
+
+```powershell
+$env:PYTHONPATH='src'
+& 'C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m unittest discover -s tests
+```
+
+accoreconsole dry-run 冒烟测试格式：
+
+```powershell
+$env:PYTHONPATH='src'
+& 'C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m yang_cad_agent.cli accore-run --script .agent\tmp\smoke\safe.lsp --dry-run .agent\tmp\smoke
+```
+
 ## 后续目标
 
 后续应提供一键开发环境：
@@ -32,4 +46,3 @@ scripts\doctor.ps1
 ```
 
 目标是让用户无需理解 Python 环境，只要双击或让 AI 运行脚本即可。
-
