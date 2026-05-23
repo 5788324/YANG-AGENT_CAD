@@ -1,10 +1,10 @@
 # 当前交接日志
 
-更新时间：2026-05-23
+更新时间：2026-05-24
 
 ## 当前任务
 
-继续安全可回滚 MVP，建立当前图 LISP dry-run 投喂原型、本地 CAD 实测清单和首个内置插件。
+补充面向代码小白和 CAD 新手的操作文档、功能说明文档，并把用户提供的 `sample` DWG 目录纳入安全测试说明。
 
 ## 已完成
 
@@ -65,14 +65,20 @@
   - `toolbox/plugins/current_smoke`
   - 风险等级 `read`
   - 用于验证当前图 LISP 投喂链路
+- 用户已提供 sample 图纸目录：`D:\codex\Yang Agent_CAD\sample`
+- sample 当前匹配到 11 个 DWG。
+- 新增小白操作文档：`docs/USER_GUIDE.md`
+- 新增功能使用说明：`docs/FEATURES.md`
+- 新增 sample 图纸测试说明：`docs/SAMPLE_DWGS.md`
+- 新增批量烟测插件：`toolbox/plugins/batch_smoke`
 
 ## 下一步
 
-1. 在真实 AutoCAD 中执行 `current_smoke` 插件测试。
-2. 给当前图 LISP 执行增加结果文件/完成标记监听。
-3. 增加真实 accoreconsole 执行测试清单和测试脚本。
-4. 增加更多实用插件，例如图层统计、块统计、图框属性读取。
-5. 把 MCP stdio 骨架升级为正式 MCP SDK Server。
+1. 运行文档和代码验证：`scripts\test.cmd`、`scripts\doctor.cmd`。
+2. 对 sample 目录做 dry-run 扫描。
+3. 复制 `sample\S001.dwg` 到 `.agent\tmp\sample-run`，使用 `toolbox\plugins\batch_smoke\main.lsp` 做真实 accoreconsole 小测试。
+4. 在真实 AutoCAD 中执行 `current_smoke` 插件测试。
+5. 给当前图 LISP 执行增加结果文件/完成标记监听。
 
 ## 注意事项
 
@@ -86,4 +92,6 @@
 - dry-run 冒烟测试生成过 `.agent/tasks/20260523-233502-d45edb72.json`，该目录被 gitignore 忽略。
 - `batch-task` dry-run 冒烟测试生成过 `.agent/tasks/20260523-234016-c9285ed6.json`，该目录被 gitignore 忽略。
 - `current-lisp` dry-run 冒烟测试生成过 `.agent/tasks/20260523-235227-1facdea4.json`，该目录被 gitignore 忽略。
+- sample 目录中的 DWG 不要提交到 GitHub，`.gitignore` 已忽略 `*.dwg`。
+- 第一次真实 accoreconsole 测试建议只用 `S001.dwg` 的复制件，不要直接跑完整 sample 目录。
 - 新安装的 skills 需要重启 Codex 后才会完整生效。

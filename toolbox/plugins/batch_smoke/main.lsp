@@ -1,0 +1,5 @@
+(setvar "CMDDIA" 0)
+(setvar "FILEDIA" 0)
+(princ "\nYANG AGENT CAD: accoreconsole batch smoke test.")
+(command "_.QSAVE")
+(princ)

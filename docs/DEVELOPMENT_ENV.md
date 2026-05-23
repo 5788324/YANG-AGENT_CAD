@@ -55,3 +55,5 @@ scripts\doctor.ps1
 scripts\doctor.cmd
 scripts\test.cmd
 ```
+
+推荐小白用户优先阅读 [USER_GUIDE.md](USER_GUIDE.md)，不要直接运行带 `--execute` 的命令。

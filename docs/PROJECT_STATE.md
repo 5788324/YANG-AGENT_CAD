@@ -1,10 +1,10 @@
 # 项目状态
 
-更新时间：2026-05-23
+更新时间：2026-05-24
 
 ## 当前状态
 
-项目处于安全可回滚 MVP 阶段。AI-first 开发规范、安全工作流、最小 Python CLI、备份/回滚基础模块、LISP 静态校验器、accoreconsole dry-run runner、完整批量任务入口、插件箱 manifest 校验、任务查询命令、MCP stdio 骨架、当前图 LISP dry-run 投喂原型和首个内置插件已建立。
+项目处于安全可回滚 MVP 阶段。AI-first 开发规范、安全工作流、最小 Python CLI、备份/回滚基础模块、LISP 静态校验器、accoreconsole dry-run runner、完整批量任务入口、插件箱 manifest 校验、任务查询命令、MCP stdio 骨架、当前图 LISP dry-run 投喂原型、首个内置插件和小白操作文档已建立。
 
 ## 已确认需求
 
@@ -34,14 +34,15 @@
 - 普通 `python` / `py` 命令当前不在 PATH。
 - Git 可用：`git version 2.53.0.windows.2`
 - AutoCAD 2027 accoreconsole 已发现：`C:\Program Files\Autodesk\AutoCAD 2027\accoreconsole.exe`
+- sample 图纸目录可用：`D:\codex\Yang Agent_CAD\sample`，当前匹配到 11 个 DWG。
 
 ## 下一步
 
-1. 在真实 AutoCAD 中执行 `current_smoke` 插件测试。
-2. 给当前图 LISP 执行增加结果文件/完成标记监听。
-3. 增加真实 accoreconsole 执行测试清单和测试脚本。
-4. 增加更多实用插件，例如图层统计、块统计、图框属性读取。
-5. 把 MCP stdio 骨架升级为正式 MCP SDK Server。
+1. 对 sample 目录做 dry-run 扫描。
+2. 复制 `sample\S001.dwg`，使用 `toolbox\plugins\batch_smoke\main.lsp` 做真实 accoreconsole 小测试。
+3. 在真实 AutoCAD 中执行 `current_smoke` 插件测试。
+4. 给当前图 LISP 执行增加结果文件/完成标记监听。
+5. 增加更多实用插件，例如图层统计、块统计、图框属性读取。
 
 ## 风险
 

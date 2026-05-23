@@ -1,0 +1,20 @@
+{
+  "id": "batch.smoke_qsave",
+  "name": "批量烟测保存",
+  "version": "0.1.0",
+  "category": "diagnostics",
+  "description": "用于验证 accoreconsole 批量链路，会打印测试消息并 QSAVE。仅建议在测试图纸副本上使用。",
+  "author": "YANG AGENT CAD",
+  "source": "builtin",
+  "tracks": ["C"],
+  "accore_safe": true,
+  "risk": "batch_modify",
+  "requires_backup": true,
+  "supports_dry_run": true,
+  "params_schema": {},
+  "entry": {
+    "type": "lisp",
+    "path": "main.lsp",
+    "command": "batch-smoke-qsave"
+  }
+}

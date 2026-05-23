@@ -31,6 +31,14 @@
 3. [handoff/CURRENT_HANDOFF.md](handoff/CURRENT_HANDOFF.md)
 4. [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md)
 
+## 给小白用户的入口
+
+如果你不懂代码或 CAD 自动化，从这里开始：
+
+1. [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+2. [docs/FEATURES.md](docs/FEATURES.md)
+3. [docs/SAMPLE_DWGS.md](docs/SAMPLE_DWGS.md)
+
 ## 快速自检
 
 Windows 用户可直接运行：

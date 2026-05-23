@@ -2,6 +2,8 @@
 
 本文件用于真实 AutoCAD 环境测试。不要使用客户项目图纸。优先使用空白图纸或专门创建的测试 DWG。
 
+如果使用用户提供的 `sample` 目录，请先阅读 [SAMPLE_DWGS.md](SAMPLE_DWGS.md)。
+
 ## 准备
 
 1. 打开 AutoCAD 2027。
@@ -60,4 +62,3 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 ```
 
 不要在未确认备份路径前加 `--execute`。
-
