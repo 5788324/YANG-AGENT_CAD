@@ -48,7 +48,8 @@ def task_record_path(project_root: Path, task_id: str) -> Path:
 
 def load_task_record(project_root: Path, task_id: str) -> dict:
     path = task_record_path(project_root, task_id)
-    return json.loads(path.read_text(encoding="utf-8"))
+    record = json.loads(path.read_text(encoding="utf-8"))
+    return {**record, "ledger_path": str(path)}
 
 
 def update_task_record(project_root: Path, task_id: str, **updates) -> dict:
@@ -57,3 +58,16 @@ def update_task_record(project_root: Path, task_id: str, **updates) -> dict:
     record.update(updates)
     path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
     return {**record, "ledger_path": str(path)}
+
+
+def list_task_records(project_root: Path, limit: int = 20) -> list[dict]:
+    task_dir = project_root / ".agent" / "tasks"
+    if not task_dir.exists():
+        return []
+    records = []
+    for path in sorted(task_dir.glob("*.json"), key=lambda item: item.stat().st_mtime, reverse=True):
+        record = json.loads(path.read_text(encoding="utf-8"))
+        records.append({**record, "ledger_path": str(path)})
+        if len(records) >= limit:
+            break
+    return records

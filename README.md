@@ -31,3 +31,12 @@
 3. [handoff/CURRENT_HANDOFF.md](handoff/CURRENT_HANDOFF.md)
 4. [docs/PROJECT_STATE.md](docs/PROJECT_STATE.md)
 
+## 快速自检
+
+Windows 用户可直接运行：
+
+```cmd
+scripts\doctor.cmd
+scripts\test.cmd
+```
+

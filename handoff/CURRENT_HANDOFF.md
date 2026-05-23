@@ -4,7 +4,7 @@
 
 ## 当前任务
 
-继续安全可回滚 MVP，建立完整批量任务入口和插件箱 manifest 校验。
+继续安全可回滚 MVP，建立开发环境脚本、任务查询命令和 MCP stdio 骨架。
 
 ## 已完成
 
@@ -44,14 +44,25 @@
 - 实现插件箱 manifest 工具：
   - `yang-cad-agent toolbox-list`
   - `yang-cad-agent toolbox-validate`
+- 增加 Windows 包装脚本：
+  - `scripts\doctor.cmd`
+  - `scripts\test.cmd`
+- 增加任务查询 CLI：
+  - `yang-cad-agent task-list`
+  - `yang-cad-agent task-show`
+- 增加 MCP stdio 骨架：
+  - `doctor`
+  - `toolbox_list`
+  - `task_list`
+  - `task_show`
 
 ## 下一步
 
-1. 增加开发环境 bootstrap 脚本，让用户机器上的普通命令也能运行。
-2. 实现 MCP Server 最小工具。
-3. 准备 AutoCAD 本地实测脚本和测试样例。
-4. 实现当前图 LISP 投喂原型。
-5. 增加首批实用插件。
+1. 准备 AutoCAD 本地实测脚本和测试样例。
+2. 实现当前图 LISP 投喂原型。
+3. 增加首批实用插件。
+4. 把 MCP stdio 骨架升级为正式 MCP SDK Server。
+5. 增加真实 accoreconsole 执行测试清单。
 
 ## 注意事项
 
@@ -60,6 +71,7 @@
 - 本地 AutoCAD 能力需要在用户机器上实测。
 - 当前 PowerShell 中 `python` 和 `py` 不在 PATH。可临时使用 Codex runtime Python：
   `C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe`
+- PowerShell 当前禁止直接运行 `.ps1`，可使用 `.cmd` 包装脚本。
 - `yang-cad-agent doctor` 已发现 AutoCAD 2027 accoreconsole。
 - dry-run 冒烟测试生成过 `.agent/tasks/20260523-233502-d45edb72.json`，该目录被 gitignore 忽略。
 - `batch-task` dry-run 冒烟测试生成过 `.agent/tasks/20260523-234016-c9285ed6.json`，该目录被 gitignore 忽略。

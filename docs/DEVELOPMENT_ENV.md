@@ -46,3 +46,12 @@ scripts\doctor.ps1
 ```
 
 目标是让用户无需理解 Python 环境，只要双击或让 AI 运行脚本即可。
+
+## Windows 执行策略
+
+如果 PowerShell 禁止运行 `.ps1`，可直接使用 `.cmd` 包装脚本：
+
+```cmd
+scripts\doctor.cmd
+scripts\test.cmd
+```

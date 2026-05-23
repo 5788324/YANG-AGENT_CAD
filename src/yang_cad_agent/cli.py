@@ -10,7 +10,7 @@ from .accore import run_accore_batch
 from .batch_workflow import run_batch_workflow
 from .backup import backup_files, rollback_task
 from .doctor import run_doctor
-from .ledger import create_task_record
+from .ledger import create_task_record, list_task_records, load_task_record
 from .lisp_validator import validate_lisp_file
 from .toolbox import list_plugins, validate_plugin_manifest
 
@@ -30,6 +30,15 @@ def build_parser() -> argparse.ArgumentParser:
     task.add_argument("--risk", default="read", help="Risk level from runtime contract.")
     task.add_argument("--track", default="MCP", help="Planned execution track.")
     task.add_argument("--root", default=".", help="Project root.")
+
+    task_list = sub.add_parser("task-list", help="List recent task ledger records.")
+    task_list.add_argument("--root", default=".", help="Project root.")
+    task_list.add_argument("--limit", type=int, default=20, help="Maximum records to show.")
+    task_list.add_argument("--json", action="store_true", help="Print JSON output.")
+
+    task_show = sub.add_parser("task-show", help="Show one task ledger record.")
+    task_show.add_argument("task_id", help="Task id.")
+    task_show.add_argument("--root", default=".", help="Project root.")
 
     backup = sub.add_parser("backup", help="Back up files into .agent/backups.")
     backup.add_argument("--task-id", required=True, help="Existing task id.")
@@ -103,6 +112,23 @@ def main(argv: list[str] | None = None) -> int:
             risk=args.risk,
             track=args.track,
         )
+        print(json.dumps(record, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.command == "task-list":
+        records = list_task_records(Path(args.root), limit=args.limit)
+        if args.json:
+            print(json.dumps({"ok": True, "tasks": records}, ensure_ascii=False, indent=2))
+        else:
+            for record in records:
+                print(
+                    f"{record['task_id']} [{record['status']}] "
+                    f"{record['track']} {record['risk']} {record['user_goal']}"
+                )
+        return 0
+
+    if args.command == "task-show":
+        record = load_task_record(Path(args.root), args.task_id)
         print(json.dumps(record, ensure_ascii=False, indent=2))
         return 0
 
