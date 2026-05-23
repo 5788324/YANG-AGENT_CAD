@@ -45,6 +45,7 @@
 | ACCORE_NONZERO_EXIT | accoreconsole 返回非 0 | 查看 stdout/stderr |
 | ACCORE_TIMEOUT | 执行超时 | 降低并行数或检查脚本死循环 |
 | ACCORE_UNSUPPORTED_SCRIPT | 脚本不支持无头运行 | 改写 LISP 或走当前图轨道 |
+| ACCORE_CONFIG_LOCKED | AutoCAD 配置文件被锁定或只读 | 关闭 AutoCAD 进程，检查 `acad2027.cfg` 权限 |
 
 ## 文件错误
 
@@ -54,4 +55,3 @@
 | FILE_NOT_FOUND | 文件不存在 | 检查路径 |
 | BACKUP_FAILED | 备份失败 | 停止执行，检查权限和磁盘 |
 | ROLLBACK_FAILED | 回滚失败 | 使用备份目录手动恢复 |
-

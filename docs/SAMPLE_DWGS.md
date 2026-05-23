@@ -97,7 +97,7 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 - 生成任务记录
 - 返回 `rollback_command`
 
-如果返回 `ACCORE_NONZERO_EXIT`，先不要继续批量执行。查看任务日志和 `.agent\logs\任务ID`。当前已知情况是 AutoCAD 2027 首次配置/消息框提示可能导致 accoreconsole 返回非 0。
+如果返回 `ACCORE_CONFIG_LOCKED` 或 `ACCORE_NONZERO_EXIT`，先不要继续批量执行。查看任务日志和 `.agent\logs\任务ID`。当前已知情况是 AutoCAD 2027 的 `acad2027.cfg` 可能被锁定或只读，导致 accoreconsole 返回非 0。
 
 ### 5. 回滚预演
 

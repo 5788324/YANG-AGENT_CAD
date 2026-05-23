@@ -39,6 +39,29 @@ def decode_process_output(stdout: bytes, stderr: bytes) -> str:
     return data.decode("utf-8", errors="replace")
 
 
+def analyze_accore_output(output: str, returncode: int) -> dict:
+    normalized = output.lower()
+    if "acad2027.cfg" in normalized and ("只读" in output or "锁定" in output or "locked" in normalized):
+        return {
+            "error_code": error_codes.ACCORE_CONFIG_LOCKED,
+            "message": (
+                "AutoCAD configuration file is locked or read-only. "
+                "Check acad2027.cfg permissions or close other AutoCAD processes."
+            ),
+        }
+    if "无法处理配置文件" in output or "configuration" in normalized and "fatal" in normalized:
+        return {
+            "error_code": error_codes.ACCORE_CONFIG_LOCKED,
+            "message": "AutoCAD could not process its configuration file.",
+        }
+    if returncode != 0:
+        return {
+            "error_code": error_codes.ACCORE_NONZERO_EXIT,
+            "message": f"accoreconsole exited with code {returncode}.",
+        }
+    return {"error_code": None, "message": ""}
+
+
 def run_accore_batch(
     project_root: Path,
     folder: Path,
@@ -130,6 +153,7 @@ def run_accore_batch(
             output = decode_process_output(completed.stdout, completed.stderr)
             log_path = log_dir / f"{dwg.stem}.log"
             log_path.write_text(output, encoding="utf-8")
+            analysis = analyze_accore_output(output, completed.returncode)
             results.append(
                 {
                     "file": str(dwg),
@@ -137,9 +161,8 @@ def run_accore_batch(
                     "returncode": completed.returncode,
                     "elapsed": elapsed,
                     "log_path": str(log_path),
-                    "error_code": None
-                    if completed.returncode == 0
-                    else error_codes.ACCORE_NONZERO_EXIT,
+                    "error_code": analysis["error_code"],
+                    "message": analysis["message"],
                 }
             )
         except subprocess.TimeoutExpired:
@@ -153,12 +176,13 @@ def run_accore_batch(
             )
 
     failed = [item for item in results if not item["success"]]
+    first_error = failed[0].get("error_code") if failed else None
     update_task_record(
         project_root,
         task_id,
         status="failed" if failed else "done",
         finished_at=datetime.now().isoformat(timespec="seconds"),
-        error_code=error_codes.ACCORE_NONZERO_EXIT if failed else None,
+        error_code=first_error,
         rollback_available=False,
     )
     return {

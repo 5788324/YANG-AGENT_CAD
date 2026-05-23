@@ -102,4 +102,11 @@
   - rollback dry-run 成功
   - 真实 rollback 成功
 - 已修复后续 accoreconsole 日志 UTF-16 解码逻辑。
+- 复测任务 `20260524-004144-a4ee1196` 已运行：
+  - 备份成功
+  - accoreconsole 失败
+  - 日志明确显示 `C:\Program Files\Autodesk\AutoCAD 2027\acad2027.cfg` 被锁定或只读
+  - rollback dry-run 成功
+  - 真实 rollback 成功
+- 已新增错误码 `ACCORE_CONFIG_LOCKED` 和日志分析器。
 - 新安装的 skills 需要重启 Codex 后才会完整生效。
