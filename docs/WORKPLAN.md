@@ -26,7 +26,7 @@
 - 实现 task ledger：每次任务生成 task_id 和 JSON 日志。
 - 实现备份和回滚模块。已完成基础版。
 - 实现 LISP 静态校验器。已完成基础版。
-- 实现当前图 LISP 投喂原型。
+- 实现当前图 LISP 投喂原型。已完成 dry-run 和 COM 发送骨架。
 - 实现 accoreconsole 批量执行原型。已完成 dry-run scaffold。
 - 准备第一个端到端样例：查询/清理/批量 dry-run。已完成 CLI dry-run 冒烟测试。
 
@@ -45,6 +45,7 @@
 - 支持 AI 临时 LISP 转正式插件。
 - 支持插件风险分级和执行确认。
 - 把常用 CAD 操作做成首批插件。
+- 首个内置插件 `current.smoke_test` 已完成，用于验证当前图链路。
 
 验收标准：
 

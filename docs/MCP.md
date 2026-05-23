@@ -55,6 +55,8 @@ $env:PYTHONPATH='src'
 - `task_list`
 - `task_show`
 
+当前 `toolbox_list` 已可返回内置插件，例如 `current.smoke_test`。
+
 ## 后续目标
 
 正式 MCP Server 应包装同一批底层函数，并继续保持：
@@ -64,4 +66,3 @@ $env:PYTHONPATH='src'
 - 执行前校验 LISP
 - 执行前备份
 - 所有任务写入 task ledger
-

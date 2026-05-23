@@ -9,6 +9,7 @@ from pathlib import Path
 from .accore import run_accore_batch
 from .batch_workflow import run_batch_workflow
 from .backup import backup_files, rollback_task
+from .current_lisp import feed_current_lisp
 from .doctor import run_doctor
 from .ledger import create_task_record, list_task_records, load_task_record
 from .lisp_validator import validate_lisp_file
@@ -58,6 +59,11 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["B", "C"],
         help="Target track. C applies accoreconsole restrictions.",
     )
+
+    current = sub.add_parser("current-lisp", help="Feed LISP to the current AutoCAD drawing.")
+    current.add_argument("--script", required=True, help="LISP script path.")
+    current.add_argument("--root", default=".", help="Project root.")
+    current.add_argument("--execute", action="store_true", help="Actually send to AutoCAD COM.")
 
     accore = sub.add_parser("accore-run", help="Run or dry-run accoreconsole batch.")
     accore.add_argument("--script", required=True, help="LISP script path.")
@@ -152,6 +158,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "validate-lisp":
         result = validate_lisp_file(Path(args.path), target_track=args.track)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
+
+    if args.command == "current-lisp":
+        result = feed_current_lisp(
+            project_root=Path(args.root),
+            script_path=Path(args.script),
+            execute=args.execute,
+        )
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["ok"] else 1
 

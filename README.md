@@ -40,3 +40,9 @@ scripts\doctor.cmd
 scripts\test.cmd
 ```
 
+当前图 LISP 投喂默认只预演：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli current-lisp --script toolbox\plugins\current_smoke\main.lsp
+```

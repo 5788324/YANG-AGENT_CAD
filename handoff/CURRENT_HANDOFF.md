@@ -4,7 +4,7 @@
 
 ## 当前任务
 
-继续安全可回滚 MVP，建立开发环境脚本、任务查询命令和 MCP stdio 骨架。
+继续安全可回滚 MVP，建立当前图 LISP dry-run 投喂原型、本地 CAD 实测清单和首个内置插件。
 
 ## 已完成
 
@@ -55,14 +55,24 @@
   - `toolbox_list`
   - `task_list`
   - `task_show`
+- 增加当前图 LISP 投喂原型：
+  - `yang-cad-agent current-lisp --script ...`
+  - 默认 dry-run
+  - 只有加 `--execute` 才尝试 AutoCAD COM
+  - 缺少 `pywin32` 时返回 `ACAD_COM_DEPENDENCY_MISSING`
+- 增加本地 AutoCAD 实测清单：`docs/CAD_LOCAL_TESTS.md`
+- 增加首个内置插件：
+  - `toolbox/plugins/current_smoke`
+  - 风险等级 `read`
+  - 用于验证当前图 LISP 投喂链路
 
 ## 下一步
 
-1. 准备 AutoCAD 本地实测脚本和测试样例。
-2. 实现当前图 LISP 投喂原型。
-3. 增加首批实用插件。
-4. 把 MCP stdio 骨架升级为正式 MCP SDK Server。
-5. 增加真实 accoreconsole 执行测试清单。
+1. 在真实 AutoCAD 中执行 `current_smoke` 插件测试。
+2. 给当前图 LISP 执行增加结果文件/完成标记监听。
+3. 增加真实 accoreconsole 执行测试清单和测试脚本。
+4. 增加更多实用插件，例如图层统计、块统计、图框属性读取。
+5. 把 MCP stdio 骨架升级为正式 MCP SDK Server。
 
 ## 注意事项
 
@@ -75,4 +85,5 @@
 - `yang-cad-agent doctor` 已发现 AutoCAD 2027 accoreconsole。
 - dry-run 冒烟测试生成过 `.agent/tasks/20260523-233502-d45edb72.json`，该目录被 gitignore 忽略。
 - `batch-task` dry-run 冒烟测试生成过 `.agent/tasks/20260523-234016-c9285ed6.json`，该目录被 gitignore 忽略。
+- `current-lisp` dry-run 冒烟测试生成过 `.agent/tasks/20260523-235227-1facdea4.json`，该目录被 gitignore 忽略。
 - 新安装的 skills 需要重启 Codex 后才会完整生效。

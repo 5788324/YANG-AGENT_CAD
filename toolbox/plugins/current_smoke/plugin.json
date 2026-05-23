@@ -1,0 +1,20 @@
+{
+  "id": "current.smoke_test",
+  "name": "当前图烟测",
+  "version": "0.1.0",
+  "category": "diagnostics",
+  "description": "在当前 AutoCAD 命令行打印一条测试消息，用于验证 LISP 投喂链路。",
+  "author": "YANG AGENT CAD",
+  "source": "builtin",
+  "tracks": ["B"],
+  "accore_safe": false,
+  "risk": "read",
+  "requires_backup": false,
+  "supports_dry_run": true,
+  "params_schema": {},
+  "entry": {
+    "type": "lisp",
+    "path": "main.lsp",
+    "command": "yang-current-smoke"
+  }
+}
