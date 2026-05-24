@@ -113,4 +113,5 @@
   - `C:\Program Files\Autodesk\AutoCAD 2027\acad2027.cfg` 不存在
   - `C:\Program Files\Autodesk\AutoCAD 2027` 对普通用户不可写
 - 已清理残留 accoreconsole 进程。
+- 用户要求再次测试后，任务 `20260524-121718-3bda32fb` 仍被预检拦截为 `ACCORE_CONFIG_LOCKED`；没有启动 accoreconsole，没有残留进程。
 - 新安装的 skills 需要重启 Codex 后才会完整生效。
