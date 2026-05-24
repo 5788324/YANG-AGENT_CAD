@@ -11,6 +11,7 @@ class McpStdioTests(unittest.TestCase):
         self.assertIn("doctor", result["tools"])
         self.assertIn("health_check", result["tools"])
         self.assertIn("summarize_reports", result["tools"])
+        self.assertIn("rollback_dry_run", result["tools"])
 
     def test_health_check_tool_is_dry_run_only(self):
         with patch("yang_cad_agent.mcp_stdio.run_health_check") as run_health_check:
@@ -53,6 +54,26 @@ class McpStdioTests(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(result["result"]["output"], "summary.md")
         self.assertEqual(summarize_reports.call_count, 1)
+
+    def test_rollback_dry_run_tool_cannot_restore_files(self):
+        with patch("yang_cad_agent.mcp_stdio.rollback_task") as rollback_task:
+            rollback_task.return_value = {"ok": True, "dry_run": True, "actions": []}
+
+            result = handle_message(
+                {
+                    "action": "call_tool",
+                    "name": "rollback_dry_run",
+                    "params": {
+                        "root": ".",
+                        "task_id": "task-1",
+                        "dry_run": False,
+                    },
+                }
+            )
+
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["result"]["dry_run"])
+        self.assertTrue(rollback_task.call_args.kwargs["dry_run"])
 
 
 if __name__ == "__main__":

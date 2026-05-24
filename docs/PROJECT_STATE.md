@@ -135,3 +135,12 @@
   - 输出：`.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md`
   - 汇总结果：图层 12、图层对象 93、普通块参照 1、文字/标注对象 24、CSV 文件 3
 - 测试更新：`tests\test_mcp_stdio.py` 覆盖 `summarize_reports` 工具调用。
+
+## 2026-05-24 MCP 回滚预演工具
+
+- MCP stdio 新增工具 `rollback_dry_run`。
+- 工具参数：`root`、`task_id`。
+- MCP 层固定 `dry_run=true`，即使调用方传入 `dry_run:false` 也不会真实恢复或覆盖文件。
+- 已验证 `list_tools` 能返回 `rollback_dry_run`。
+- 已验证 stdio 调用 `rollback_dry_run` 预览任务 `20260524-135319-fae4680f` 成功，返回 `dry_run: true` 和 `would_restore` 动作列表。
+- 测试更新：`tests\test_mcp_stdio.py` 覆盖 `rollback_dry_run` 工具存在，以及 MCP 层强制 dry-run。

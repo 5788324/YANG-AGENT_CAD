@@ -11,6 +11,7 @@ import json
 import sys
 from pathlib import Path
 
+from .backup import rollback_task
 from .doctor import run_doctor
 from .health_check import run_health_check
 from .ledger import list_task_records, load_task_record
@@ -51,6 +52,10 @@ TOOLS = {
             "folder": "Folder containing generated report CSV files.",
             "output": "Optional output Markdown path.",
         },
+    },
+    "rollback_dry_run": {
+        "description": "Preview rollback actions for a task without restoring files.",
+        "params": {"root": "Project root path.", "task_id": "Task id."},
     },
 }
 
@@ -97,6 +102,12 @@ def call_tool(name: str, params: dict | None = None) -> dict:
         if output is not None and not output.is_absolute():
             output = root / output
         return summarize_reports(folder, output=output)
+    if name == "rollback_dry_run":
+        return rollback_task(
+            project_root=Path(params.get("root", ".")),
+            task_id=params["task_id"],
+            dry_run=True,
+        )
     return {"ok": False, "error": f"Unknown tool: {name}"}
 
 

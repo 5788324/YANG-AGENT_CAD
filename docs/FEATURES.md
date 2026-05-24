@@ -326,3 +326,14 @@ $env:PYTHONPATH='src'
 ```
 
 安全说明：该工具不启动 accoreconsole，不修改 DWG，只读取报告 CSV 并生成 Markdown 总报告。
+
+## MCP 回滚预演工具
+
+MCP stdio 已暴露 `rollback_dry_run` 工具，用于预览某个任务会回滚哪些文件。
+
+```powershell
+$env:PYTHONPATH='src'
+'{"action":"call_tool","name":"rollback_dry_run","params":{"root":".","task_id":"20260524-135319-fae4680f"}}' | & 'C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m yang_cad_agent.mcp_stdio
+```
+
+安全说明：MCP 层固定 `dry_run=true`，即使参数传入 `dry_run:false` 也不会恢复或覆盖文件。真实回滚仍需走 CLI 的 `rollback 任务ID`，并单独确认。

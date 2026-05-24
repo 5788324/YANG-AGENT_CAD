@@ -106,3 +106,17 @@ $env:PYTHONPATH='src'
 当前工具清单还包括：
 
 - `summarize_reports`
+
+## 回滚预演 MCP 工具
+
+`rollback_dry_run` 用于通过 MCP 预览某个任务会回滚哪些文件。它固定只做 dry-run，不会恢复或覆盖文件。即使调用参数里传入 `dry_run:false`，MCP 层也会固定按 `dry_run=true` 调用底层回滚流程。
+
+调用示例：
+
+```json
+{"action":"call_tool","name":"rollback_dry_run","params":{"root":".","task_id":"任务ID"}}
+```
+
+当前工具清单还包括：
+
+- `rollback_dry_run`

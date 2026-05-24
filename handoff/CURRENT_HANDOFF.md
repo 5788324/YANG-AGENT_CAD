@@ -238,3 +238,15 @@
   - 汇总结果：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24，CSV 文件 3。
 - 新增/更新测试 `tests\test_mcp_stdio.py`，当前测试数 29。
 - 下一步建议：增加正式 MCP SDK server 包装层，或给 MCP 增加 `rollback_dry_run` 安全工具。
+
+## 2026-05-24 MCP 回滚预演工具进展
+
+- 已新增 MCP stdio 工具 `rollback_dry_run`。
+- 该工具固定 dry-run，不会真实恢复或覆盖文件。
+- 即使调用参数传入 `dry_run:false`，底层仍按 `dry_run=True` 调用。
+- stdio 实测成功：
+  - `list_tools` 能看到 `rollback_dry_run`。
+  - 调用 `rollback_dry_run` 预览任务 `20260524-135319-fae4680f` 成功。
+  - 返回 `dry_run: true` 和 `would_restore: true` 动作列表。
+- 新增/更新测试 `tests\test_mcp_stdio.py`，当前测试数 30。
+- 下一步建议：增加正式 MCP SDK server 包装层，或给 MCP 增加 `task_recent_failures` 只读工具，帮助 AI 快速定位最近错误。
