@@ -11,6 +11,7 @@ from .batch_workflow import run_batch_workflow
 from .backup import backup_files, rollback_task
 from .current_lisp import feed_current_lisp
 from .doctor import run_doctor
+from .health_check import run_health_check
 from .ledger import create_task_record, list_task_records, load_task_record
 from .lisp_validator import validate_lisp_file
 from .report_summary import summarize_reports
@@ -97,6 +98,17 @@ def build_parser() -> argparse.ArgumentParser:
     summary = sub.add_parser("summarize-reports", help="Summarize generated CAD CSV reports.")
     summary.add_argument("folder", help="Folder containing generated report CSV files.")
     summary.add_argument("--output", default="", help="Output Markdown path.")
+
+    health = sub.add_parser("health-check", help="Run one-command CAD health report workflow.")
+    health.add_argument("folder", help="Folder containing DWG files.")
+    health.add_argument("--root", default=".", help="Project root.")
+    health.add_argument("--pattern", default="*.dwg", help="DWG glob pattern.")
+    health.add_argument("--recursive", action="store_true", help="Search recursively.")
+    health.add_argument(
+        "--execute",
+        action="store_true",
+        help="Actually run read-only report plugins. Omit for dry-run.",
+    )
 
     return parser
 
@@ -218,6 +230,17 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "summarize-reports":
         output = Path(args.output) if args.output else None
         result = summarize_reports(Path(args.folder), output=output)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
+
+    if args.command == "health-check":
+        result = run_health_check(
+            project_root=Path(args.root),
+            folder=Path(args.folder),
+            pattern=args.pattern,
+            recursive=args.recursive,
+            execute=args.execute,
+        )
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["ok"] else 1
 

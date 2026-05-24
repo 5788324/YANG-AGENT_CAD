@@ -100,3 +100,15 @@
 - 当前 accoreconsole 真实执行被预检阻止：AutoCAD 2027 `acad2027.cfg` 不存在且安装目录不可写。已验证备份和回滚安全链路可用。
 - ezdxf 不能直接读取 DWG，必须避免把它当 DWG 引擎。
 - AI 生成 LISP 有风险，必须先校验、记录、可回滚。
+
+## 2026-05-24 一键图纸体检命令
+
+- 新增模块 `src\yang_cad_agent\health_check.py`。
+- 新增 CLI 命令 `health-check`，用于一次性串联 `batch.layer_report`、`batch.block_report`、`batch.annotation_report`，并在真实执行后自动调用 `summarize-reports` 生成 `CAD_REPORT_SUMMARY.md`。
+- 默认模式为 dry-run，只检查匹配 DWG 和将要运行的 accoreconsole 命令；加 `--execute` 后才真实运行。
+- 已在测试副本 `.agent\tmp\sample-run\S001-test.dwg` 验证成功：
+  - dry-run 任务：`20260524-222829-6b48f206`、`20260524-222829-ff953b91`、`20260524-222830-8eb87f86`
+  - execute 任务：`20260524-222837-175c7973`、`20260524-222915-9341bd0b`、`20260524-222924-210c5d45`
+  - 汇总输出：`.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md`
+  - 汇总结果：图层 12、图层对象 93、普通块参照 1、文字/标注对象 24、CSV 文件 3
+- 新增测试 `tests\test_health_check.py`，确认一键体检依赖的三个内置插件脚本存在。

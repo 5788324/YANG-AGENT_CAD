@@ -193,3 +193,21 @@
 - 已清理残留 accoreconsole 进程。
 - 用户要求再次测试后，任务 `20260524-121718-3bda32fb` 仍被预检拦截为 `ACCORE_CONFIG_LOCKED`；没有启动 accoreconsole，没有残留进程。
 - 新安装的 skills 需要重启 Codex 后才会完整生效。
+
+## 2026-05-24 一键图纸体检命令进展
+
+- 新增 `src\yang_cad_agent\health_check.py`。
+- 新增 CLI 命令 `health-check`，默认 dry-run；加 `--execute` 后依次运行：
+  - `batch.layer_report`
+  - `batch.block_report`
+  - `batch.annotation_report`
+  - `summarize-reports`
+- 已在 `.agent\tmp\sample-run\S001-test.dwg` 测试副本上验证真实 accoreconsole 链路成功。
+- 真实执行任务：
+  - `20260524-222837-175c7973`
+  - `20260524-222915-9341bd0b`
+  - `20260524-222924-210c5d45`
+- 输出总报告：`.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md`。
+- 当前汇总结果：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24，CSV 文件 3。
+- 新增测试 `tests\test_health_check.py`。
+- 下一步建议：把 `health-check` 暴露到 MCP stdio，方便 Codex/Antigravity 直接以 MCP 工具调用，而不是只走 CLI。

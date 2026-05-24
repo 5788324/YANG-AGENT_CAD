@@ -272,3 +272,29 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 - 要删除、清理、覆盖、保存 DWG 时。
 - 看到 `failed` 或 `error_code` 时。
 - 不知道任务 ID 是什么时。
+
+## 一键图纸体检
+
+如果只是想快速看一张测试图纸里有哪些图层、块、文字标注，可以让 AI 运行这个命令。它会一次完成三种统计，并生成一份总报告。
+
+先预演：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli health-check .agent\tmp\sample-run
+```
+
+确认只匹配测试副本后，再执行：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli health-check .agent\tmp\sample-run --execute
+```
+
+成功后会生成：
+
+```text
+.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md
+```
+
+当前测试副本已经验证成功：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24。以后正式处理客户图纸时，仍然先让 AI 复制副本、dry-run、确认备份，再执行。

@@ -273,3 +273,34 @@ $env:PYTHONPATH='src'
 - `toolbox_list`
 - `task_list`
 - `task_show`
+
+## 一键图纸体检
+
+用途：把图层统计、块统计、文字标注统计、总报告汇总串成一个命令。默认 dry-run，只检查会处理哪些 DWG，不修改图纸。
+
+预演：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli health-check .agent\tmp\sample-run
+```
+
+真实执行测试副本：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli health-check .agent\tmp\sample-run --execute
+```
+
+当前已验证输出：
+
+```text
+.agent\tmp\sample-run\S001-test.dwg.layer-report.csv
+.agent\tmp\sample-run\S001-test.dwg.block-report.csv
+.agent\tmp\sample-run\S001-test.dwg.annotation-report.csv
+.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md
+```
+
+测试副本汇总结果：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24，CSV 文件 3。
+
+注意：这个命令虽然当前使用的是只读报告插件，但 `--execute` 会启动 accoreconsole。正式对整批图纸执行前，仍然要先 dry-run、确认匹配文件、保留备份记录。
