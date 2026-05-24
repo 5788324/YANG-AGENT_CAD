@@ -1,5 +1,12 @@
 # 项目状态
 
+## 2026-05-24 管理员修复脚本体验更新
+
+- 用户反馈 `scripts\fix-acad-cfg.cmd` 管理员运行时窗口秒退。
+- 脚本已更新为在所有成功/失败出口停住窗口，便于用户把结果反馈给 AI。
+- 复查确认安装目录 `acad2027.cfg` 已存在，accoreconsole 环境预检恢复正常。
+- 首个真实 accoreconsole 小样本执行成功：任务 `20260524-135319-fae4680f` 对测试副本 `.agent\tmp\sample-run\S001-test.dwg` 执行成功，成功 1、失败 0，并保留自动备份。
+
 ## 2026-05-24 accoreconsole 配置诊断更新
 
 - 再次测试后确认 `C:\Program Files\Autodesk\AutoCAD 2027\acad2027.cfg` 仍不存在。

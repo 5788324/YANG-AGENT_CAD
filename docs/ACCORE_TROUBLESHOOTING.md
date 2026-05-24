@@ -26,7 +26,11 @@ scripts\fix-acad-cfg.cmd
 scripts\doctor.cmd
 ```
 
+如果管理员窗口弹开后立刻关闭，说明你运行的是旧版脚本；新版脚本会在成功或失败时停住窗口，方便查看提示。
+
 如果 doctor 不再提示 `ACCORE_CONFIG_LOCKED`，就可以继续对 `.agent\tmp\sample-run\S001-test.dwg` 的副本做 accoreconsole 小测试。
+
+本机已验证：复制成功后，任务 `20260524-135319-fae4680f` 已经能通过 accoreconsole 处理测试副本，成功 1、失败 0。
 
 ## 当前已知问题：ACCORE_CONFIG_LOCKED
 

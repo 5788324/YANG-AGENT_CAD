@@ -23,7 +23,11 @@ scripts\fix-acad-cfg.cmd
 scripts\doctor.cmd
 ```
 
+如果窗口弹开后马上关闭，先让 AI 更新到最新版脚本；新版脚本会停在结果页面，按任意键才会关闭。
+
 doctor 不再提示 `ACCORE_CONFIG_LOCKED` 后，AI 才会继续跑 accoreconsole 的真实测试。
+
+当前机器已经修复成功，并完成了一次只针对测试副本的 accoreconsole 小测试。以后仍然不要直接对原始 `sample` 图纸整批执行，先让 AI 复制副本再测试。
 
 ## 先记住三句话
 

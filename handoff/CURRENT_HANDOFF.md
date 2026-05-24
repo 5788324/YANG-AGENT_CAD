@@ -1,5 +1,13 @@
 # 当前交接日志
 
+## 2026-05-24 管理员脚本秒退处理
+
+- 用户反馈右键“以管理员身份运行” `scripts\fix-acad-cfg.cmd` 后窗口秒退。
+- 已更新脚本：打印源路径、目标路径、结果信息，并在成功/失败时 `pause`，避免窗口自动关闭。
+- 复查发现用户管理员运行旧脚本实际已复制成功，`scripts\doctor.cmd` 显示安装目录 `acad2027.cfg` 已存在且 notes 为空。
+- 已继续运行 accoreconsole 小样本真实测试，任务 `20260524-135319-fae4680f` 成功处理 `.agent\tmp\sample-run\S001-test.dwg`，成功 1、失败 0，并生成备份 `.agent\backups\20260524-135319-fae4680f`。
+- 下一步：可以在测试副本上继续扩展更真实的批量插件验证；不要直接对 `sample` 原图目录整批 `--execute`。
+
 ## 2026-05-24 accoreconsole 配置修复进展
 
 - 用户要求“再试试”后，重新运行 doctor 和 batch-task 预检。
