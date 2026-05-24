@@ -1,5 +1,14 @@
 # 项目状态
 
+## 2026-05-24 批量图层统计插件
+
+- 新增内置插件 `batch.layer_report`，路径：`toolbox\plugins\batch_layer_report`。
+- 插件用途：用 accoreconsole 批量读取 DWG 图层表，输出 `*.layer-report.csv`，包含图层名、颜色、锁定/冻结状态、对象数量。
+- 已修复 accoreconsole runner：`/s` 现在使用自动生成的 `.scr` 包装脚本加载 LISP，避免 `.lsp` 被当成 `.scr` 查找。
+- 已增强 accoreconsole 日志分析：忽略 AutoCAD 2027 启动时的 `acad2027` 加载噪声；真正的脚本缺失、加载取消会返回 `LISP_LOAD_FAILED`。
+- 已在测试副本 `.agent\tmp\sample-run\S001-test.dwg` 验证成功，任务 `20260524-140529-fbc58d1a`，成功 1、失败 0。
+- 已生成报告 `.agent\tmp\sample-run\S001-test.dwg.layer-report.csv`，统计总对象数 93。
+
 ## 2026-05-24 管理员修复脚本体验更新
 
 - 用户反馈 `scripts\fix-acad-cfg.cmd` 管理员运行时窗口秒退。

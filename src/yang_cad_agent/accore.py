@@ -52,6 +52,28 @@ def decode_process_output(stdout: bytes, stderr: bytes) -> str:
 
 def analyze_accore_output(output: str, returncode: int) -> dict:
     normalized = output.lower()
+    load_failed = False
+    for line in output.splitlines():
+        line_lower = line.lower()
+        if "acad2027" in line_lower:
+            continue
+        if (
+            "load failed" in line_lower
+            or ("load" in line_lower and "failed" in line_lower)
+            or "LOAD 失败" in line
+            or "load 失败" in line
+            or "文件加载已取消" in line
+            or "load canceled" in line_lower
+            or "未找到文件" in line
+            or "not found" in line_lower
+        ):
+            load_failed = True
+            break
+    if load_failed:
+        return {
+            "error_code": error_codes.LISP_LOAD_FAILED,
+            "message": "accoreconsole did not load the LISP/script file successfully.",
+        }
     if "acad2027.cfg" in normalized and ("只读" in output or "锁定" in output or "locked" in normalized):
         return {
             "error_code": error_codes.ACCORE_CONFIG_LOCKED,
@@ -73,6 +95,18 @@ def analyze_accore_output(output: str, returncode: int) -> dict:
     return {"error_code": None, "message": ""}
 
 
+def write_accore_script_wrapper(project_root: Path, task_id: str, script_path: Path) -> Path:
+    script_dir = project_root / ".agent" / "scripts" / task_id
+    script_dir.mkdir(parents=True, exist_ok=True)
+    wrapper_path = script_dir / f"{script_path.stem}.scr"
+    lisp_path = script_path.resolve().as_posix()
+    wrapper_path.write_text(
+        f'(setvar "SECURELOAD" 0)\n(load "{lisp_path}")\n',
+        encoding="utf-8",
+    )
+    return wrapper_path
+
+
 def run_accore_batch(
     project_root: Path,
     folder: Path,
@@ -90,7 +124,10 @@ def run_accore_batch(
             "error_code": error_codes.FILE_NOT_FOUND,
             "message": f"Folder not found: {folder}",
         }
-    validation = validate_lisp_file(script_path, target_track="C")
+    project_root = project_root.resolve()
+    script_for_run = script_path if script_path.is_absolute() else project_root / script_path
+    script_for_run = script_for_run.resolve()
+    validation = validate_lisp_file(script_for_run, target_track="C")
     if not validation["ok"]:
         return {
             "ok": False,
@@ -134,8 +171,13 @@ def run_accore_batch(
                 "preflight": preflight,
             }
 
+    accore_script = (
+        project_root / ".agent" / "scripts" / task_id / f"{script_for_run.stem}.scr"
+        if dry_run
+        else write_accore_script_wrapper(project_root, task_id, script_for_run)
+    )
     commands = [
-        [str(accore), "/i", str(dwg), "/s", str(script_path), "/l", "zh-CN"]
+        [str(accore), "/i", str(dwg.resolve()), "/s", str(accore_script), "/l", "zh-CN"]
         for dwg in dwgs
     ]
     update_task_record(
@@ -149,6 +191,7 @@ def run_accore_batch(
             "pattern": pattern,
             "recursive": recursive,
             "dry_run": dry_run,
+            "accore_script": str(accore_script),
         },
         started_at=datetime.now().isoformat(timespec="seconds"),
     )
@@ -162,6 +205,7 @@ def run_accore_batch(
             "file_count": len(dwgs),
             "files": [str(path) for path in dwgs],
             "commands": commands,
+            "accore_script": str(accore_script),
             "validation": validation,
         }
 
@@ -182,10 +226,11 @@ def run_accore_batch(
             log_path = log_dir / f"{dwg.stem}.log"
             log_path.write_text(output, encoding="utf-8")
             analysis = analyze_accore_output(output, completed.returncode)
+            success = completed.returncode == 0 and analysis["error_code"] is None
             results.append(
                 {
                     "file": str(dwg),
-                    "success": completed.returncode == 0,
+                    "success": success,
                     "returncode": completed.returncode,
                     "elapsed": elapsed,
                     "log_path": str(log_path),

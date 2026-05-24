@@ -1,5 +1,25 @@
 # 当前交接日志
 
+## 2026-05-24 批量图层统计插件进展
+
+- 新增插件 `batch.layer_report`：
+  - `toolbox\plugins\batch_layer_report\plugin.json`
+  - `toolbox\plugins\batch_layer_report\main.lsp`
+- 插件为只读报告插件，不修改 DWG；输出 `*.layer-report.csv`。
+- 修复 accoreconsole runner：
+  - `/s` 改为指向自动生成的 `.scr` 包装脚本。
+  - 包装脚本设置 `SECURELOAD=0` 后加载真实 LISP。
+  - `.agent\scripts/` 已加入 `.gitignore`。
+- 增强错误识别：
+  - 返回码为 0 但日志显示脚本未找到、加载取消时，返回 `LISP_LOAD_FAILED`。
+  - 忽略 AutoCAD 2027 启动时固定出现的 `acad2027` 加载噪声。
+- 验证：
+  - `scripts\test.cmd` 通过 24 个测试。
+  - dry-run 显示绝对 DWG 路径和 `.scr` 包装脚本路径。
+  - 真实执行任务 `20260524-140529-fbc58d1a` 成功处理 `.agent\tmp\sample-run\S001-test.dwg`，成功 1、失败 0。
+  - 输出报告 `.agent\tmp\sample-run\S001-test.dwg.layer-report.csv`，总对象数 93。
+- 下一步建议：继续开发“块统计报告”或“文字/标注体检报告”，仍只在测试副本上验证。
+
 ## 2026-05-24 管理员脚本秒退处理
 
 - 用户反馈右键“以管理员身份运行” `scripts\fix-acad-cfg.cmd` 后窗口秒退。

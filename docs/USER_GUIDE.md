@@ -141,6 +141,32 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 
 注意：不要加 `--execute`。这一步只预演，不会修改 DWG。
 
+## 第七步：生成图层统计报告
+
+这个插件只读取图层和对象数量，不修改 DWG。AI 会先用测试副本运行，不直接碰原始 `sample` 图纸。
+
+先预演：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_layer_report\main.lsp .agent\tmp\sample-run
+```
+
+确认只匹配测试副本后，再执行：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_layer_report\main.lsp .agent\tmp\sample-run --execute
+```
+
+成功后会生成：
+
+```text
+.agent\tmp\sample-run\S001-test.dwg.layer-report.csv
+```
+
+这份 CSV 可以用 Excel 打开，里面会看到每个图层的颜色、是否锁定、是否冻结、对象数量。
+
 ## 查看任务记录
 
 运行：
