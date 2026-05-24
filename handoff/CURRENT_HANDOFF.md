@@ -109,4 +109,8 @@
   - rollback dry-run 成功
   - 真实 rollback 成功
 - 已新增错误码 `ACCORE_CONFIG_LOCKED` 和日志分析器。
+- 已新增 accoreconsole 执行前预检。当前 `--execute` 会直接返回 `ACCORE_CONFIG_LOCKED`，不会启动 accoreconsole，因为：
+  - `C:\Program Files\Autodesk\AutoCAD 2027\acad2027.cfg` 不存在
+  - `C:\Program Files\Autodesk\AutoCAD 2027` 对普通用户不可写
+- 已清理残留 accoreconsole 进程。
 - 新安装的 skills 需要重启 Codex 后才会完整生效。

@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from . import error_codes
-from .doctor import _candidate_accore_paths
+from .doctor import _candidate_accore_paths, _check_accore_install, accore_install_issue
 from .ledger import create_task_record, update_task_record
 from .lisp_validator import validate_lisp_file
 
@@ -17,6 +17,17 @@ def find_accoreconsole() -> Path | None:
         if path.exists():
             return path
     return None
+
+
+def check_accore_ready(accore_path: Path) -> dict:
+    detail = _check_accore_install(accore_path)
+    issue = accore_install_issue(detail)
+    return {
+        "ok": issue is None,
+        "detail": detail,
+        "error_code": None if issue is None else issue["error_code"],
+        "message": "" if issue is None else issue["message"],
+    }
 
 
 def collect_dwgs(folder: Path, pattern: str = "*.dwg", recursive: bool = False) -> list[Path]:
@@ -105,6 +116,23 @@ def run_accore_batch(
             "error_code": error_codes.ACCORE_NOT_FOUND,
             "message": "accoreconsole.exe was not found.",
         }
+    if not dry_run:
+        preflight = check_accore_ready(accore)
+        if not preflight["ok"]:
+            update_task_record(
+                project_root,
+                task_id,
+                status="failed",
+                error_code=preflight["error_code"],
+                finished_at=datetime.now().isoformat(timespec="seconds"),
+            )
+            return {
+                "ok": False,
+                "task_id": task_id,
+                "error_code": preflight["error_code"],
+                "message": preflight["message"],
+                "preflight": preflight,
+            }
 
     commands = [
         [str(accore), "/i", str(dwg), "/s", str(script_path), "/l", "zh-CN"]

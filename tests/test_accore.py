@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from yang_cad_agent.accore import analyze_accore_output, collect_dwgs, decode_process_output
+from yang_cad_agent.doctor import accore_install_issue
 
 
 class AccoreTests(unittest.TestCase):
@@ -28,6 +29,17 @@ class AccoreTests(unittest.TestCase):
             returncode=1,
         )
         self.assertEqual(result["error_code"], "ACCORE_CONFIG_LOCKED")
+
+    def test_accore_install_issue_when_cfg_missing_and_dir_unwritable(self):
+        issue = accore_install_issue(
+            {
+                "cfg_exists": False,
+                "cfg_read_only": False,
+                "install_dir_writable": False,
+                "expected_cfg": "C:/Program Files/Autodesk/AutoCAD 2027/acad2027.cfg",
+            }
+        )
+        self.assertEqual(issue["error_code"], "ACCORE_CONFIG_LOCKED")
 
 
 if __name__ == "__main__":

@@ -47,6 +47,6 @@
 ## 风险
 
 - AutoCAD/accoreconsole 只能在本机实际安装环境中完整验证。
-- 当前 accoreconsole 真实执行遇到 AutoCAD 2027 `acad2027.cfg` 被锁定或只读，已验证备份和回滚安全链路可用。
+- 当前 accoreconsole 真实执行被预检阻止：AutoCAD 2027 `acad2027.cfg` 不存在且安装目录不可写。已验证备份和回滚安全链路可用。
 - ezdxf 不能直接读取 DWG，必须避免把它当 DWG 引擎。
 - AI 生成 LISP 有风险，必须先校验、记录、可回滚。

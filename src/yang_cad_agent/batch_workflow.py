@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from . import error_codes
-from .accore import collect_dwgs, run_accore_batch
+from .accore import check_accore_ready, collect_dwgs, find_accoreconsole, run_accore_batch
 from .backup import backup_files
 from .ledger import create_task_record, update_task_record
 from .lisp_validator import validate_lisp_file
@@ -120,6 +120,36 @@ def run_batch_workflow(
             "file_count": len(dwgs),
             "validation": validation,
             "accore": accore,
+        }
+
+    accore = find_accoreconsole()
+    if not accore:
+        update_task_record(
+            project_root,
+            task_id,
+            status="failed",
+            error_code=error_codes.ACCORE_NOT_FOUND,
+        )
+        return {
+            "ok": False,
+            "task_id": task_id,
+            "error_code": error_codes.ACCORE_NOT_FOUND,
+            "message": "accoreconsole.exe was not found.",
+        }
+    preflight = check_accore_ready(accore)
+    if not preflight["ok"]:
+        update_task_record(
+            project_root,
+            task_id,
+            status="failed",
+            error_code=preflight["error_code"],
+        )
+        return {
+            "ok": False,
+            "task_id": task_id,
+            "error_code": preflight["error_code"],
+            "message": preflight["message"],
+            "preflight": preflight,
         }
 
     backup = backup_files(project_root=project_root, task_id=task_id, file_paths=dwgs)

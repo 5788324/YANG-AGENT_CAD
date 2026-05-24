@@ -9,8 +9,8 @@ class DoctorTests(unittest.TestCase):
         self.assertIn("python", result)
         self.assertIn("git", result)
         self.assertIn("accoreconsole", result)
+        self.assertIn("autocad_processes", result)
 
 
 if __name__ == "__main__":
     unittest.main()
-
