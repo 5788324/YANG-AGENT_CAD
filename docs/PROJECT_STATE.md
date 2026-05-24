@@ -1,5 +1,13 @@
 # 项目状态
 
+## 2026-05-24 批量块统计插件
+
+- 新增内置插件 `batch.block_report`，路径：`toolbox\plugins\batch_block_report`。
+- 插件用途：用 accoreconsole 批量读取 DWG 块表，输出 `*.block-report.csv`，包含块名、是否外部参照、是否布局块、插入数量。
+- 已在测试副本 `.agent\tmp\sample-run\S001-test.dwg` 验证成功，任务 `20260524-141102-64b18755`，成功 1、失败 0。
+- 已生成报告 `.agent\tmp\sample-run\S001-test.dwg.block-report.csv`，统计到普通块参照总数 1。
+- 新增测试覆盖：内置插件清单必须包含 `batch.block_report`、`batch.layer_report`、`batch.smoke_qsave`、`current.smoke_test`。
+
 ## 2026-05-24 批量图层统计插件
 
 - 新增内置插件 `batch.layer_report`，路径：`toolbox\plugins\batch_layer_report`。

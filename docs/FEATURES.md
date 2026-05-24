@@ -20,6 +20,7 @@
 | 插件校验 | `toolbox-validate` | 可用 | 只读 |
 | MCP stdio | `yang_cad_agent.mcp_stdio` | 骨架可用 | 只暴露安全工具 |
 | 批量图层统计报告 | `batch.layer_report` | 可用，已在测试副本验证 | 只读报告 |
+| 批量块统计报告 | `batch.block_report` | 可用，已在测试副本验证 | 只读报告 |
 
 ## 环境自检
 
@@ -161,6 +162,7 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 - `current.smoke_test`：当前图 LISP 投喂烟测，只打印命令行文字。
 - `batch.smoke_qsave`：批量 accoreconsole 烟测，会 QSAVE，只能用于测试图纸副本。
 - `batch.layer_report`：批量图层统计报告，不修改 DWG，会在图纸同目录生成 `*.layer-report.csv`。
+- `batch.block_report`：批量块统计报告，不修改 DWG，会在图纸同目录生成 `*.block-report.csv`。
 
 图层统计报告示例：
 
@@ -183,6 +185,28 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 ```
 
 说明：该插件是只读报告插件，不保存 DWG。LISP 静态检查中可能出现 `qsave/saveas` 警告，这是因为通用批处理规则提醒“修改类脚本应显式保存”，对该只读插件不构成失败。
+
+块统计报告示例：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_block_report\main.lsp .agent\tmp\sample-run
+```
+
+确认 dry-run 只匹配测试副本后，再执行：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_block_report\main.lsp .agent\tmp\sample-run --execute
+```
+
+已验证输出：
+
+```text
+.agent\tmp\sample-run\S001-test.dwg.block-report.csv
+```
+
+说明：该插件统计普通块参照数量。动态块有效名称、块属性明细等更深信息后续再扩展。
 
 ## MCP stdio
 

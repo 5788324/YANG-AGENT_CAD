@@ -32,7 +32,17 @@ class ToolboxTests(unittest.TestCase):
             self.assertTrue(listing["ok"])
             self.assertEqual(listing["plugins"][0]["id"], "demo.plugin")
 
+    def test_builtin_plugins_are_valid(self):
+        project_root = Path(__file__).resolve().parents[1]
+        listing = list_plugins(project_root)
+        plugin_ids = {item["id"] for item in listing["plugins"]}
+
+        self.assertTrue(listing["ok"], listing)
+        self.assertIn("batch.block_report", plugin_ids)
+        self.assertIn("batch.layer_report", plugin_ids)
+        self.assertIn("batch.smoke_qsave", plugin_ids)
+        self.assertIn("current.smoke_test", plugin_ids)
+
 
 if __name__ == "__main__":
     unittest.main()
-

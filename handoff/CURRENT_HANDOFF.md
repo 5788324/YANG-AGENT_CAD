@@ -1,5 +1,17 @@
 # 当前交接日志
 
+## 2026-05-24 批量块统计插件进展
+
+- 新增插件 `batch.block_report`：
+  - `toolbox\plugins\batch_block_report\plugin.json`
+  - `toolbox\plugins\batch_block_report\main.lsp`
+- 插件为只读报告插件，不修改 DWG；输出 `*.block-report.csv`。
+- dry-run 已确认只匹配 `.agent\tmp\sample-run\S001-test.dwg` 测试副本。
+- 真实执行任务 `20260524-141102-64b18755` 成功，成功 1、失败 0。
+- 输出报告 `.agent\tmp\sample-run\S001-test.dwg.block-report.csv`，统计到普通块参照总数 1。
+- 已补充测试：内置插件清单必须包含当前四个插件。
+- 下一步建议：开发“文字/标注体检报告”或增强块报告，加入块属性统计。
+
 ## 2026-05-24 批量图层统计插件进展
 
 - 新增插件 `batch.layer_report`：

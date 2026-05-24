@@ -167,6 +167,32 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 
 这份 CSV 可以用 Excel 打开，里面会看到每个图层的颜色、是否锁定、是否冻结、对象数量。
 
+## 第八步：生成块统计报告
+
+这个插件只读取块参照数量，不修改 DWG。
+
+先预演：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_block_report\main.lsp .agent\tmp\sample-run
+```
+
+确认只匹配测试副本后，再执行：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_block_report\main.lsp .agent\tmp\sample-run --execute
+```
+
+成功后会生成：
+
+```text
+.agent\tmp\sample-run\S001-test.dwg.block-report.csv
+```
+
+这份 CSV 可以用 Excel 打开，里面会看到每个普通块的名称、是否外部参照、是否布局块、插入数量。
+
 ## 查看任务记录
 
 运行：

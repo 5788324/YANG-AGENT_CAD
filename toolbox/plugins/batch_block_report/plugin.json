@@ -1,0 +1,20 @@
+{
+  "id": "batch.block_report",
+  "name": "批量块统计报告",
+  "version": "0.1.0",
+  "category": "reports",
+  "description": "使用 accoreconsole 读取 DWG 块定义，统计每个普通块参照数量，并在图纸同目录输出 CSV 报告。该插件不修改 DWG。",
+  "author": "YANG AGENT CAD",
+  "source": "builtin",
+  "tracks": ["C"],
+  "accore_safe": true,
+  "risk": "read",
+  "requires_backup": false,
+  "supports_dry_run": true,
+  "params_schema": {},
+  "entry": {
+    "type": "lisp",
+    "path": "main.lsp",
+    "command": "batch-block-report"
+  }
+}
