@@ -86,3 +86,23 @@ $env:PYTHONPATH='src'
 - `health_check`
 
 真实 accoreconsole 执行仍需要走 CLI，并由用户/AI 明确确认后运行 `health-check --execute`。
+
+## 报告汇总 MCP 工具
+
+`summarize_reports` 用于让 Codex/Antigravity 通过 MCP 汇总已有 CSV 报告。它不启动 accoreconsole，不修改 DWG，只读取 `*.layer-report.csv`、`*.block-report.csv`、`*.annotation-report.csv` 并写出 Markdown 总报告。
+
+调用示例：
+
+```json
+{"action":"call_tool","name":"summarize_reports","params":{"root":".","folder":".agent/tmp/sample-run"}}
+```
+
+可选自定义输出：
+
+```json
+{"action":"call_tool","name":"summarize_reports","params":{"root":".","folder":".agent/tmp/sample-run","output":".agent/tmp/sample-run/CAD_REPORT_SUMMARY.md"}}
+```
+
+当前工具清单还包括：
+
+- `summarize_reports`

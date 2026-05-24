@@ -124,3 +124,14 @@
   - `20260524-223512-c3989223`
   - `20260524-223512-ce2c04bb`
 - 测试更新：`tests\test_mcp_stdio.py` 覆盖 `health_check` 工具存在，以及 MCP 层强制 dry-run。
+
+## 2026-05-24 MCP 报告汇总工具
+
+- MCP stdio 新增工具 `summarize_reports`。
+- 工具参数：`root`、`folder`、`output`。
+- 该工具不启动 accoreconsole，不修改 DWG，只读取已有 CSV 报告并生成 Markdown 总报告。
+- 已验证 `list_tools` 能返回 `summarize_reports`。
+- 已验证 stdio 调用 `summarize_reports` 能汇总 `.agent\tmp\sample-run`：
+  - 输出：`.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md`
+  - 汇总结果：图层 12、图层对象 93、普通块参照 1、文字/标注对象 24、CSV 文件 3
+- 测试更新：`tests\test_mcp_stdio.py` 覆盖 `summarize_reports` 工具调用。

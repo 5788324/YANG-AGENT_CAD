@@ -226,3 +226,15 @@
   - `20260524-223512-ce2c04bb`
 - 新增/更新测试 `tests\test_mcp_stdio.py`，当前测试数 28。
 - 下一步建议：为 MCP 增加 `summarize_reports` 只读工具，或增加正式 MCP SDK server 包装层。
+
+## 2026-05-24 MCP 报告汇总工具进展
+
+- 已新增 MCP stdio 工具 `summarize_reports`。
+- 该工具不启动 accoreconsole，不修改 DWG，只读取现有 CSV 报告并生成 Markdown 总报告。
+- stdio 实测成功：
+  - `list_tools` 能看到 `summarize_reports`。
+  - 调用 `summarize_reports` 汇总 `.agent\tmp\sample-run` 成功。
+  - 输出 `.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md`。
+  - 汇总结果：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24，CSV 文件 3。
+- 新增/更新测试 `tests\test_mcp_stdio.py`，当前测试数 29。
+- 下一步建议：增加正式 MCP SDK server 包装层，或给 MCP 增加 `rollback_dry_run` 安全工具。

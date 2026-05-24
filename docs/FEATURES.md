@@ -315,3 +315,14 @@ $env:PYTHONPATH='src'
 ```
 
 安全说明：MCP 层固定 `execute=false`，即使参数传入 `execute:true` 也不会真实启动 accoreconsole 执行。真实执行仍需走 CLI 的 `health-check --execute`。
+
+## MCP 报告汇总工具
+
+MCP stdio 已暴露 `summarize_reports` 工具，用于汇总已有 CSV 报告。
+
+```powershell
+$env:PYTHONPATH='src'
+'{"action":"call_tool","name":"summarize_reports","params":{"root":".","folder":".agent/tmp/sample-run"}}' | & 'C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m yang_cad_agent.mcp_stdio
+```
+
+安全说明：该工具不启动 accoreconsole，不修改 DWG，只读取报告 CSV 并生成 Markdown 总报告。

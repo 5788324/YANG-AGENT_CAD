@@ -14,6 +14,7 @@ from pathlib import Path
 from .doctor import run_doctor
 from .health_check import run_health_check
 from .ledger import list_task_records, load_task_record
+from .report_summary import summarize_reports
 from .toolbox import list_plugins
 
 
@@ -41,6 +42,14 @@ TOOLS = {
             "folder": "Folder containing DWG files.",
             "pattern": "DWG glob pattern.",
             "recursive": "Search recursively.",
+        },
+    },
+    "summarize_reports": {
+        "description": "Summarize generated CAD CSV reports into Markdown.",
+        "params": {
+            "root": "Project root path.",
+            "folder": "Folder containing generated report CSV files.",
+            "output": "Optional output Markdown path.",
         },
     },
 }
@@ -78,6 +87,16 @@ def call_tool(name: str, params: dict | None = None) -> dict:
             recursive=_as_bool(params.get("recursive", False)),
             execute=False,
         )
+    if name == "summarize_reports":
+        root = Path(params.get("root", ".")).resolve()
+        folder = Path(params["folder"])
+        output_param = params.get("output", "")
+        output = Path(output_param) if output_param else None
+        if not folder.is_absolute():
+            folder = root / folder
+        if output is not None and not output.is_absolute():
+            output = root / output
+        return summarize_reports(folder, output=output)
     return {"ok": False, "error": f"Unknown tool: {name}"}
 
 
