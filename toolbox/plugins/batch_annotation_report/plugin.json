@@ -1,0 +1,20 @@
+{
+  "id": "batch.annotation_report",
+  "name": "批量文字标注统计报告",
+  "version": "0.1.0",
+  "category": "reports",
+  "description": "使用 accoreconsole 统计 DWG 中的文字、标注和引线对象数量，并在图纸同目录输出 CSV 报告。该插件不修改 DWG。",
+  "author": "YANG AGENT CAD",
+  "source": "builtin",
+  "tracks": ["C"],
+  "accore_safe": true,
+  "risk": "read",
+  "requires_backup": false,
+  "supports_dry_run": true,
+  "params_schema": {},
+  "entry": {
+    "type": "lisp",
+    "path": "main.lsp",
+    "command": "batch-annotation-report"
+  }
+}

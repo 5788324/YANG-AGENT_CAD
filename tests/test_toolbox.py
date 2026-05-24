@@ -38,6 +38,7 @@ class ToolboxTests(unittest.TestCase):
         plugin_ids = {item["id"] for item in listing["plugins"]}
 
         self.assertTrue(listing["ok"], listing)
+        self.assertIn("batch.annotation_report", plugin_ids)
         self.assertIn("batch.block_report", plugin_ids)
         self.assertIn("batch.layer_report", plugin_ids)
         self.assertIn("batch.smoke_qsave", plugin_ids)

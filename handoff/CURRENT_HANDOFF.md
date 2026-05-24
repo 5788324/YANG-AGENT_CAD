@@ -1,5 +1,17 @@
 # 当前交接日志
 
+## 2026-05-24 批量文字标注统计插件进展
+
+- 新增插件 `batch.annotation_report`：
+  - `toolbox\plugins\batch_annotation_report\plugin.json`
+  - `toolbox\plugins\batch_annotation_report\main.lsp`
+- 插件为只读报告插件，不修改 DWG；输出 `*.annotation-report.csv`。
+- dry-run 已确认只匹配 `.agent\tmp\sample-run\S001-test.dwg` 测试副本。
+- 真实执行任务 `20260524-142334-134fdfb5` 成功，成功 1、失败 0。
+- 输出报告 `.agent\tmp\sample-run\S001-test.dwg.annotation-report.csv`，统计到注释类对象总数 24，其中 `MTEXT` 为 24。
+- 已补充内置插件清单测试，当前必须包含五个插件。
+- 下一步建议：把三份 CSV 合并为一个“图纸体检总报告”，或增加按图层分组的文字/标注统计。
+
 ## 2026-05-24 批量块统计插件进展
 
 - 新增插件 `batch.block_report`：

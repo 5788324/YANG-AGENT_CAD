@@ -1,5 +1,13 @@
 # 项目状态
 
+## 2026-05-24 批量文字标注统计插件
+
+- 新增内置插件 `batch.annotation_report`，路径：`toolbox\plugins\batch_annotation_report`。
+- 插件用途：用 accoreconsole 批量统计 DWG 中的 `TEXT`、`MTEXT`、`DIMENSION`、`LEADER`、`MULTILEADER`、`ACAD_TABLE` 数量。
+- 已在测试副本 `.agent\tmp\sample-run\S001-test.dwg` 验证成功，任务 `20260524-142334-134fdfb5`，成功 1、失败 0。
+- 已生成报告 `.agent\tmp\sample-run\S001-test.dwg.annotation-report.csv`，统计到注释类对象总数 24，其中 `MTEXT` 为 24。
+- 内置插件清单测试已补充 `batch.annotation_report`。
+
 ## 2026-05-24 批量块统计插件
 
 - 新增内置插件 `batch.block_report`，路径：`toolbox\plugins\batch_block_report`。

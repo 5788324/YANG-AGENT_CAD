@@ -1,0 +1,46 @@
+(setvar "CMDDIA" 0)
+(setvar "FILEDIA" 0)
+
+(defun yang-annotation-report-count (entity-type / ss)
+  (setq ss (ssget "X" (list (cons 0 entity-type))))
+  (if ss (sslength ss) 0)
+)
+
+(defun yang-annotation-report-write-row (handle dwg-name entity-type label count)
+  (write-line
+    (strcat dwg-name "," entity-type "," label "," (itoa count))
+    handle
+  )
+)
+
+(defun yang-annotation-report-write (/ dwg-prefix dwg-name report-path handle text-count mtext-count dim-count leader-count mleader-count table-count total)
+  (setq dwg-prefix (getvar "DWGPREFIX"))
+  (setq dwg-name (getvar "DWGNAME"))
+  (setq report-path (strcat dwg-prefix dwg-name ".annotation-report.csv"))
+  (setq handle (open report-path "w"))
+  (if handle
+    (progn
+      (write-line "dwg,entity_type,label,count" handle)
+      (setq text-count (yang-annotation-report-count "TEXT"))
+      (setq mtext-count (yang-annotation-report-count "MTEXT"))
+      (setq dim-count (yang-annotation-report-count "DIMENSION"))
+      (setq leader-count (yang-annotation-report-count "LEADER"))
+      (setq mleader-count (yang-annotation-report-count "MULTILEADER"))
+      (setq table-count (yang-annotation-report-count "ACAD_TABLE"))
+      (setq total (+ text-count mtext-count dim-count leader-count mleader-count table-count))
+      (yang-annotation-report-write-row handle dwg-name "TEXT" "single_line_text" text-count)
+      (yang-annotation-report-write-row handle dwg-name "MTEXT" "multi_line_text" mtext-count)
+      (yang-annotation-report-write-row handle dwg-name "DIMENSION" "dimension" dim-count)
+      (yang-annotation-report-write-row handle dwg-name "LEADER" "leader" leader-count)
+      (yang-annotation-report-write-row handle dwg-name "MULTILEADER" "multileader" mleader-count)
+      (yang-annotation-report-write-row handle dwg-name "ACAD_TABLE" "table" table-count)
+      (yang-annotation-report-write-row handle dwg-name "__TOTAL__" "annotation_total" total)
+      (close handle)
+      (princ (strcat "\nYANG AGENT CAD: annotation report written to " report-path))
+    )
+    (princ (strcat "\nYANG AGENT CAD: failed to open report file " report-path))
+  )
+)
+
+(yang-annotation-report-write)
+(princ)

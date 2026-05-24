@@ -21,6 +21,7 @@
 | MCP stdio | `yang_cad_agent.mcp_stdio` | 骨架可用 | 只暴露安全工具 |
 | 批量图层统计报告 | `batch.layer_report` | 可用，已在测试副本验证 | 只读报告 |
 | 批量块统计报告 | `batch.block_report` | 可用，已在测试副本验证 | 只读报告 |
+| 批量文字标注统计报告 | `batch.annotation_report` | 可用，已在测试副本验证 | 只读报告 |
 
 ## 环境自检
 
@@ -163,6 +164,7 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 - `batch.smoke_qsave`：批量 accoreconsole 烟测，会 QSAVE，只能用于测试图纸副本。
 - `batch.layer_report`：批量图层统计报告，不修改 DWG，会在图纸同目录生成 `*.layer-report.csv`。
 - `batch.block_report`：批量块统计报告，不修改 DWG，会在图纸同目录生成 `*.block-report.csv`。
+- `batch.annotation_report`：批量文字标注统计报告，不修改 DWG，会在图纸同目录生成 `*.annotation-report.csv`。
 
 图层统计报告示例：
 
@@ -207,6 +209,28 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 ```
 
 说明：该插件统计普通块参照数量。动态块有效名称、块属性明细等更深信息后续再扩展。
+
+文字标注统计报告示例：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_annotation_report\main.lsp .agent\tmp\sample-run
+```
+
+确认 dry-run 只匹配测试副本后，再执行：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_annotation_report\main.lsp .agent\tmp\sample-run --execute
+```
+
+已验证输出：
+
+```text
+.agent\tmp\sample-run\S001-test.dwg.annotation-report.csv
+```
+
+说明：该插件统计 `TEXT`、`MTEXT`、`DIMENSION`、`LEADER`、`MULTILEADER`、`ACAD_TABLE` 的数量，后续可扩展为按图层和文字样式分组。
 
 ## MCP stdio
 
