@@ -41,6 +41,37 @@ class AccoreTests(unittest.TestCase):
         )
         self.assertEqual(issue["error_code"], "ACCORE_CONFIG_LOCKED")
 
+    def test_accore_install_issue_reports_user_cfg_copy_path(self):
+        issue = accore_install_issue(
+            {
+                "cfg_exists": False,
+                "cfg_read_only": False,
+                "install_dir_writable": False,
+                "expected_cfg": "C:/Program Files/Autodesk/AutoCAD 2027/acad2027.cfg",
+                "user_cfg": "C:/Users/YANG/AppData/Local/Autodesk/AutoCAD 2027/R26.0/chs/acad2027.cfg",
+                "user_cfg_exists": True,
+            }
+        )
+        self.assertEqual(issue["error_code"], "ACCORE_CONFIG_LOCKED")
+        self.assertIn("User config exists", issue["message"])
+        self.assertIn("admin rights", issue["message"])
+
+    def test_accore_install_issue_reports_user_cfg_check_error(self):
+        issue = accore_install_issue(
+            {
+                "cfg_exists": False,
+                "cfg_read_only": False,
+                "install_dir_writable": False,
+                "expected_cfg": "C:/Program Files/Autodesk/AutoCAD 2027/acad2027.cfg",
+                "user_cfg": "C:/Users/YANG/AppData/Local/Autodesk/AutoCAD 2027/R26.0/chs/acad2027.cfg",
+                "user_cfg_exists": False,
+                "user_cfg_check_error": "Access denied",
+            }
+        )
+        self.assertEqual(issue["error_code"], "ACCORE_CONFIG_LOCKED")
+        self.assertIn("could not be checked", issue["message"])
+        self.assertIn("fix-acad-cfg.cmd", issue["message"])
+
 
 if __name__ == "__main__":
     unittest.main()

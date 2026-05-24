@@ -38,6 +38,13 @@ def _check_git() -> dict:
     }
 
 
+def _safe_exists(path: Path) -> tuple[bool, str | None]:
+    try:
+        return path.exists(), None
+    except OSError as exc:
+        return False, str(exc)
+
+
 def _check_accoreconsole() -> dict:
     checked = _candidate_accore_paths()
     existing = [str(path) for path in checked if path.exists()]
@@ -54,6 +61,20 @@ def _check_accore_install(accore_path: Path) -> dict:
     install_dir = accore_path.parent
     year = "".join(ch for ch in install_dir.name if ch.isdigit()) or ""
     cfg_path = install_dir / f"acad{year}.cfg" if year else install_dir / "acad.cfg"
+    user_cfg_path = (
+        Path.home()
+        / "AppData"
+        / "Local"
+        / "Autodesk"
+        / f"AutoCAD {year}"
+        / "R26.0"
+        / "chs"
+        / f"acad{year}.cfg"
+    ) if year else None
+    user_cfg_exists = False
+    user_cfg_error = None
+    if user_cfg_path is not None:
+        user_cfg_exists, user_cfg_error = _safe_exists(user_cfg_path)
     can_write_probe = False
     probe_path = install_dir / ".yang_agent_write_test.tmp"
     try:
@@ -70,11 +91,32 @@ def _check_accore_install(accore_path: Path) -> dict:
         "cfg_exists": cfg_path.exists(),
         "cfg_read_only": cfg_path.exists() and not bool(cfg_path.stat().st_mode & 0o200),
         "install_dir_writable": can_write_probe,
+        "user_cfg": None if user_cfg_path is None else str(user_cfg_path),
+        "user_cfg_exists": user_cfg_exists,
+        "user_cfg_check_error": user_cfg_error,
     }
 
 
 def accore_install_issue(detail: dict) -> dict | None:
     if not detail["cfg_exists"] and not detail["install_dir_writable"]:
+        if detail.get("user_cfg_exists"):
+            return {
+                "error_code": "ACCORE_CONFIG_LOCKED",
+                "message": (
+                    "AutoCAD install config is missing and install dir is not writable. "
+                    f"User config exists and can be copied with admin rights: {detail['user_cfg']} -> "
+                    f"{detail['expected_cfg']}"
+                ),
+            }
+        if detail.get("user_cfg_check_error"):
+            return {
+                "error_code": "ACCORE_CONFIG_LOCKED",
+                "message": (
+                    "AutoCAD install config is missing and install dir is not writable. "
+                    f"User config path could not be checked without higher permissions: {detail['user_cfg']}. "
+                    "Run scripts\\fix-acad-cfg.cmd as Administrator if that file exists."
+                ),
+            }
         return {
             "error_code": "ACCORE_CONFIG_LOCKED",
             "message": f"AutoCAD config is missing and install dir is not writable: {detail['expected_cfg']}",

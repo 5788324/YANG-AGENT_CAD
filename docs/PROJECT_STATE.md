@@ -1,5 +1,15 @@
 # 项目状态
 
+## 2026-05-24 accoreconsole 配置诊断更新
+
+- 再次测试后确认 `C:\Program Files\Autodesk\AutoCAD 2027\acad2027.cfg` 仍不存在。
+- 已找到用户配置文件：`C:\Users\YANG\AppData\Local\Autodesk\AutoCAD 2027\R26.0\chs\acad2027.cfg`。
+- 直接复制到 `C:\Program Files\Autodesk\AutoCAD 2027\acad2027.cfg` 因权限不足失败。
+- 新增 `scripts\fix-acad-cfg.cmd`，需要用户右键“以管理员身份运行”，用于把用户配置复制到 AutoCAD 安装目录。
+- `doctor` 现在会报告 `user_cfg` / `user_cfg_exists`，并在可修复时提示管理员复制路径。
+- 非管理员环境读取用户 cfg 也可能返回访问拒绝；doctor 已改为记录 `user_cfg_check_error`，不会崩溃。
+- 最新复测：`batch-task --execute` 被 `ACCORE_CONFIG_LOCKED` 安全拦截，未启动 accoreconsole，未修改 DWG。
+
 更新时间：2026-05-24
 
 ## 当前状态

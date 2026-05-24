@@ -1,5 +1,17 @@
 # 当前交接日志
 
+## 2026-05-24 accoreconsole 配置修复进展
+
+- 用户要求“再试试”后，重新运行 doctor 和 batch-task 预检。
+- accoreconsole 真实执行仍被预检拦截为 `ACCORE_CONFIG_LOCKED`，未启动 accoreconsole，未修改测试 DWG。
+- 安装目录缺少：`C:\Program Files\Autodesk\AutoCAD 2027\acad2027.cfg`。
+- 用户配置已存在：`C:\Users\YANG\AppData\Local\Autodesk\AutoCAD 2027\R26.0\chs\acad2027.cfg`。
+- 直接复制到 Program Files 因权限不足失败。
+- 已新增 `scripts\fix-acad-cfg.cmd`，下一步需要用户右键该脚本并选择“以管理员身份运行”，然后再运行 `scripts\doctor.cmd`。
+- doctor 已增强：会输出 `user_cfg`、`user_cfg_exists`，并提示可用管理员权限从用户配置复制到安装目录。
+- 验证结果：`scripts\test.cmd` 通过 21 个测试，`scripts\doctor.cmd` 能输出可读诊断，`compileall src tests` 通过。
+- 最新真实执行入口复测任务 `20260524-134601-55f2f41a` 被预检拦截为 `ACCORE_CONFIG_LOCKED`，未启动 accoreconsole，未修改 DWG。
+
 更新时间：2026-05-24
 
 ## 当前任务

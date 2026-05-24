@@ -2,6 +2,29 @@
 
 这份文档给完全不懂代码、CAD 也刚入门的人使用。你只需要知道：默认命令只做检查或预演，不会修改图纸；真正修改图纸的命令会明确要求加 `--execute`。
 
+## accoreconsole 配置修复
+
+如果运行 `scripts\doctor.cmd` 时看到 `ACCORE_CONFIG_LOCKED`，并且提示用户配置文件已经存在，可以让 AI 先确认下面两个路径：
+
+```text
+C:\Users\YANG\AppData\Local\Autodesk\AutoCAD 2027\R26.0\chs\acad2027.cfg
+C:\Program Files\Autodesk\AutoCAD 2027\acad2027.cfg
+```
+
+当前机器的情况是：第一个文件存在，第二个文件缺少，普通权限不能写入 `C:\Program Files`。修复方式是右键运行：
+
+```cmd
+scripts\fix-acad-cfg.cmd
+```
+
+一定要选“以管理员身份运行”。运行完成后，再执行：
+
+```cmd
+scripts\doctor.cmd
+```
+
+doctor 不再提示 `ACCORE_CONFIG_LOCKED` 后，AI 才会继续跑 accoreconsole 的真实测试。
+
 ## 先记住三句话
 
 1. 不确定时，只运行 `scripts\doctor.cmd` 和 dry-run 命令。
