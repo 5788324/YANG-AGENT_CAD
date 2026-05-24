@@ -219,6 +219,23 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 
 这份 CSV 可以用 Excel 打开，里面会看到单行文字、多行文字、尺寸标注、引线、多重引线、表格的数量。
 
+## 第十步：生成图纸体检总报告
+
+前面三步会生成三份 CSV。这个命令会把它们合成一份更容易读的 Markdown 总报告，不修改 DWG。
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli summarize-reports .agent\tmp\sample-run
+```
+
+成功后会生成：
+
+```text
+.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md
+```
+
+这份报告会汇总图层数量、对象总数、块参照数量、文字/标注数量，并列出对象最多的图层。
+
 ## 查看任务记录
 
 运行：

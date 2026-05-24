@@ -13,6 +13,7 @@ from .current_lisp import feed_current_lisp
 from .doctor import run_doctor
 from .ledger import create_task_record, list_task_records, load_task_record
 from .lisp_validator import validate_lisp_file
+from .report_summary import summarize_reports
 from .toolbox import list_plugins, validate_plugin_manifest
 
 
@@ -92,6 +93,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     plugin = sub.add_parser("toolbox-validate", help="Validate a plugin.json manifest.")
     plugin.add_argument("manifest", help="Path to plugin.json.")
+
+    summary = sub.add_parser("summarize-reports", help="Summarize generated CAD CSV reports.")
+    summary.add_argument("folder", help="Folder containing generated report CSV files.")
+    summary.add_argument("--output", default="", help="Output Markdown path.")
 
     return parser
 
@@ -207,6 +212,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "toolbox-validate":
         result = validate_plugin_manifest(Path(args.manifest))
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
+
+    if args.command == "summarize-reports":
+        output = Path(args.output) if args.output else None
+        result = summarize_reports(Path(args.folder), output=output)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["ok"] else 1
 

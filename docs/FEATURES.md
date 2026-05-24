@@ -22,6 +22,7 @@
 | 批量图层统计报告 | `batch.layer_report` | 可用，已在测试副本验证 | 只读报告 |
 | 批量块统计报告 | `batch.block_report` | 可用，已在测试副本验证 | 只读报告 |
 | 批量文字标注统计报告 | `batch.annotation_report` | 可用，已在测试副本验证 | 只读报告 |
+| 图纸体检总报告 | `summarize-reports` | 可用，已在测试副本验证 | 只读报告 |
 
 ## 环境自检
 
@@ -231,6 +232,29 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 ```
 
 说明：该插件统计 `TEXT`、`MTEXT`、`DIMENSION`、`LEADER`、`MULTILEADER`、`ACAD_TABLE` 的数量，后续可扩展为按图层和文字样式分组。
+
+## 图纸体检总报告
+
+用途：把图层、块、文字标注三类 CSV 报告汇总成一份 Markdown 文件。
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli summarize-reports .agent\tmp\sample-run
+```
+
+已验证输出：
+
+```text
+.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md
+```
+
+当前测试副本汇总结果：
+
+- 图层数量：12
+- 图层对象总数：93
+- 普通块参照总数：1
+- 文字/标注对象总数：24
+- CSV 报告文件数：3
 
 ## MCP stdio
 

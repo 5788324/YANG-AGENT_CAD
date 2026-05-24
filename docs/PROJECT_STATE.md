@@ -1,5 +1,13 @@
 # 项目状态
 
+## 2026-05-24 图纸体检总报告汇总器
+
+- 新增 CLI 命令 `summarize-reports`，用于把 `*.layer-report.csv`、`*.block-report.csv`、`*.annotation-report.csv` 汇总为 `CAD_REPORT_SUMMARY.md`。
+- 新增模块 `src\yang_cad_agent\report_summary.py`。
+- 已在 `.agent\tmp\sample-run` 验证成功，输出 `.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md`。
+- 当前测试副本汇总结果：图层 12、图层对象 93、普通块参照 1、文字/标注对象 24、CSV 文件 3。
+- 新增单元测试 `tests\test_report_summary.py`，覆盖 Markdown 汇总生成。
+
 ## 2026-05-24 批量文字标注统计插件
 
 - 新增内置插件 `batch.annotation_report`，路径：`toolbox\plugins\batch_annotation_report`。

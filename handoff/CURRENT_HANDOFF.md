@@ -1,5 +1,19 @@
 # 当前交接日志
 
+## 2026-05-24 图纸体检总报告汇总器进展
+
+- 新增模块 `src\yang_cad_agent\report_summary.py`。
+- 新增 CLI 命令 `summarize-reports`，读取图层、块、文字标注三类 CSV，输出 `CAD_REPORT_SUMMARY.md`。
+- 已在 `.agent\tmp\sample-run` 验证成功：
+  - 输出 `.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md`
+  - 图层数量 12
+  - 图层对象总数 93
+  - 普通块参照总数 1
+  - 文字/标注对象总数 24
+  - CSV 报告文件数 3
+- 新增测试 `tests\test_report_summary.py`。
+- 下一步建议：做一个一键体检命令，自动依次跑三个只读插件并生成总报告。
+
 ## 2026-05-24 批量文字标注统计插件进展
 
 - 新增插件 `batch.annotation_report`：
