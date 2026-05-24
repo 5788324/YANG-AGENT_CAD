@@ -112,3 +112,15 @@
   - 汇总输出：`.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md`
   - 汇总结果：图层 12、图层对象 93、普通块参照 1、文字/标注对象 24、CSV 文件 3
 - 新增测试 `tests\test_health_check.py`，确认一键体检依赖的三个内置插件脚本存在。
+
+## 2026-05-24 MCP 一键体检 dry-run 工具
+
+- MCP stdio 新增工具 `health_check`。
+- 工具参数：`root`、`folder`、`pattern`、`recursive`。
+- MCP 层固定 `execute=false`，即使调用方传入 `execute:true` 也不会真实启动 accoreconsole。
+- 已验证 `list_tools` 能返回 `health_check`。
+- 已验证 stdio 调用 `health_check` 对 `.agent\tmp\sample-run` 只执行 dry-run，并生成三个 dry-run 任务记录：
+  - `20260524-223512-d42cdea5`
+  - `20260524-223512-c3989223`
+  - `20260524-223512-ce2c04bb`
+- 测试更新：`tests\test_mcp_stdio.py` 覆盖 `health_check` 工具存在，以及 MCP 层强制 dry-run。

@@ -66,3 +66,23 @@ $env:PYTHONPATH='src'
 - 执行前校验 LISP
 - 执行前备份
 - 所有任务写入 task ledger
+
+## 一键图纸体检 MCP 工具
+
+`health_check` 用于让 Codex/Antigravity 通过 MCP 做图纸体检预演。它当前只暴露 dry-run，不接受真实执行。即使调用参数里传入 `execute: true`，MCP 层也会固定按 `execute=false` 调用底层流程。
+
+调用示例：
+
+```json
+{"action":"call_tool","name":"health_check","params":{"root":".","folder":".agent/tmp/sample-run","pattern":"*.dwg","recursive":false}}
+```
+
+当前工具清单包括：
+
+- `doctor`
+- `toolbox_list`
+- `task_list`
+- `task_show`
+- `health_check`
+
+真实 accoreconsole 执行仍需要走 CLI，并由用户/AI 明确确认后运行 `health-check --execute`。

@@ -211,3 +211,18 @@
 - 当前汇总结果：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24，CSV 文件 3。
 - 新增测试 `tests\test_health_check.py`。
 - 下一步建议：把 `health-check` 暴露到 MCP stdio，方便 Codex/Antigravity 直接以 MCP 工具调用，而不是只走 CLI。
+
+## 2026-05-24 MCP 一键体检 dry-run 工具进展
+
+- 已把 `health-check` 的 dry-run 能力暴露为 MCP stdio 工具 `health_check`。
+- MCP 工具固定 `execute=false`，不能通过 MCP 直接真实执行 accoreconsole。
+- stdio 实测成功：
+  - `list_tools` 能看到 `health_check`。
+  - 调用 `health_check` 处理 `.agent\tmp\sample-run` 返回 `mode: dry_run`。
+  - 即使参数传入 `execute:true`，仍然只 dry-run。
+- dry-run 任务 ID：
+  - `20260524-223512-d42cdea5`
+  - `20260524-223512-c3989223`
+  - `20260524-223512-ce2c04bb`
+- 新增/更新测试 `tests\test_mcp_stdio.py`，当前测试数 28。
+- 下一步建议：为 MCP 增加 `summarize_reports` 只读工具，或增加正式 MCP SDK server 包装层。

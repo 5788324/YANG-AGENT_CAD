@@ -304,3 +304,14 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 测试副本汇总结果：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24，CSV 文件 3。
 
 注意：这个命令虽然当前使用的是只读报告插件，但 `--execute` 会启动 accoreconsole。正式对整批图纸执行前，仍然要先 dry-run、确认匹配文件、保留备份记录。
+
+## MCP 一键体检工具
+
+MCP stdio 已暴露 `health_check` 工具，供 Codex/Antigravity 做图纸体检 dry-run。
+
+```powershell
+$env:PYTHONPATH='src'
+'{"action":"call_tool","name":"health_check","params":{"root":".","folder":".agent/tmp/sample-run","pattern":"*.dwg","recursive":false}}' | & 'C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m yang_cad_agent.mcp_stdio
+```
+
+安全说明：MCP 层固定 `execute=false`，即使参数传入 `execute:true` 也不会真实启动 accoreconsole 执行。真实执行仍需走 CLI 的 `health-check --execute`。

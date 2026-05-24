@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 from .doctor import run_doctor
+from .health_check import run_health_check
 from .ledger import list_task_records, load_task_record
 from .toolbox import list_plugins
 
@@ -33,7 +34,24 @@ TOOLS = {
         "description": "Show one task record.",
         "params": {"root": "Project root path.", "task_id": "Task id."},
     },
+    "health_check": {
+        "description": "Dry-run the one-command CAD health report workflow.",
+        "params": {
+            "root": "Project root path.",
+            "folder": "Folder containing DWG files.",
+            "pattern": "DWG glob pattern.",
+            "recursive": "Search recursively.",
+        },
+    },
 }
+
+
+def _as_bool(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "y"}
+    return bool(value)
 
 
 def call_tool(name: str, params: dict | None = None) -> dict:
@@ -52,6 +70,14 @@ def call_tool(name: str, params: dict | None = None) -> dict:
         }
     if name == "task_show":
         return load_task_record(Path(params.get("root", ".")), params["task_id"])
+    if name == "health_check":
+        return run_health_check(
+            project_root=Path(params.get("root", ".")),
+            folder=Path(params["folder"]),
+            pattern=params.get("pattern", "*.dwg"),
+            recursive=_as_bool(params.get("recursive", False)),
+            execute=False,
+        )
     return {"ok": False, "error": f"Unknown tool: {name}"}
 
 
@@ -82,4 +108,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
