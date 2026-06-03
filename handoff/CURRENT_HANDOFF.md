@@ -348,3 +348,18 @@
 - 下一步建议：
   1. 把日志诊断规则拆成独立模块并增加更多 accoreconsole 失败样本。
   2. 或开发正式 MCP SDK server 包装层。
+
+## 2026-06-03 日志诊断规则模块化
+
+- 已新增 `src\yang_cad_agent\log_diagnostics.py`。
+- `task_query.py` 现在调用 `diagnose_log_tails(...)`，不再内联诊断规则。
+- 已新增 `tests\test_log_diagnostics.py`，将纯日志诊断规则从任务查询测试中拆出。
+- MCP 返回格式保持不变：`task_error_detail` 仍返回 `diagnostics`。
+- 验证：
+  - `tests.test_log_diagnostics tests.test_mcp_stdio` 通过。
+  - `tests.test_task_query tests.test_log_diagnostics tests.test_mcp_stdio` 通过。
+  - MCP stdio 实测任务 `20260524-140406-3c2fbf05` 仍返回 `acad_startup_noise` 和 `lisp_load_canceled`。
+  - `compileall src tests` 通过。
+- 下一步建议：
+  1. 增加更多 accoreconsole 失败样本规则，例如超时、非零退出、路径安全加载。
+  2. 或开发正式 MCP SDK server 包装层。

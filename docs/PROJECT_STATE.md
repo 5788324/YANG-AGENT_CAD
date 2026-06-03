@@ -227,3 +227,19 @@
   - `tests.test_task_query tests.test_mcp_stdio` 通过。
   - MCP stdio 对任务 `20260524-140406-3c2fbf05` 实测返回 `acad_startup_noise` 和 `lisp_load_canceled`。
   - `compileall src tests` 通过。
+
+## 2026-06-03 日志诊断规则模块化
+
+- 新增 `src\yang_cad_agent\log_diagnostics.py`。
+- `task_query.py` 不再内联日志诊断规则，只负责读取任务、日志和调用 `diagnose_log_tails(...)`。
+- 新增 `tests\test_log_diagnostics.py`，覆盖：
+  - 启动噪声 + LISP 加载取消。
+  - `acad2027.cfg` 锁定。
+  - 引用文件缺失。
+  - 未命中规则时的保底诊断。
+  - 无错误码且未命中规则时返回空诊断。
+- 已验证：
+  - `tests.test_log_diagnostics tests.test_mcp_stdio` 通过。
+  - `tests.test_task_query tests.test_log_diagnostics tests.test_mcp_stdio` 通过。
+  - MCP stdio 实测 `task_error_detail` 返回格式保持不变。
+  - `compileall src tests` 通过。
