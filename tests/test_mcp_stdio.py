@@ -13,6 +13,7 @@ class McpStdioTests(unittest.TestCase):
         self.assertIn("summarize_reports", result["tools"])
         self.assertIn("rollback_dry_run", result["tools"])
         self.assertIn("task_recent_failures", result["tools"])
+        self.assertIn("task_error_detail", result["tools"])
 
     def test_health_check_tool_is_dry_run_only(self):
         with patch("yang_cad_agent.mcp_stdio.run_health_check") as run_health_check:
@@ -92,6 +93,23 @@ class McpStdioTests(unittest.TestCase):
         self.assertEqual(result["result"]["count"], 1)
         self.assertEqual(recent_failures.call_args.kwargs["limit"], 5)
         self.assertEqual(recent_failures.call_args.kwargs["scan_limit"], 50)
+
+    def test_task_error_detail_tool(self):
+        with patch("yang_cad_agent.mcp_stdio.error_detail") as error_detail:
+            error_detail.return_value = {"ok": True, "task": {"task_id": "task-1"}}
+
+            result = handle_message(
+                {
+                    "action": "call_tool",
+                    "name": "task_error_detail",
+                    "params": {"root": ".", "task_id": "task-1", "log_tail_chars": 123},
+                }
+            )
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["result"]["task"]["task_id"], "task-1")
+        self.assertEqual(error_detail.call_args.kwargs["task_id"], "task-1")
+        self.assertEqual(error_detail.call_args.kwargs["log_tail_chars"], 123)
 
 
 if __name__ == "__main__":

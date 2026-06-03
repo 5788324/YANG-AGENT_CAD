@@ -348,3 +348,14 @@ $env:PYTHONPATH='src'
 ```
 
 安全说明：该工具只读 `.agent\tasks`，不修改 DWG、不启动 AutoCAD、不写入任务记录。
+
+## MCP 失败任务排障包
+
+MCP stdio 已暴露 `task_error_detail` 工具，用于把单个失败任务、错误码、accoreconsole 日志尾部和回滚 dry-run 预演合并成一个排障包。
+
+```powershell
+$env:PYTHONPATH='src'
+'{"action":"call_tool","name":"task_error_detail","params":{"root":".","task_id":"20260524-140406-3c2fbf05","log_tail_chars":500}}' | & 'C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m yang_cad_agent.mcp_stdio
+```
+
+安全说明：该工具只读，不修改 DWG，不启动 AutoCAD，不执行真实回滚。真实回滚仍需单独走 CLI `rollback 任务ID`，并在高风险场景下确认。

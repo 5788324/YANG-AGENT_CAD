@@ -16,7 +16,7 @@ from .doctor import run_doctor
 from .health_check import run_health_check
 from .ledger import list_task_records, load_task_record
 from .report_summary import summarize_reports
-from .task_query import recent_failures
+from .task_query import error_detail, recent_failures
 from .toolbox import list_plugins
 
 
@@ -64,6 +64,14 @@ TOOLS = {
             "root": "Project root path.",
             "limit": "Maximum failures to return.",
             "scan_limit": "Maximum recent records to scan.",
+        },
+    },
+    "task_error_detail": {
+        "description": "Build a read-only diagnostic bundle for one task.",
+        "params": {
+            "root": "Project root path.",
+            "task_id": "Task id.",
+            "log_tail_chars": "Maximum characters to include from each log tail.",
         },
     },
 }
@@ -122,6 +130,12 @@ def call_tool(name: str, params: dict | None = None) -> dict:
             project_root=Path(params.get("root", ".")),
             limit=int(params.get("limit", 10)),
             scan_limit=int(params.get("scan_limit", 100)),
+        )
+    if name == "task_error_detail":
+        return error_detail(
+            project_root=Path(params.get("root", ".")),
+            task_id=params["task_id"],
+            log_tail_chars=int(params.get("log_tail_chars", 2000)),
         )
     return {"ok": False, "error": f"Unknown tool: {name}"}
 

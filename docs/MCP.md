@@ -147,3 +147,23 @@ $env:PYTHONPATH='src'
 当前工具清单还包括：
 
 - `task_recent_failures`
+
+## MCP 失败任务排障包工具
+
+`task_error_detail` 用于通过 MCP 查看单个失败任务的排障信息。它只读取任务记录、accoreconsole 日志和回滚预演结果，不修改 DWG、不启动 AutoCAD、不写入新的任务记录。
+
+调用示例：
+```json
+{"action":"call_tool","name":"task_error_detail","params":{"root":".","task_id":"任务ID","log_tail_chars":500}}
+```
+
+返回字段包括：
+- `task`：完整任务记录
+- `error_code`：错误码
+- `status`：任务状态
+- `rollback_available`：是否有可回滚备份
+- `rollback_dry_run`：只读回滚预演结果
+- `log_paths`：相关日志路径
+- `log_tails`：日志尾部内容，方便 AI 快速定位失败原因
+
+安全说明：该工具固定为只读排障入口。即使任务有可回滚备份，也只返回 `rollback_dry_run`，不会执行真实回滚。

@@ -159,3 +159,28 @@
 - 测试更新：
   - 新增 `tests\test_task_query.py`
   - 更新 `tests\test_mcp_stdio.py`
+
+## 2026-06-03 MCP 失败任务排障包工具
+
+- 新增 MCP stdio 工具 `task_error_detail`。
+- 新增/扩展只读查询模块 `src\yang_cad_agent\task_query.py`：
+  - 读取指定任务记录。
+  - 返回 `error_code`、`status`、`rollback_available`。
+  - 查找 `.agent\logs\<task_id>\*.log`。
+  - 返回日志尾部 `log_tails`，避免一次性输出过长日志。
+  - 如果任务可回滚，只执行 `rollback_task(..., dry_run=True)`，不做真实恢复。
+- 更新测试：
+  - `tests\test_mcp_stdio.py` 覆盖 `task_error_detail` 工具注册和参数转发。
+  - `tests\test_task_query.py` 覆盖任务记录和日志尾部读取。
+- 已通过 MCP stdio 实测：
+  - `list_tools` 能看到 `task_error_detail`。
+  - 对任务 `20260524-140406-3c2fbf05` 调用成功，返回 `LISP_LOAD_FAILED`、日志尾部和回滚 dry-run。
+- 当前验证限制：
+  - `doctor` 通过。
+  - `compileall src tests` 通过。
+  - `tests.test_mcp_stdio` 通过。
+  - 全量 `unittest discover` 在当前 Codex 沙箱中被临时目录写权限拦截，错误为 `PermissionError`，不是新增功能断言失败。
+- 当前环境提示：
+  - `doctor` 检测到 AutoCAD 2027 accoreconsole 可用。
+  - `acad2027.cfg` 已存在。
+  - 当前仍有 `acad.exe` 进程运行；真实批量执行前建议关闭 AutoCAD。

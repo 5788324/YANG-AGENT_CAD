@@ -268,3 +268,25 @@
   - `tests\test_mcp_stdio.py`
 - 当前测试数 32。
 - 下一步建议：增加正式 MCP SDK server 包装层，或者做 `task_error_detail` 工具，把失败任务、accore 日志路径和回滚预演合并成一个排障包。
+
+## 2026-06-03 MCP 失败任务排障包工具
+
+- 已新增 MCP stdio 工具 `task_error_detail`。
+- 工具用途：输入任务 ID，返回任务记录、错误码、状态、日志路径、日志尾部和回滚 dry-run 预演。
+- 安全边界：只读，不修改 DWG，不启动 AutoCAD，不执行真实回滚。
+- 实测任务：`20260524-140406-3c2fbf05`。
+  - 返回错误码：`LISP_LOAD_FAILED`。
+  - 返回日志尾部：包含 `文件加载已取消:D:/codex/Yang Agent_CAD/toolbox/plugins/batch_layer_report/main.lsp`。
+  - 返回回滚预演：`dry_run: true`，`would_restore: true`。
+- 验证：
+  - `tests.test_mcp_stdio` 通过。
+  - `compileall src tests` 通过。
+  - `scripts\doctor.cmd` 通过。
+  - 全量 `unittest discover` 当前被 Codex 沙箱临时目录权限拦截，报 `PermissionError`，不是功能断言失败。
+- 环境提示：
+  - `doctor` 检测到 AutoCAD 2027 accoreconsole 可用。
+  - `acad2027.cfg` 已存在。
+  - 当前有 `acad.exe` 进程运行；真实批量执行前应关闭 AutoCAD。
+- 下一步建议：
+  1. 为 MCP stdio 增加正式 MCP SDK server 包装层。
+  2. 或继续增强 `task_error_detail`，增加错误码解释和建议动作字段。
