@@ -375,4 +375,7 @@ $env:PYTHONPATH='src'
 - `lisp_load_canceled`：LISP 加载取消或失败。
 - `acad_config_locked`：`acad2027.cfg` 锁定或只读。
 - `referenced_file_missing`：引用文件缺失。
+- `accore_timeout`：accoreconsole 超时。
+- `accore_nonzero_exit`：accoreconsole 返回非 0。
+- `secure_load_blocked`：安全加载或受信任路径规则阻止脚本。
 - `no_log_rule_match`：没有命中已知日志规则，需要查看完整日志。

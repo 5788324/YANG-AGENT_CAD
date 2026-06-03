@@ -198,4 +198,7 @@ $env:PYTHONPATH='src'
 - `lisp_load_canceled`：日志显示 LISP 加载取消或失败，需要检查脚本路径、编码、`SECURELOAD` / `TRUSTEDPATHS`。
 - `acad_config_locked`：日志显示 `acad2027.cfg` 锁定或只读，需要关闭 AutoCAD/accoreconsole 并检查配置权限。
 - `referenced_file_missing`：日志显示文件不存在，需要检查脚本路径和传入文件路径。
+- `accore_timeout`：accoreconsole 超时，通常需要检查脚本是否等待输入、死循环或一次处理图纸过多。
+- `accore_nonzero_exit`：accoreconsole 返回非 0，需要查看完整日志、stdout/stderr 和第一个失败图纸。
+- `secure_load_blocked`：AutoCAD 安全加载或受信任路径规则可能阻止脚本加载，需要检查 `SECURELOAD` / `TRUSTEDPATHS`。
 - `no_log_rule_match`：有错误码但没有命中已知日志规则，需要人工或 AI 继续查看完整日志。

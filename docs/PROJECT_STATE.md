@@ -243,3 +243,14 @@
   - `tests.test_task_query tests.test_log_diagnostics tests.test_mcp_stdio` 通过。
   - MCP stdio 实测 `task_error_detail` 返回格式保持不变。
   - `compileall src tests` 通过。
+
+## 2026-06-03 accoreconsole 日志诊断规则补充
+
+- 增强 `src\yang_cad_agent\log_diagnostics.py`，新增诊断规则：
+  - `accore_timeout`：识别 `ACCORE_TIMEOUT` 或日志中的超时信息。
+  - `accore_nonzero_exit`：识别 `ACCORE_NONZERO_EXIT` 或日志中的非零退出信息。
+  - `secure_load_blocked`：识别 `SECURELOAD` / `TRUSTEDPATHS` / 安全加载阻断信息。
+- 更新 `tests\test_log_diagnostics.py` 覆盖新增规则。
+- 已验证：
+  - `tests.test_log_diagnostics tests.test_mcp_stdio` 通过，当前该组 14 个测试。
+  - `compileall src tests` 通过。

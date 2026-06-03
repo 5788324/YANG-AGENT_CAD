@@ -84,6 +84,56 @@ def diagnose_log_tails(log_tails: list[dict], error_code: str | None) -> list[di
                     log_path=path,
                 )
             )
+        if error_code == "ACCORE_TIMEOUT" or "timed out" in tail_lower or "超时" in tail:
+            diagnostics.append(
+                _diagnostic(
+                    rule_id="accore_timeout",
+                    severity="error",
+                    evidence="accoreconsole timeout",
+                    message="accoreconsole appears to have timed out.",
+                    suggestion=(
+                        "Check whether the LISP script is waiting for input, stuck in a loop, "
+                        "or processing too many drawings in one run."
+                    ),
+                    log_path=path,
+                )
+            )
+        if (
+            error_code == "ACCORE_NONZERO_EXIT"
+            or "exited with code" in tail_lower
+            or "returncode" in tail_lower
+            or "返回非 0" in tail
+        ):
+            diagnostics.append(
+                _diagnostic(
+                    rule_id="accore_nonzero_exit",
+                    severity="error",
+                    evidence="accoreconsole non-zero exit",
+                    message="accoreconsole returned a non-zero exit code.",
+                    suggestion="Inspect the full accoreconsole log, stdout/stderr, and the first failed drawing.",
+                    log_path=path,
+                )
+            )
+        if (
+            "secureload" in tail_lower
+            or "trustedpaths" in tail_lower
+            or "trusted path" in tail_lower
+            or "不受信任" in tail
+            or "安全加载" in tail
+        ):
+            diagnostics.append(
+                _diagnostic(
+                    rule_id="secure_load_blocked",
+                    severity="error",
+                    evidence="secure load or trusted path",
+                    message="AutoCAD security loading rules may have blocked the script.",
+                    suggestion=(
+                        "Check SECURELOAD/TRUSTEDPATHS and prefer running scripts from a trusted "
+                        "project or plugin directory."
+                    ),
+                    log_path=path,
+                )
+            )
     if not diagnostics and error_code:
         diagnostics.append(
             _diagnostic(

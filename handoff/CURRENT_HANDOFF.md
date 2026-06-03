@@ -363,3 +363,17 @@
 - 下一步建议：
   1. 增加更多 accoreconsole 失败样本规则，例如超时、非零退出、路径安全加载。
   2. 或开发正式 MCP SDK server 包装层。
+
+## 2026-06-03 accoreconsole 日志诊断规则补充
+
+- 已在 `src\yang_cad_agent\log_diagnostics.py` 新增规则：
+  - `accore_timeout`
+  - `accore_nonzero_exit`
+  - `secure_load_blocked`
+- 已更新 `tests\test_log_diagnostics.py` 覆盖这些规则。
+- 验证：
+  - `tests.test_log_diagnostics tests.test_mcp_stdio` 通过，14 个测试。
+  - `compileall src tests` 通过。
+- 下一步建议：
+  1. 运行全量测试并继续观察真实 accoreconsole 日志样本。
+  2. 开发正式 MCP SDK server 包装层。
