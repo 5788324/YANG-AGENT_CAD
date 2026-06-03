@@ -213,3 +213,17 @@
   - `tests.test_error_codes` 通过。
   - 全量 `unittest discover -s tests` 通过，当前 38 个测试。
   - `compileall src tests` 通过。
+
+## 2026-06-03 MCP 日志关键字诊断
+
+- 增强 `task_error_detail`，新增返回字段 `diagnostics`。
+- 诊断规则：
+  - `acad_startup_noise`：识别 AutoCAD 2027 启动时的 `acad2027` 加载噪声，避免误判。
+  - `lisp_load_canceled`：识别 LISP 加载取消或失败。
+  - `acad_config_locked`：识别 `acad2027.cfg` 锁定或只读。
+  - `referenced_file_missing`：识别引用文件缺失。
+  - `no_log_rule_match`：有错误码但未命中已知日志规则时返回保底诊断。
+- 已验证：
+  - `tests.test_task_query tests.test_mcp_stdio` 通过。
+  - MCP stdio 对任务 `20260524-140406-3c2fbf05` 实测返回 `acad_startup_noise` 和 `lisp_load_canceled`。
+  - `compileall src tests` 通过。

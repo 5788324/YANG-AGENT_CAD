@@ -57,9 +57,12 @@ class TaskQueryTests(unittest.TestCase):
                 "rollback_available": False,
             }
             (task_dir / "fail-1.json").write_text(json.dumps(task), encoding="utf-8")
-            (log_dir / "drawing.log").write_text("line1\nline2\nline3", encoding="utf-8")
+            (log_dir / "drawing.log").write_text(
+                '命令: (load "D:/demo/main.lsp")\n; 错误: 文件加载已取消:D:/demo/main.lsp\n',
+                encoding="utf-8",
+            )
 
-            result = error_detail(root, "fail-1", log_tail_chars=6)
+            result = error_detail(root, "fail-1", log_tail_chars=200)
 
         self.assertTrue(result["ok"])
         self.assertEqual(result["task"]["task_id"], "fail-1")
@@ -68,7 +71,9 @@ class TaskQueryTests(unittest.TestCase):
         self.assertIn("LISP", result["error"]["meaning"])
         self.assertEqual(result["error"]["severity"], "error")
         self.assertEqual(len(result["log_paths"]), 1)
-        self.assertEqual(result["log_tails"][0]["tail"], "\nline3")
+        self.assertIn("文件加载已取消", result["log_tails"][0]["tail"])
+        self.assertEqual(result["diagnostics"][0]["rule_id"], "lisp_load_canceled")
+        self.assertEqual(result["diagnostics"][0]["severity"], "error")
 
     def test_error_detail_returns_unknown_error_explanation(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -88,6 +93,31 @@ class TaskQueryTests(unittest.TestCase):
         self.assertEqual(result["error"]["code"], "NEW_ERROR_CODE")
         self.assertEqual(result["error"]["severity"], "error")
         self.assertIn("Unclassified", result["error"]["meaning"])
+        self.assertEqual(result["diagnostics"][0]["rule_id"], "no_log_rule_match")
+
+    def test_error_detail_diagnoses_config_locked_log(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            task_dir = root / ".agent" / "tasks"
+            task_dir.mkdir(parents=True)
+            log_dir = root / ".agent" / "logs" / "fail-3"
+            log_dir.mkdir(parents=True)
+            task = {
+                "task_id": "fail-3",
+                "status": "failed",
+                "error_code": "ACCORE_CONFIG_LOCKED",
+                "rollback_available": False,
+            }
+            (task_dir / "fail-3.json").write_text(json.dumps(task), encoding="utf-8")
+            (log_dir / "drawing.log").write_text(
+                "C:\\Program Files\\Autodesk\\AutoCAD 2027\\acad2027.cfg 已锁定",
+                encoding="utf-8",
+            )
+
+            result = error_detail(root, "fail-3")
+
+        self.assertEqual(result["diagnostics"][0]["rule_id"], "acad_config_locked")
+        self.assertIn("Close AutoCAD", result["diagnostics"][0]["suggestion"])
 
 
 if __name__ == "__main__":

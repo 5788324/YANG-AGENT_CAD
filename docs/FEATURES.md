@@ -368,3 +368,11 @@ $env:PYTHONPATH='src'
 - `severity`：严重级别。
 
 这样小白用户或其他 AI 拿到排障包后，可以直接知道下一步该检查路径、编码、配置文件权限，还是先做回滚预演。
+
+该工具还会返回 `diagnostics`，用于自动识别日志中的常见失败线索：
+
+- `acad_startup_noise`：AutoCAD 2027 启动噪声，不单独视为真正失败。
+- `lisp_load_canceled`：LISP 加载取消或失败。
+- `acad_config_locked`：`acad2027.cfg` 锁定或只读。
+- `referenced_file_missing`：引用文件缺失。
+- `no_log_rule_match`：没有命中已知日志规则，需要查看完整日志。

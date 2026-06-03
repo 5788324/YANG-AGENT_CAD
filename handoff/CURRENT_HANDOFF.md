@@ -328,3 +328,23 @@
 - 下一步建议：
   1. 开发正式 MCP SDK server 包装层。
   2. 或继续增强 `task_error_detail`，增加基于日志关键字的自动诊断原因。
+
+## 2026-06-03 MCP 日志关键字诊断
+
+- 已增强 `task_error_detail`，新增 `diagnostics` 字段。
+- 当前诊断规则：
+  - `acad_startup_noise`
+  - `lisp_load_canceled`
+  - `acad_config_locked`
+  - `referenced_file_missing`
+  - `no_log_rule_match`
+- 实测任务 `20260524-140406-3c2fbf05` 返回：
+  - `acad_startup_noise`
+  - `lisp_load_canceled`
+- 安全边界：只读分析日志尾部，不修改 DWG，不启动 AutoCAD，不执行回滚。
+- 验证：
+  - `tests.test_task_query tests.test_mcp_stdio` 通过。
+  - `compileall src tests` 通过。
+- 下一步建议：
+  1. 把日志诊断规则拆成独立模块并增加更多 accoreconsole 失败样本。
+  2. 或开发正式 MCP SDK server 包装层。

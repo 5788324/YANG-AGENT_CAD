@@ -166,6 +166,7 @@ $env:PYTHONPATH='src'
 - `rollback_dry_run`：只读回滚预演结果
 - `log_paths`：相关日志路径
 - `log_tails`：日志尾部内容，方便 AI 快速定位失败原因
+- `diagnostics`：基于日志关键字的自动诊断结果
 
 安全说明：该工具固定为只读排障入口。即使任务有可回滚备份，也只返回 `rollback_dry_run`，不会执行真实回滚。
 
@@ -187,3 +188,14 @@ $env:PYTHONPATH='src'
 ```
 
 未知错误码会保留原始 `code`，但 `meaning` 会回退为未分类错误说明，避免调用方丢失错误码。
+
+## MCP 日志关键字诊断
+
+`task_error_detail` 会根据日志尾部生成 `diagnostics`。该字段用于让 AI 区分启动噪声和真正失败原因。
+
+当前规则包括：
+- `acad_startup_noise`：AutoCAD 启动时出现 `acad2027` 加载消息，通常只是启动噪声。
+- `lisp_load_canceled`：日志显示 LISP 加载取消或失败，需要检查脚本路径、编码、`SECURELOAD` / `TRUSTEDPATHS`。
+- `acad_config_locked`：日志显示 `acad2027.cfg` 锁定或只读，需要关闭 AutoCAD/accoreconsole 并检查配置权限。
+- `referenced_file_missing`：日志显示文件不存在，需要检查脚本路径和传入文件路径。
+- `no_log_rule_match`：有错误码但没有命中已知日志规则，需要人工或 AI 继续查看完整日志。
