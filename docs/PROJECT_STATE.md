@@ -144,3 +144,18 @@
 - 已验证 `list_tools` 能返回 `rollback_dry_run`。
 - 已验证 stdio 调用 `rollback_dry_run` 预览任务 `20260524-135319-fae4680f` 成功，返回 `dry_run: true` 和 `would_restore` 动作列表。
 - 测试更新：`tests\test_mcp_stdio.py` 覆盖 `rollback_dry_run` 工具存在，以及 MCP 层强制 dry-run。
+
+## 2026-05-24 MCP 最近失败任务工具
+
+- 新增只读模块 `src\yang_cad_agent\task_query.py`。
+- MCP stdio 新增工具 `task_recent_failures`。
+- 工具参数：`root`、`limit`、`scan_limit`。
+- 该工具只读 `.agent\tasks`，不修改 DWG、不启动 AutoCAD、不写入任务记录。
+- 已验证 `list_tools` 能返回 `task_recent_failures`。
+- 已验证 stdio 调用 `task_recent_failures` 能返回最近 3 个失败任务：
+  - `20260524-140406-3c2fbf05`：`LISP_LOAD_FAILED`
+  - `20260524-140210-10f1cc04`：`LISP_LOAD_FAILED`
+  - `20260524-134601-55f2f41a`：`ACCORE_CONFIG_LOCKED`
+- 测试更新：
+  - 新增 `tests\test_task_query.py`
+  - 更新 `tests\test_mcp_stdio.py`

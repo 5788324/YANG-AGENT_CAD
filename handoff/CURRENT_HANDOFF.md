@@ -250,3 +250,21 @@
   - 返回 `dry_run: true` 和 `would_restore: true` 动作列表。
 - 新增/更新测试 `tests\test_mcp_stdio.py`，当前测试数 30。
 - 下一步建议：增加正式 MCP SDK server 包装层，或给 MCP 增加 `task_recent_failures` 只读工具，帮助 AI 快速定位最近错误。
+
+## 2026-05-24 MCP 最近失败任务工具进展
+
+- 新增只读模块 `src\yang_cad_agent\task_query.py`。
+- 已新增 MCP stdio 工具 `task_recent_failures`。
+- 该工具只读 `.agent\tasks`，不修改 DWG、不启动 AutoCAD、不写入任务记录。
+- stdio 实测成功：
+  - `list_tools` 能看到 `task_recent_failures`。
+  - 调用 `task_recent_failures` 返回最近 3 个失败任务和错误码。
+  - 当前返回：
+    - `20260524-140406-3c2fbf05`：`LISP_LOAD_FAILED`
+    - `20260524-140210-10f1cc04`：`LISP_LOAD_FAILED`
+    - `20260524-134601-55f2f41a`：`ACCORE_CONFIG_LOCKED`
+- 新增/更新测试：
+  - `tests\test_task_query.py`
+  - `tests\test_mcp_stdio.py`
+- 当前测试数 32。
+- 下一步建议：增加正式 MCP SDK server 包装层，或者做 `task_error_detail` 工具，把失败任务、accore 日志路径和回滚预演合并成一个排障包。

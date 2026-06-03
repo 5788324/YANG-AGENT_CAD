@@ -120,3 +120,30 @@ $env:PYTHONPATH='src'
 当前工具清单还包括：
 
 - `rollback_dry_run`
+
+## 最近失败任务 MCP 工具
+
+`task_recent_failures` 用于通过 MCP 查看最近失败任务和错误码，方便 AI 快速定位排障入口。该工具只读 `.agent\tasks` 任务记录，不修改 DWG、不启动 AutoCAD、不写入任务记录。
+
+调用示例：
+
+```json
+{"action":"call_tool","name":"task_recent_failures","params":{"root":".","limit":3,"scan_limit":100}}
+```
+
+返回字段包括：
+
+- `task_id`
+- `status`
+- `error_code`
+- `track`
+- `risk`
+- `user_goal`
+- `script_path`
+- `files`
+- `rollback_available`
+- `ledger_path`
+
+当前工具清单还包括：
+
+- `task_recent_failures`

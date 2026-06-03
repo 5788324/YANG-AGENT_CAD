@@ -16,6 +16,7 @@ from .doctor import run_doctor
 from .health_check import run_health_check
 from .ledger import list_task_records, load_task_record
 from .report_summary import summarize_reports
+from .task_query import recent_failures
 from .toolbox import list_plugins
 
 
@@ -56,6 +57,14 @@ TOOLS = {
     "rollback_dry_run": {
         "description": "Preview rollback actions for a task without restoring files.",
         "params": {"root": "Project root path.", "task_id": "Task id."},
+    },
+    "task_recent_failures": {
+        "description": "List recent failed task records and error codes.",
+        "params": {
+            "root": "Project root path.",
+            "limit": "Maximum failures to return.",
+            "scan_limit": "Maximum recent records to scan.",
+        },
     },
 }
 
@@ -107,6 +116,12 @@ def call_tool(name: str, params: dict | None = None) -> dict:
             project_root=Path(params.get("root", ".")),
             task_id=params["task_id"],
             dry_run=True,
+        )
+    if name == "task_recent_failures":
+        return recent_failures(
+            project_root=Path(params.get("root", ".")),
+            limit=int(params.get("limit", 10)),
+            scan_limit=int(params.get("scan_limit", 100)),
         )
     return {"ok": False, "error": f"Unknown tool: {name}"}
 

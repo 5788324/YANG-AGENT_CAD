@@ -337,3 +337,14 @@ $env:PYTHONPATH='src'
 ```
 
 安全说明：MCP 层固定 `dry_run=true`，即使参数传入 `dry_run:false` 也不会恢复或覆盖文件。真实回滚仍需走 CLI 的 `rollback 任务ID`，并单独确认。
+
+## MCP 最近失败任务工具
+
+MCP stdio 已暴露 `task_recent_failures` 工具，用于查看最近失败任务和错误码。
+
+```powershell
+$env:PYTHONPATH='src'
+'{"action":"call_tool","name":"task_recent_failures","params":{"root":".","limit":3,"scan_limit":100}}' | & 'C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -m yang_cad_agent.mcp_stdio
+```
+
+安全说明：该工具只读 `.agent\tasks`，不修改 DWG、不启动 AutoCAD、不写入任务记录。

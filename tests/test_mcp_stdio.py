@@ -12,6 +12,7 @@ class McpStdioTests(unittest.TestCase):
         self.assertIn("health_check", result["tools"])
         self.assertIn("summarize_reports", result["tools"])
         self.assertIn("rollback_dry_run", result["tools"])
+        self.assertIn("task_recent_failures", result["tools"])
 
     def test_health_check_tool_is_dry_run_only(self):
         with patch("yang_cad_agent.mcp_stdio.run_health_check") as run_health_check:
@@ -74,6 +75,23 @@ class McpStdioTests(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertTrue(result["result"]["dry_run"])
         self.assertTrue(rollback_task.call_args.kwargs["dry_run"])
+
+    def test_task_recent_failures_tool(self):
+        with patch("yang_cad_agent.mcp_stdio.recent_failures") as recent_failures:
+            recent_failures.return_value = {"ok": True, "count": 1, "failures": []}
+
+            result = handle_message(
+                {
+                    "action": "call_tool",
+                    "name": "task_recent_failures",
+                    "params": {"root": ".", "limit": 5, "scan_limit": 50},
+                }
+            )
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["result"]["count"], 1)
+        self.assertEqual(recent_failures.call_args.kwargs["limit"], 5)
+        self.assertEqual(recent_failures.call_args.kwargs["scan_limit"], 50)
 
 
 if __name__ == "__main__":
