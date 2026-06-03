@@ -312,3 +312,19 @@
 - 下一步建议：
   1. 把 `docs\ERROR_CODES.md` 和 `ERROR_DETAILS` 做一致性测试，防止文档和代码漂移。
   2. 或开发正式 MCP SDK server 包装层。
+
+## 2026-06-03 错误码文档一致性校验
+
+- 已新增 `tests\test_error_codes.py`。
+- 测试会校验：
+  - 所有错误码常量必须存在于 `ERROR_DETAILS`。
+  - 所有错误码常量必须存在于 `docs\ERROR_CODES.md`。
+  - 每个 `ERROR_DETAILS` 条目必须包含非空 `meaning`、`suggestion`，且 `severity` 只能是 `info`、`warning`、`error`。
+- 已补齐文档缺口：`ACAD_COM_DEPENDENCY_MISSING`。
+- 验证结果：
+  - `tests.test_error_codes` 通过。
+  - 全量 `unittest discover -s tests` 通过，当前 38 个测试。
+  - `compileall src tests` 通过。
+- 下一步建议：
+  1. 开发正式 MCP SDK server 包装层。
+  2. 或继续增强 `task_error_detail`，增加基于日志关键字的自动诊断原因。

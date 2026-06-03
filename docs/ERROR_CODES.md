@@ -24,6 +24,7 @@
 | 错误码 | 含义 | 建议 |
 | --- | --- | --- |
 | ACAD_COM_UNAVAILABLE | 无法连接 AutoCAD | 打开 AutoCAD 后重试 |
+| ACAD_COM_DEPENDENCY_MISSING | 缺少 Python COM 依赖 | 安装 pywin32 后重试 |
 | ACAD_DOC_UNAVAILABLE | 无活动图纸 | 打开 DWG 后重试 |
 | ACAD_COMMAND_TIMEOUT | 命令执行超时 | 检查命令是否卡在交互输入 |
 | ACAD_RPC_FAILED | AutoCAD RPC 失败 | 重启 AutoCAD |

@@ -199,3 +199,17 @@
   - `compileall src tests` 通过。
   - `scripts\doctor.cmd` 通过。
   - MCP stdio 对任务 `20260524-140406-3c2fbf05` 实测返回 `error.meaning` 和 `error.suggestion`。
+
+## 2026-06-03 错误码文档一致性校验
+
+- 新增测试 `tests\test_error_codes.py`。
+- 校验范围：
+  - `src\yang_cad_agent\error_codes.py` 中的所有错误码常量。
+  - `ERROR_DETAILS` 结构化解释表。
+  - `docs\ERROR_CODES.md` 文档表格。
+- 修复发现的问题：`ACAD_COM_DEPENDENCY_MISSING` 已在代码中定义并解释，但文档缺少对应行，现已补齐。
+- 该测试用于防止后续 Codex/Antigravity/其他 AI 增加错误码时只改代码或只改文档，导致排障提示漂移。
+- 已验证：
+  - `tests.test_error_codes` 通过。
+  - 全量 `unittest discover -s tests` 通过，当前 38 个测试。
+  - `compileall src tests` 通过。
