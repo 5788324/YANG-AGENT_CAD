@@ -160,6 +160,7 @@ $env:PYTHONPATH='src'
 返回字段包括：
 - `task`：完整任务记录
 - `error_code`：错误码
+- `error`：结构化错误解释，包含 `code`、`meaning`、`suggestion`、`severity`
 - `status`：任务状态
 - `rollback_available`：是否有可回滚备份
 - `rollback_dry_run`：只读回滚预演结果
@@ -167,3 +168,22 @@ $env:PYTHONPATH='src'
 - `log_tails`：日志尾部内容，方便 AI 快速定位失败原因
 
 安全说明：该工具固定为只读排障入口。即使任务有可回滚备份，也只返回 `rollback_dry_run`，不会执行真实回滚。
+
+## MCP 错误码解释
+
+`task_error_detail` 会把原始 `error_code` 同步转换为结构化 `error` 字段，方便 Codex/Antigravity 或其他 AI 不翻文档也能给出下一步动作。
+
+示例：
+```json
+{
+  "error_code": "LISP_LOAD_FAILED",
+  "error": {
+    "code": "LISP_LOAD_FAILED",
+    "meaning": "AutoCAD failed to load the LISP file.",
+    "suggestion": "Check the script path, file encoding, secure load settings, and trusted paths.",
+    "severity": "error"
+  }
+}
+```
+
+未知错误码会保留原始 `code`，但 `meaning` 会回退为未分类错误说明，避免调用方丢失错误码。

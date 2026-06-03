@@ -64,8 +64,30 @@ class TaskQueryTests(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(result["task"]["task_id"], "fail-1")
         self.assertEqual(result["error_code"], "LISP_LOAD_FAILED")
+        self.assertEqual(result["error"]["code"], "LISP_LOAD_FAILED")
+        self.assertIn("LISP", result["error"]["meaning"])
+        self.assertEqual(result["error"]["severity"], "error")
         self.assertEqual(len(result["log_paths"]), 1)
         self.assertEqual(result["log_tails"][0]["tail"], "\nline3")
+
+    def test_error_detail_returns_unknown_error_explanation(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            task_dir = root / ".agent" / "tasks"
+            task_dir.mkdir(parents=True)
+            task = {
+                "task_id": "fail-2",
+                "status": "failed",
+                "error_code": "NEW_ERROR_CODE",
+                "rollback_available": False,
+            }
+            (task_dir / "fail-2.json").write_text(json.dumps(task), encoding="utf-8")
+
+            result = error_detail(root, "fail-2")
+
+        self.assertEqual(result["error"]["code"], "NEW_ERROR_CODE")
+        self.assertEqual(result["error"]["severity"], "error")
+        self.assertIn("Unclassified", result["error"]["meaning"])
 
 
 if __name__ == "__main__":

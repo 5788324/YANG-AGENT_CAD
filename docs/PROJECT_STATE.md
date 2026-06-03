@@ -184,3 +184,18 @@
   - `doctor` 检测到 AutoCAD 2027 accoreconsole 可用。
   - `acad2027.cfg` 已存在。
   - 当前仍有 `acad.exe` 进程运行；真实批量执行前建议关闭 AutoCAD。
+
+## 2026-06-03 MCP 错误码结构化解释
+
+- 新增 `src\yang_cad_agent\error_codes.py` 中的 `ERROR_DETAILS` 和 `explain_error_code(...)`。
+- `task_error_detail` 现在除保留旧字段 `error_code` 外，还返回结构化 `error`：
+  - `code`
+  - `meaning`
+  - `suggestion`
+  - `severity`
+- 未知错误码会保留原始 `code`，并回退到 `UNKNOWN_ERROR` 的解释，避免调用方丢失排障线索。
+- 已验证：
+  - `tests.test_task_query tests.test_mcp_stdio` 通过。
+  - `compileall src tests` 通过。
+  - `scripts\doctor.cmd` 通过。
+  - MCP stdio 对任务 `20260524-140406-3c2fbf05` 实测返回 `error.meaning` 和 `error.suggestion`。

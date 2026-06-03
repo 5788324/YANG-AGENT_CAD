@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from .backup import rollback_task
+from .error_codes import explain_error_code
 from .ledger import list_task_records
 from .ledger import load_task_record
 
@@ -79,6 +80,7 @@ def error_detail(project_root: Path, task_id: str, log_tail_chars: int = 2000) -
         "ok": True,
         "task": record,
         "error_code": record.get("error_code"),
+        "error": explain_error_code(record.get("error_code")),
         "status": record.get("status"),
         "rollback_available": bool(record.get("rollback_available", False)),
         "rollback_dry_run": rollback,

@@ -290,3 +290,25 @@
 - 下一步建议：
   1. 为 MCP stdio 增加正式 MCP SDK server 包装层。
   2. 或继续增强 `task_error_detail`，增加错误码解释和建议动作字段。
+
+## 2026-06-03 MCP 错误码结构化解释
+
+- 已增强 `task_error_detail`。
+- 除旧字段 `error_code` 外，现在返回结构化 `error`：
+  - `code`
+  - `meaning`
+  - `suggestion`
+  - `severity`
+- 错误码解释集中在 `src\yang_cad_agent\error_codes.py` 的 `ERROR_DETAILS` 和 `explain_error_code(...)`。
+- 未知错误码会保留原始 code，并回退为未分类错误解释。
+- 实测任务 `20260524-140406-3c2fbf05` 返回：
+  - `error.code`: `LISP_LOAD_FAILED`
+  - `error.meaning`: `AutoCAD failed to load the LISP file.`
+  - `error.suggestion`: `Check the script path, file encoding, secure load settings, and trusted paths.`
+- 验证：
+  - `tests.test_task_query tests.test_mcp_stdio` 通过。
+  - `compileall src tests` 通过。
+  - `scripts\doctor.cmd` 通过。
+- 下一步建议：
+  1. 把 `docs\ERROR_CODES.md` 和 `ERROR_DETAILS` 做一致性测试，防止文档和代码漂移。
+  2. 或开发正式 MCP SDK server 包装层。
