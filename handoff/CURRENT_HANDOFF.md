@@ -647,3 +647,60 @@ python -m yang_cad_agent.cli task-error-detail 任务ID
 - MCP `server_info`：通过，`tool_count = 11`。
 - `validate-lisp toolbox\plugins\current_smoke\main.lsp --track B`：通过。
 - `scripts\test.cmd`：普通沙箱因 Windows Temp ACL 失败；提升权限重跑通过，72 tests OK。
+
+## 2026-06-05 继续交接：AutoCAD 窗口探测
+
+本轮尝试使用 Computer Use 观察 AutoCAD 界面，但当前 Codex 会话返回：
+
+- `Computer Use native pipe is unavailable: Unsupported local Computer Use helper method: list_windows`
+
+因此改为增强本地只读诊断：
+
+- `acad-com-diagnose` 新增 `window_probe`。
+- `window_probe` 会枚举 `acad.exe` 的顶层窗口：
+  - `hwnd`
+  - `pid`
+  - `title`
+  - `visible`
+  - `minimized`
+  - `maximized`
+  - `rect`
+- 新增诊断规则：
+  - `acad_process_without_top_level_window`
+  - `acad_windows_not_visible`
+  - `acad_visible_window_title_empty`
+
+本机复测结果：
+
+- AutoCAD PID 仍为 `56860`。
+- `window_probe.window_count = 0`。
+- ROT `entry_count = 0`。
+- `attachable = false`。
+- 命中：
+  - `acad_process_without_top_level_window`
+  - `acad_not_in_running_object_table`
+  - `acad_process_without_com`
+
+判断：
+
+- 当前 AutoCAD 不是正常可操作窗口状态。
+- 不要继续运行 `current-smoke-test --execute`。
+- 不要自动杀进程，除非用户确认没有未保存图纸。
+
+下一步：
+
+1. 用户确认没有未保存图纸后，关闭残留 AutoCAD 进程。
+2. 用普通权限重新打开 AutoCAD 2027。
+3. 打开测试 DWG，等待命令行可输入。
+4. 运行 `scripts\current-com-diagnose.cmd`。
+5. 只有 `attachable: true` 时，再运行 `scripts\current-smoke-test.cmd --execute`。
+
+验证：
+
+- `python -m unittest tests.test_acad_com_diagnose tests.test_cli_commands`：通过。
+- `python -m compileall src tests`：通过。
+- `scripts\doctor.cmd`：通过；仍提示 AutoCAD PID `56860` 正在运行。
+- MCP `server_info`：通过，`tool_count = 11`。
+- `validate-lisp toolbox\plugins\current_smoke\main.lsp --track B`：通过。
+- `scripts\current-com-diagnose.cmd`：通过，返回 `window_probe.window_count = 0`。
+- `scripts\test.cmd`：普通沙箱因 Windows Temp ACL 失败；提升权限重跑通过，73 tests OK。

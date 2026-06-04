@@ -36,6 +36,9 @@ set "RC=%ERRORLEVEL%"
 echo.
 echo [YANG Agent CAD] If attachable is false and acad_process.running is true:
 echo   Close AutoCAD, reopen it normally, open a test DWG, wait for command line, then retry.
+echo [YANG Agent CAD] If diagnostics include acad_process_without_top_level_window:
+echo   acad.exe is running in the background but no usable AutoCAD window exists.
+echo   Do not send LISP. Close AutoCAD from Task Manager only after confirming no unsaved drawings.
 echo [YANG Agent CAD] If diagnostics include acad_not_in_running_object_table:
 echo   AutoCAD is running but not visible to COM ROT. Check startup/license dialogs or repair COM registration.
 echo [YANG Agent CAD] If attachable is true:

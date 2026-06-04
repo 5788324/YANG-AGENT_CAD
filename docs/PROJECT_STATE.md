@@ -357,6 +357,7 @@
 
 - `acad-com-diagnose` 新增：
   - `acad_process_details`
+  - `window_probe`
   - `registered_prog_ids`
   - `rot`
 - 本机当前结论：
@@ -364,6 +365,7 @@
   - `AutoCAD.Application` 已注册。
   - `acad.exe` 正在运行，PID `56860`。
   - AutoCAD 主窗口标题为空。
+  - `window_probe.window_count = 0`，没有可用顶层 AutoCAD 窗口。
   - COM Running Object Table `entry_count = 0`。
-  - 诊断命中 `acad_not_in_running_object_table`。
-- 下一步不应继续盲目发 LISP；应优先确认 AutoCAD 是否卡在启动、许可、欢迎页或弹窗状态，或执行 AutoCAD COM 注册修复。
+  - 诊断命中 `acad_process_without_top_level_window` 和 `acad_not_in_running_object_table`。
+- 下一步不应继续盲目发 LISP；应先确认没有未保存图纸，再关闭残留 AutoCAD 进程，用普通权限重开 AutoCAD 2027 和测试 DWG。

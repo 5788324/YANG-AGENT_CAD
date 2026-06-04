@@ -116,11 +116,100 @@ def _acad_process_details() -> dict:
     return {"ok": True, "processes": parsed if isinstance(parsed, list) else [parsed]}
 
 
+def _process_ids_from_details(process_details: dict) -> set[int]:
+    pids: set[int] = set()
+    processes = process_details.get("processes", [])
+    if not isinstance(processes, list):
+        return pids
+    for process in processes:
+        if not isinstance(process, dict):
+            continue
+        try:
+            pids.add(int(process.get("Id")))
+        except (TypeError, ValueError):
+            continue
+    return pids
+
+
+def _window_text(hwnd: int) -> str:
+    user32 = ctypes.windll.user32
+    length = user32.GetWindowTextLengthW(hwnd)
+    if length <= 0:
+        return ""
+    buffer = ctypes.create_unicode_buffer(length + 1)
+    user32.GetWindowTextW(hwnd, buffer, length + 1)
+    return buffer.value
+
+
+def _collect_acad_windows(process_details: dict) -> dict:
+    """Collect top-level window state for running acad.exe processes."""
+    if not sys.platform.startswith("win") or not hasattr(ctypes, "windll"):
+        return {"available": False, "error": "Windows user32 is unavailable.", "windows": []}
+
+    pids = _process_ids_from_details(process_details)
+    if not pids:
+        return {"available": True, "error": "", "windows": []}
+
+    user32 = ctypes.windll.user32
+    windows: list[dict] = []
+
+    class Rect(ctypes.Structure):
+        _fields_ = [
+            ("left", ctypes.c_long),
+            ("top", ctypes.c_long),
+            ("right", ctypes.c_long),
+            ("bottom", ctypes.c_long),
+        ]
+
+    enum_proc_type = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+
+    def callback(hwnd: int, _lparam: int) -> bool:
+        pid = ctypes.c_ulong()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        if int(pid.value) not in pids:
+            return True
+
+        rect = Rect()
+        user32.GetWindowRect(hwnd, ctypes.byref(rect))
+        windows.append(
+            {
+                "hwnd": int(hwnd),
+                "pid": int(pid.value),
+                "title": _window_text(hwnd),
+                "visible": bool(user32.IsWindowVisible(hwnd)),
+                "minimized": bool(user32.IsIconic(hwnd)),
+                "maximized": bool(user32.IsZoomed(hwnd)),
+                "rect": {
+                    "left": int(rect.left),
+                    "top": int(rect.top),
+                    "right": int(rect.right),
+                    "bottom": int(rect.bottom),
+                },
+            }
+        )
+        return True
+
+    try:
+        user32.EnumWindows(enum_proc_type(callback), 0)
+    except Exception as exc:  # pragma: no cover - depends on local desktop state
+        return {"available": True, "error": str(exc), "windows": windows}
+
+    return {
+        "available": True,
+        "error": "",
+        "pid_count": len(pids),
+        "window_count": len(windows),
+        "visible_window_count": sum(1 for window in windows if window["visible"]),
+        "windows": windows,
+    }
+
+
 def diagnose_acad_com(project_root: Path | None = None) -> dict:
     """Inspect local AutoCAD COM reachability without sending commands."""
     pywin32 = _check_pywin32()
     process = _acad_process_state()
     process_details = _acad_process_details()
+    window_probe = _collect_acad_windows(process_details)
     registered_prog_ids = _check_registered_prog_ids()
     result = {
         "ok": True,
@@ -134,6 +223,7 @@ def diagnose_acad_com(project_root: Path | None = None) -> dict:
         "pywin32": pywin32,
         "acad_process": process,
         "acad_process_details": process_details,
+        "window_probe": window_probe,
         "registered_prog_ids": registered_prog_ids,
         "rot": {"available": False, "entries": []},
         "prog_id_checks": [],
@@ -186,6 +276,40 @@ def diagnose_acad_com(project_root: Path | None = None) -> dict:
             }
         )
     elif process.get("running") is True:
+        window_probe = result.get("window_probe", {})
+        windows = window_probe.get("windows", []) if isinstance(window_probe, dict) else []
+        visible_windows = [
+            window for window in windows
+            if isinstance(window, dict) and window.get("visible")
+        ]
+        if isinstance(window_probe, dict) and window_probe.get("available"):
+            if not windows:
+                result["diagnostics"].append(
+                    {
+                        "rule_id": "acad_process_without_top_level_window",
+                        "severity": "error",
+                        "message": "acad.exe is running, but no top-level AutoCAD window was found.",
+                        "suggestion": "AutoCAD may still be starting, hidden, or blocked by startup state. Wait, inspect the desktop, then retry diagnosis.",
+                    }
+                )
+            elif not visible_windows:
+                result["diagnostics"].append(
+                    {
+                        "rule_id": "acad_windows_not_visible",
+                        "severity": "error",
+                        "message": "AutoCAD windows exist, but none are visible.",
+                        "suggestion": "Restore AutoCAD from the taskbar or close hidden startup dialogs, then retry diagnosis.",
+                    }
+                )
+            elif all(not str(window.get("title", "")).strip() for window in visible_windows):
+                result["diagnostics"].append(
+                    {
+                        "rule_id": "acad_visible_window_title_empty",
+                        "severity": "warning",
+                        "message": "AutoCAD has a visible top-level window, but its title is empty.",
+                        "suggestion": "Check whether AutoCAD is stuck on a startup, license, or blank initialization screen.",
+                    }
+                )
         rot = result.get("rot", {})
         filtered_entries = rot.get("filtered_entries", []) if isinstance(rot, dict) else []
         if rot.get("available") and not filtered_entries:

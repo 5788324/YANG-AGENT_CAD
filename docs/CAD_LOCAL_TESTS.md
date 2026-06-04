@@ -161,6 +161,7 @@ scripts\open-autocad-test.cmd --execute
 
 `scripts\current-com-diagnose.cmd` 现在会额外输出：
 - `acad_process_details`：AutoCAD 进程路径、PID、窗口标题。
+- `window_probe`：AutoCAD 顶层窗口句柄、标题、可见性、是否最小化和窗口位置。
 - `registered_prog_ids`：本机注册的 AutoCAD COM ProgID 和 CLSID。
 - `rot`：COM Running Object Table 中是否存在 AutoCAD/DWG 相关条目。
 
@@ -169,7 +170,15 @@ scripts\open-autocad-test.cmd --execute
 - `AutoCAD.Application` 也指向同一个 CLSID。
 - AutoCAD 进程 `56860` 正在运行。
 - `MainWindowTitle` 为空。
+- `window_probe.window_count = 0`，说明当前 `acad.exe` 没有可用顶层窗口。
 - ROT `entry_count = 0`，没有 AutoCAD-like 条目。
-- 诊断规则命中 `acad_not_in_running_object_table` 和 `acad_process_without_com`。
+- 诊断规则命中 `acad_process_without_top_level_window`、`acad_not_in_running_object_table` 和 `acad_process_without_com`。
 
 这说明问题不是 Python 缺少 pywin32，也不是 AutoCAD 2027 ProgID 没注册；当前更可能是 AutoCAD 尚未真正进入可自动化状态，或者 COM Running Object Table 注册异常。
+
+如果出现 `acad_process_without_top_level_window`：
+
+1. 不要继续运行 `current-smoke-test --execute`。
+2. 先确认 AutoCAD 没有未保存图纸。
+3. 关闭残留 AutoCAD 进程后，用普通权限重新打开 AutoCAD 2027。
+4. 打开测试 DWG，等命令行可输入，再运行 `scripts\current-com-diagnose.cmd`。

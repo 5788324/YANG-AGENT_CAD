@@ -465,3 +465,11 @@ scripts\current-smoke-test.cmd --execute
 ```
 
 只有 `current-com-diagnose` 返回 `attachable: true` 时，第二个命令才会真正发送测试 LISP。关闭 AutoCAD 必须手动确认，因为可能有未保存图纸，AI 不会自动杀掉 CAD 进程。
+
+如果 `current-com-diagnose` 里出现：
+
+- `acad_process_without_top_level_window`
+- `acad_not_in_running_object_table`
+- `acad_process_without_com`
+
+意思是：`acad.exe` 进程虽然还在，但 AutoCAD 没有可用窗口，也没有进入 COM 可控制状态。此时不要继续发送 LISP。先确认没有未保存图纸，再关闭残留 AutoCAD，重新用普通权限打开 AutoCAD 2027 和测试 DWG。
