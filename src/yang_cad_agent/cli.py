@@ -14,6 +14,7 @@ from .doctor import run_doctor
 from .health_check import run_health_check
 from .ledger import create_task_record, list_task_records, load_task_record
 from .lisp_validator import validate_lisp_file
+from .personal_health import run_personal_health
 from .report_summary import summarize_reports
 from .toolbox import list_plugins, validate_plugin_manifest
 
@@ -105,6 +106,18 @@ def build_parser() -> argparse.ArgumentParser:
     health.add_argument("--pattern", default="*.dwg", help="DWG glob pattern.")
     health.add_argument("--recursive", action="store_true", help="Search recursively.")
     health.add_argument(
+        "--execute",
+        action="store_true",
+        help="Actually run read-only report plugins. Omit for dry-run.",
+    )
+
+    personal = sub.add_parser("personal-health", help="Beginner-friendly one-command CAD health check.")
+    personal.add_argument("folder", nargs="?", default="sample", help="Folder containing DWG files.")
+    personal.add_argument("--root", default=".", help="Project root.")
+    personal.add_argument("--pattern", default="*.dwg", help="DWG glob pattern.")
+    personal.add_argument("--recursive", action="store_true", help="Search recursively.")
+    personal.add_argument("--output", default="", help="Output Markdown report path.")
+    personal.add_argument(
         "--execute",
         action="store_true",
         help="Actually run read-only report plugins. Omit for dry-run.",
@@ -240,6 +253,19 @@ def main(argv: list[str] | None = None) -> int:
             pattern=args.pattern,
             recursive=args.recursive,
             execute=args.execute,
+        )
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
+
+    if args.command == "personal-health":
+        output = Path(args.output) if args.output else None
+        result = run_personal_health(
+            project_root=Path(args.root),
+            folder=Path(args.folder),
+            pattern=args.pattern,
+            recursive=args.recursive,
+            execute=args.execute,
+            output=output,
         )
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["ok"] else 1

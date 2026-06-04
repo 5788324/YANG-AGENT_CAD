@@ -395,3 +395,26 @@
 - 下一步建议：
   1. 优先跑 sample 图纸 dry-run 体检，形成用户可直接看的报告。
   2. 继续把高频只读 CAD 查询沉淀为插件箱插件和 MCP 工具。
+
+## 2026-06-04 个人版一键体检入口
+
+- 已落实用户的新方向：项目定位为个人工作用的小型 CAD 工具箱，不做大型商业级 C# / WPF 架构。
+- 新增：
+  - `src\yang_cad_agent\personal_health.py`
+  - CLI 命令 `personal-health`
+  - `scripts\personal-health-check.cmd`
+  - `tests\test_personal_health.py`
+  - 轻量版 `CLAUDE.md`
+- 默认使用方式：
+  - 运行 `scripts\personal-health-check.cmd`
+  - 默认扫描 `sample`
+  - 只做 dry-run
+  - 输出 `.agent\reports\PERSONAL_HEALTH_PLAN.md`
+- MCP stdio 已新增工具 `personal_health`，固定 dry-run，不通过 MCP 做真实批量执行。
+- 实测结果：
+  - `sample` 匹配 11 个 DWG。
+  - 三个只读报告插件 dry-run 成功。
+  - 计划报告已生成。
+- 下一步建议：
+  1. 复制 `sample\S001.dwg` 到 `.agent\tmp\sample-run`，对测试副本运行 `scripts\personal-health-check.cmd .agent\tmp\sample-run --execute`，生成真实 CSV 和总报告。
+  2. 补第一批个人常用只读插件：图框/标题栏候选识别、外参/图片引用检查。

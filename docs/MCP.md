@@ -129,6 +129,27 @@ $env:PYTHONPATH='src'
 
 - `summarize_reports`
 
+## 个人版一键体检 MCP 工具
+
+`personal_health` 是给小白和其他 AI 使用的最短入口。它会调用一键体检 dry-run，并写出一份 Markdown 计划报告。MCP 层固定 `execute=false`，即使参数里传入 `execute:true`，也不会真实启动 accoreconsole。
+
+调用示例：
+
+```json
+{"action":"call_tool","name":"personal_health","params":{"root":".","folder":"sample","output":".agent/reports/PERSONAL_HEALTH_PLAN.md"}}
+```
+
+返回字段包括：
+
+- `mode`：固定为 `dry_run`
+- `folder`：扫描的 DWG 目录
+- `report.output`：生成的 Markdown 计划报告
+- `health_check.steps`：三个只读统计插件的 dry-run 任务
+
+当前工具清单还包括：
+
+- `personal_health`
+
 ## 回滚预演 MCP 工具
 
 `rollback_dry_run` 用于通过 MCP 预览某个任务会回滚哪些文件。它固定只做 dry-run，不会恢复或覆盖文件。即使调用参数里传入 `dry_run:false`，MCP 层也会固定按 `dry_run=true` 调用底层回滚流程。

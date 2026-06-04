@@ -265,3 +265,22 @@
   - 返回启动入口、工具清单、工具数量和安全边界。
   - 安全边界包括不暴露泛用 shell、`health_check` 强制 dry-run、回滚只做 dry-run、真实批量执行必须走 CLI 确认。
 - 当前策略：先保证无依赖 stdio 层可用、可测、可被其他 AI 理解；正式 MCP Python SDK 接入放到后续联网依赖安装阶段。
+
+## 2026-06-04 个人版一键体检入口
+
+- 新增模块 `src\yang_cad_agent\personal_health.py`。
+- 新增 CLI 命令 `personal-health`。
+- 新增 Windows 小白入口 `scripts\personal-health-check.cmd`。
+- 默认行为：
+  - 扫描 `sample`。
+  - 只做 dry-run。
+  - 不修改 DWG。
+  - 输出 `.agent\reports\PERSONAL_HEALTH_PLAN.md`。
+- MCP stdio 新增工具 `personal_health`，固定只执行 dry-run，不允许通过 MCP 真实批量执行。
+- 新增轻量版 `CLAUDE.md`，明确当前项目不是大型 C# / WPF 商业插件工程，近期主线保持 Python CLI + MCP stdio + LISP 插件箱 + accoreconsole。
+- 已实测 `scripts\personal-health-check.cmd`：
+  - 匹配 `sample` 目录 11 个 DWG。
+  - `batch.layer_report` dry-run 成功。
+  - `batch.block_report` dry-run 成功。
+  - `batch.annotation_report` dry-run 成功。
+  - 已生成 `.agent\reports\PERSONAL_HEALTH_PLAN.md`。

@@ -23,6 +23,7 @@ class McpStdioTests(unittest.TestCase):
         self.assertIn("rollback_dry_run", result["tools"])
         self.assertIn("task_recent_failures", result["tools"])
         self.assertIn("task_error_detail", result["tools"])
+        self.assertIn("personal_health", result["tools"])
 
     def test_health_check_tool_is_dry_run_only(self):
         with patch("yang_cad_agent.mcp_stdio.run_health_check") as run_health_check:
@@ -119,6 +120,27 @@ class McpStdioTests(unittest.TestCase):
         self.assertEqual(result["result"]["task"]["task_id"], "task-1")
         self.assertEqual(error_detail.call_args.kwargs["task_id"], "task-1")
         self.assertEqual(error_detail.call_args.kwargs["log_tail_chars"], 123)
+
+    def test_personal_health_tool_is_dry_run_only(self):
+        with patch("yang_cad_agent.mcp_stdio.run_personal_health") as run_personal_health:
+            run_personal_health.return_value = {"ok": True, "mode": "dry_run"}
+
+            result = handle_message(
+                {
+                    "action": "call_tool",
+                    "name": "personal_health",
+                    "params": {
+                        "root": ".",
+                        "folder": "sample",
+                        "execute": True,
+                        "output": ".agent/reports/test.md",
+                    },
+                }
+            )
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["result"]["mode"], "dry_run")
+        self.assertFalse(run_personal_health.call_args.kwargs["execute"])
 
 
 if __name__ == "__main__":

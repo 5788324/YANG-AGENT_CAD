@@ -16,6 +16,7 @@ from .doctor import run_doctor
 from .health_check import run_health_check
 from .ledger import list_task_records, load_task_record
 from .mcp_manifest import build_manifest
+from .personal_health import run_personal_health
 from .report_summary import summarize_reports
 from .task_query import error_detail, recent_failures
 from .toolbox import list_plugins
@@ -73,6 +74,16 @@ TOOLS = {
             "root": "Project root path.",
             "task_id": "Task id.",
             "log_tail_chars": "Maximum characters to include from each log tail.",
+        },
+    },
+    "personal_health": {
+        "description": "Run the beginner-friendly CAD health check in dry-run mode and write a Markdown plan report.",
+        "params": {
+            "root": "Project root path.",
+            "folder": "Folder containing DWG files. Defaults to sample.",
+            "pattern": "DWG glob pattern.",
+            "recursive": "Search recursively.",
+            "output": "Optional Markdown report path.",
         },
     },
 }
@@ -137,6 +148,16 @@ def call_tool(name: str, params: dict | None = None) -> dict:
             project_root=Path(params.get("root", ".")),
             task_id=params["task_id"],
             log_tail_chars=int(params.get("log_tail_chars", 2000)),
+        )
+    if name == "personal_health":
+        output_param = params.get("output", "")
+        return run_personal_health(
+            project_root=Path(params.get("root", ".")),
+            folder=Path(params.get("folder", "sample")),
+            pattern=params.get("pattern", "*.dwg"),
+            recursive=_as_bool(params.get("recursive", False)),
+            execute=False,
+            output=Path(output_param) if output_param else None,
         )
     return {"ok": False, "error": f"Unknown tool: {name}"}
 

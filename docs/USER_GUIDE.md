@@ -60,6 +60,39 @@ scripts\doctor.cmd
 - 检测到 Git
 - 检测到 `accoreconsole`
 
+## 最快试用：个人版一键体检
+
+如果你只想先看这个工具好不好用，运行：
+
+```cmd
+scripts\personal-health-check.cmd
+```
+
+默认行为：
+
+- 扫描 `sample` 目录。
+- 只做 dry-run。
+- 不修改 DWG。
+- 生成一份给人看的计划报告：
+
+```text
+.agent\reports\PERSONAL_HEALTH_PLAN.md
+```
+
+如果要换目录，例如只检查测试副本目录：
+
+```cmd
+scripts\personal-health-check.cmd .agent\tmp\sample-run
+```
+
+真实生成图层、块、文字标注 CSV 报告时，必须明确加：
+
+```cmd
+scripts\personal-health-check.cmd .agent\tmp\sample-run --execute
+```
+
+不要直接对客户原图目录加 `--execute`。先让 AI 复制测试副本，再执行。
+
 ## 第二步：运行测试
 
 运行：

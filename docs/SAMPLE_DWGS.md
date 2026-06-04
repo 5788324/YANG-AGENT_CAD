@@ -31,6 +31,20 @@ D:\codex\Yang Agent_CAD\sample
 
 ## 检查 sample 是否能被扫描
 
+最简单方式：
+
+```cmd
+scripts\personal-health-check.cmd
+```
+
+该命令默认扫描 `sample`，只做 dry-run，不修改 DWG，并生成：
+
+```text
+.agent\reports\PERSONAL_HEALTH_PLAN.md
+```
+
+当前已验证：该命令能匹配 11 个 DWG，并为图层统计、块统计、文字标注统计三个只读插件生成 dry-run 任务。
+
 这个命令只预演，不修改 DWG：
 
 ```cmd
