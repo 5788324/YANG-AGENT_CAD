@@ -18,6 +18,28 @@ $env:PYTHONPATH='src'
 
 ## 消息格式
 
+查看服务器能力、安全边界和启动方式：
+
+```json
+{"action":"server_info"}
+```
+
+`manifest` 是同义动作：
+
+```json
+{"action":"manifest"}
+```
+
+返回内容包括：
+
+- `transport`：当前为 `stdio-json-lines`
+- `protocol.official_mcp_sdk`：当前为 `false`
+- `entrypoints`：给 Codex/Antigravity 使用的启动命令
+- `tools`：当前可调用工具清单
+- `safety`：MCP 层安全边界，例如不暴露泛用 shell、批量执行必须走 CLI 确认、回滚只做 dry-run
+
+说明：当前入口是无依赖 stdio 兼容层，用于让 Codex/Antigravity 先稳定调用和自检。正式 MCP Python SDK 需要后续在可联网安装依赖后再接入，但底层工具和安全边界会复用同一套实现。
+
 列出工具：
 
 ```json

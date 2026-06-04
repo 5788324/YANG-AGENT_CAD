@@ -15,6 +15,7 @@ from .backup import rollback_task
 from .doctor import run_doctor
 from .health_check import run_health_check
 from .ledger import list_task_records, load_task_record
+from .mcp_manifest import build_manifest
 from .report_summary import summarize_reports
 from .task_query import error_detail, recent_failures
 from .toolbox import list_plugins
@@ -142,6 +143,8 @@ def call_tool(name: str, params: dict | None = None) -> dict:
 
 def handle_message(message: dict) -> dict:
     action = message.get("action")
+    if action in {"server_info", "manifest"}:
+        return build_manifest(TOOLS)
     if action == "list_tools":
         return {"ok": True, "tools": TOOLS}
     if action == "call_tool":
@@ -149,7 +152,10 @@ def handle_message(message: dict) -> dict:
             "ok": True,
             "result": call_tool(message.get("name", ""), message.get("params", {})),
         }
-    return {"ok": False, "error": "Expected action=list_tools or action=call_tool"}
+    return {
+        "ok": False,
+        "error": "Expected action=server_info, action=manifest, action=list_tools, or action=call_tool",
+    }
 
 
 def main() -> int:

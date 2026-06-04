@@ -254,3 +254,14 @@
 - 已验证：
   - `tests.test_log_diagnostics tests.test_mcp_stdio` 通过，当前该组 14 个测试。
   - `compileall src tests` 通过。
+
+## 2026-06-04 MCP stdio 兼容描述层
+
+- 新增 `src\yang_cad_agent\mcp_manifest.py`。
+- MCP stdio 新增动作 `server_info` / `manifest`。
+- 返回内容用于 Codex/Antigravity 自检和接入：
+  - 当前 transport 为 `stdio-json-lines`。
+  - 明确标记当前不是官方 MCP SDK server：`official_mcp_sdk: false`。
+  - 返回启动入口、工具清单、工具数量和安全边界。
+  - 安全边界包括不暴露泛用 shell、`health_check` 强制 dry-run、回滚只做 dry-run、真实批量执行必须走 CLI 确认。
+- 当前策略：先保证无依赖 stdio 层可用、可测、可被其他 AI 理解；正式 MCP Python SDK 接入放到后续联网依赖安装阶段。

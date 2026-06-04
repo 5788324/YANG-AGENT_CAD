@@ -5,6 +5,15 @@ from yang_cad_agent.mcp_stdio import handle_message
 
 
 class McpStdioTests(unittest.TestCase):
+    def test_server_info_returns_manifest(self):
+        result = handle_message({"action": "server_info"})
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["name"], "yang-cad-agent")
+        self.assertIn("doctor", result["tools"])
+        self.assertFalse(result["protocol"]["official_mcp_sdk"])
+        self.assertTrue(result["safety"]["health_check_forces_dry_run"])
+
     def test_list_tools(self):
         result = handle_message({"action": "list_tools"})
         self.assertTrue(result["ok"])

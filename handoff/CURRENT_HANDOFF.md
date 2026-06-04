@@ -377,3 +377,21 @@
 - 下一步建议：
   1. 运行全量测试并继续观察真实 accoreconsole 日志样本。
   2. 开发正式 MCP SDK server 包装层。
+
+## 2026-06-04 MCP stdio 兼容描述层
+
+- 已新增 `src\yang_cad_agent\mcp_manifest.py`。
+- 已给 `src\yang_cad_agent\mcp_stdio.py` 增加动作：
+  - `server_info`
+  - `manifest`
+- 用途：让 Codex/Antigravity 在调用 MCP stdio 前能读取机器可读的能力、安全边界和启动入口。
+- 重要边界：
+  - 当前不是官方 MCP SDK server，返回 `official_mcp_sdk: false`。
+  - 当前 transport 是 `stdio-json-lines`。
+  - MCP 层不暴露泛用 shell。
+  - `health_check` 固定 dry-run。
+  - `rollback_dry_run` 固定只预演。
+  - 真实批量执行仍必须走 CLI，并经过确认。
+- 下一步建议：
+  1. 优先跑 sample 图纸 dry-run 体检，形成用户可直接看的报告。
+  2. 继续把高频只读 CAD 查询沉淀为插件箱插件和 MCP 工具。
