@@ -339,6 +339,19 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 
 ## 当前图烟测失败时怎么判断
 
+可以先运行只读诊断，不会发送 LISP，也不会修改 DWG：
+
+```cmd
+scripts\current-com-diagnose.cmd
+```
+
+重点看：
+
+- `pywin32.available`
+- `acad_process.running`
+- `attachable`
+- `diagnostics`
+
 如果 `scripts\current-smoke-test.cmd --execute` 返回 `ACAD_COM_UNAVAILABLE`，先看输出里的：
 
 ```text
@@ -366,6 +379,8 @@ python -m yang_cad_agent.cli task-error-detail 任务ID
 ```
 
 `task_error_detail` 和 `task-error-detail` 都可以用。
+
+当前本机已验证：`pywin32.available = true`，`acad_process.running = true`，但 `attachable = false`。这说明 AutoCAD 进程存在，但当前 Python 还不能附着到 AutoCAD COM；优先按“普通权限重开 AutoCAD + 打开测试 DWG + 等命令行可输入”处理。
 
 ## 一键图纸体检
 

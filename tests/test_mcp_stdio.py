@@ -24,6 +24,7 @@ class McpStdioTests(unittest.TestCase):
         self.assertIn("task_recent_failures", result["tools"])
         self.assertIn("task_error_detail", result["tools"])
         self.assertIn("personal_health", result["tools"])
+        self.assertIn("acad_com_diagnose", result["tools"])
 
     def test_health_check_tool_is_dry_run_only(self):
         with patch("yang_cad_agent.mcp_stdio.run_health_check") as run_health_check:
@@ -141,6 +142,22 @@ class McpStdioTests(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(result["result"]["mode"], "dry_run")
         self.assertFalse(run_personal_health.call_args.kwargs["execute"])
+
+    def test_acad_com_diagnose_tool_is_read_only(self):
+        with patch("yang_cad_agent.mcp_stdio.diagnose_acad_com") as diagnose:
+            diagnose.return_value = {"ok": True, "mode": "read_only"}
+
+            result = handle_message(
+                {
+                    "action": "call_tool",
+                    "name": "acad_com_diagnose",
+                    "params": {"root": "."},
+                }
+            )
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["result"]["mode"], "read_only")
+        self.assertEqual(diagnose.call_count, 1)
 
 
 if __name__ == "__main__":

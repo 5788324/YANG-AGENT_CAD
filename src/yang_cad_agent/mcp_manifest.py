@@ -42,6 +42,7 @@ def build_manifest(tools: Mapping[str, dict]) -> dict:
             "health_check_forces_dry_run": True,
             "rollback_is_dry_run_only": True,
             "task_error_detail_is_read_only": True,
+            "acad_com_diagnose_is_read_only": True,
             "batch_execute_requires_cli_confirmation": True,
             "do_not_commit_dwg_or_agent_runtime_files": True,
         },

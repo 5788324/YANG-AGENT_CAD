@@ -83,9 +83,16 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 
 - 默认 Python 已安装并验证 `pywin32`，`win32com.client` 可导入。
 - 当前图执行代码已加入 AutoCAD 2027 COM ProgID：`AutoCAD.Application.26`。
+- 新增只读诊断入口：`scripts\current-com-diagnose.cmd`。
 - `scripts\current-smoke-test.cmd --execute` 已在本机复测。
 - 失败任务 `20260604-234553-07493147` 返回 `ACAD_COM_UNAVAILABLE`。
 - 该任务的 `send_result.acad_process.running` 为 `true`，说明 `acad.exe` 正在运行，但 COM 附着失败。
+- `scripts\current-com-diagnose.cmd` 已验证：
+  - `python.elevated = false`
+  - `pywin32.available = true`
+  - `acad_process.running = true`
+  - `attachable = false`
+  - `AutoCAD.Application.26` 返回 `操作无法使用`
 
 当前判断：
 
@@ -103,6 +110,14 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 ```cmd
 scripts\current-smoke-test.cmd --execute
 ```
+
+执行前也可以先运行：
+
+```cmd
+scripts\current-com-diagnose.cmd
+```
+
+如果返回 `attachable: true`，再运行真实烟测。
 
 如果仍失败，运行：
 

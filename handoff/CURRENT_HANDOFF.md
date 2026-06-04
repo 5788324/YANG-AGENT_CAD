@@ -2,6 +2,37 @@
 
 ## 2026-06-04 23:50 交接更新
 
+## 2026-06-04 继续工作流：COM 只读诊断入口
+
+本轮新增：
+
+- `src\yang_cad_agent\acad_com_diagnose.py`
+- CLI：`acad-com-diagnose`
+- Windows 脚本：`scripts\current-com-diagnose.cmd`
+- MCP stdio 工具：`acad_com_diagnose`
+
+安全边界：
+
+- 只读。
+- 不发送 LISP。
+- 不保存 DWG。
+- 不启动 accoreconsole。
+- 不修改任务记录。
+
+本机诊断结果：
+
+- `python.elevated = false`
+- `pywin32.available = true`
+- `acad_process.running = true`
+- `attachable = false`
+- `AutoCAD.Application.26` 返回 `操作无法使用`
+
+下一步建议：
+
+1. 先运行 `scripts\current-com-diagnose.cmd`。
+2. 只有看到 `attachable: true`，再运行 `scripts\current-smoke-test.cmd --execute`。
+3. 如果 `attachable: false` 且 `acad_process.running: true`，关闭 AutoCAD，用普通权限重开，打开测试 DWG，等待命令行可输入后再诊断。
+
 本轮完成：
 
 - 已执行 `git fetch` 和 `git pull --rebase`，远端无新提交。

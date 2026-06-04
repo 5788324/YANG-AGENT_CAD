@@ -11,6 +11,7 @@ import json
 import sys
 from pathlib import Path
 
+from .acad_com_diagnose import diagnose_acad_com
 from .backup import rollback_task
 from .doctor import run_doctor
 from .health_check import run_health_check
@@ -86,6 +87,10 @@ TOOLS = {
             "output": "Optional Markdown report path.",
         },
     },
+    "acad_com_diagnose": {
+        "description": "Read-only AutoCAD COM diagnostics. Does not send commands or modify drawings.",
+        "params": {"root": "Project root path."},
+    },
 }
 
 
@@ -159,6 +164,8 @@ def call_tool(name: str, params: dict | None = None) -> dict:
             execute=False,
             output=Path(output_param) if output_param else None,
         )
+    if name == "acad_com_diagnose":
+        return diagnose_acad_com(Path(params.get("root", ".")))
     return {"ok": False, "error": f"Unknown tool: {name}"}
 
 

@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
+from .acad_com_diagnose import diagnose_acad_com
 from .accore import run_accore_batch
 from .batch_workflow import run_batch_workflow
 from .backup import backup_files, rollback_task
@@ -79,6 +80,9 @@ def build_parser() -> argparse.ArgumentParser:
     current.add_argument("--script", required=True, help="LISP script path.")
     current.add_argument("--root", default=".", help="Project root.")
     current.add_argument("--execute", action="store_true", help="Actually send to AutoCAD COM.")
+
+    acad_com = sub.add_parser("acad-com-diagnose", help="Read-only AutoCAD COM diagnostics.")
+    acad_com.add_argument("--root", default=".", help="Project root.")
 
     accore = sub.add_parser("accore-run", help="Run or dry-run accoreconsole batch.")
     accore.add_argument("--script", required=True, help="LISP script path.")
@@ -214,6 +218,11 @@ def main(argv: list[str] | None = None) -> int:
             script_path=Path(args.script),
             execute=args.execute,
         )
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
+
+    if args.command == "acad-com-diagnose":
+        result = diagnose_acad_com(Path(args.root))
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["ok"] else 1
 

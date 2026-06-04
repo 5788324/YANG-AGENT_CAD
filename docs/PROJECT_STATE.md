@@ -7,6 +7,11 @@
 - `current-lisp` 执行失败时会保存 `send_result` 到任务记录，便于 `task-error-detail` 排障。
 - `ACAD_COM_UNAVAILABLE` 现在会返回 `acad_process` 诊断；本机复测显示 `acad.exe` 正在运行但 COM 不可附着。
 - 新增 CLI 排障入口：`task-error-detail` 和 `task_error_detail`，均为只读。
+- 新增 AutoCAD COM 只读诊断入口：
+  - CLI：`python -m yang_cad_agent.cli acad-com-diagnose`
+  - Windows 脚本：`scripts\current-com-diagnose.cmd`
+  - MCP stdio 工具：`acad_com_diagnose`
+- 本机诊断结果：默认 Python 非管理员、`pywin32` 可用、`acad.exe` 正在运行、`attachable = false`。
 - 当前真实执行未完成闭环：任务 `20260604-234553-07493147` 仍失败，原因是 AutoCAD 进程存在但 COM Running Object Table 不可连接。下一步需要关闭 AutoCAD，用普通权限重开并打开测试 DWG 后再运行 `scripts\current-smoke-test.cmd --execute`。
 
 ## 2026-06-04 当前图一键烟测入口

@@ -236,6 +236,31 @@ $env:PYTHONPATH='src'
 
 `task_error_detail` 会根据日志尾部生成 `diagnostics`。该字段用于让 AI 区分启动噪声和真正失败原因。
 
+## AutoCAD COM 只读诊断
+
+MCP stdio 暴露 `acad_com_diagnose` 工具，用于只读检查当前机器的 AutoCAD COM 可连接性。
+
+它只读取：
+
+- 当前 Python 路径和是否管理员权限
+- `pywin32` 是否可用
+- `acad.exe` 是否运行
+- AutoCAD COM ProgID 是否能被 `GetActiveObject` 附着
+
+它不会发送 LISP、不会保存 DWG、不会启动批量任务。
+
+示例：
+
+```powershell
+'{"action":"call_tool","name":"acad_com_diagnose","params":{"root":"."}}' | python -m yang_cad_agent.mcp_stdio
+```
+
+常见结果：
+
+- `attachable: true`：可以对测试 DWG 继续运行 `scripts\current-smoke-test.cmd --execute`。
+- `attachable: false` 且 `acad_process.running: true`：AutoCAD 正在运行，但 COM 不可附着，优先关闭 AutoCAD 后用普通权限重开。
+- `pywin32.available: false`：当前 Python 缺少 `pywin32`。
+
 当前规则包括：
 - `acad_startup_noise`：AutoCAD 启动时出现 `acad2027` 加载消息，通常只是启动噪声。
 - `lisp_load_canceled`：日志显示 LISP 加载取消或失败，需要检查脚本路径、编码、`SECURELOAD` / `TRUSTEDPATHS`。
