@@ -76,6 +76,39 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 
 - 如果当前 Python 没有 `pywin32`，返回 `ACAD_COM_DEPENDENCY_MISSING`。
 - 如果 AutoCAD 未打开，返回 `ACAD_COM_UNAVAILABLE`。
+
+## 2026-06-04 当前图真实执行复测
+
+已完成：
+
+- 默认 Python 已安装并验证 `pywin32`，`win32com.client` 可导入。
+- 当前图执行代码已加入 AutoCAD 2027 COM ProgID：`AutoCAD.Application.26`。
+- `scripts\current-smoke-test.cmd --execute` 已在本机复测。
+- 失败任务 `20260604-234553-07493147` 返回 `ACAD_COM_UNAVAILABLE`。
+- 该任务的 `send_result.acad_process.running` 为 `true`，说明 `acad.exe` 正在运行，但 COM 附着失败。
+
+当前判断：
+
+- 不是 Python 缺依赖。
+- 不是缺 AutoCAD 2027 ProgID。
+- 更可能是 AutoCAD 以管理员权限运行、AutoCAD 仍停在启动/许可/欢迎状态、或当前 AutoCAD 实例没有注册到 COM Running Object Table。
+
+下一次人工环境验证：
+
+1. 关闭当前 AutoCAD。
+2. 用普通权限重新打开 AutoCAD 2027。
+3. 打开测试 DWG，等待命令行可输入。
+4. 运行：
+
+```cmd
+scripts\current-smoke-test.cmd --execute
+```
+
+如果仍失败，运行：
+
+```cmd
+python -m yang_cad_agent.cli task-error-detail 任务ID
+```
 - 如果发送成功，AutoCAD 命令行应打印 smoke test 文本。
 
 ## 批量 accoreconsole dry-run

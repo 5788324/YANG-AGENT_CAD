@@ -1,5 +1,14 @@
 # 项目状态
 
+## 2026-06-04 当前最新状态
+
+- 已安装并验证默认 Python 的 `pywin32`：`win32com.client` 可导入。
+- 当前图 LISP 执行入口已补 AutoCAD 2027 COM ProgID：`AutoCAD.Application.26`。
+- `current-lisp` 执行失败时会保存 `send_result` 到任务记录，便于 `task-error-detail` 排障。
+- `ACAD_COM_UNAVAILABLE` 现在会返回 `acad_process` 诊断；本机复测显示 `acad.exe` 正在运行但 COM 不可附着。
+- 新增 CLI 排障入口：`task-error-detail` 和 `task_error_detail`，均为只读。
+- 当前真实执行未完成闭环：任务 `20260604-234553-07493147` 仍失败，原因是 AutoCAD 进程存在但 COM Running Object Table 不可连接。下一步需要关闭 AutoCAD，用普通权限重开并打开测试 DWG 后再运行 `scripts\current-smoke-test.cmd --execute`。
+
 ## 2026-06-04 当前图一键烟测入口
 
 - 新增 `scripts\current-smoke-test.cmd`。

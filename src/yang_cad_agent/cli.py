@@ -16,6 +16,7 @@ from .ledger import create_task_record, list_task_records, load_task_record
 from .lisp_validator import validate_lisp_file
 from .personal_health import run_personal_health
 from .report_summary import summarize_reports
+from .task_query import error_detail
 from .toolbox import list_plugins, validate_plugin_manifest
 
 
@@ -43,6 +44,17 @@ def build_parser() -> argparse.ArgumentParser:
     task_show = sub.add_parser("task-show", help="Show one task ledger record.")
     task_show.add_argument("task_id", help="Task id.")
     task_show.add_argument("--root", default=".", help="Project root.")
+
+    for detail_name in ("task-error-detail", "task_error_detail"):
+        task_detail = sub.add_parser(detail_name, help="Show task error detail and diagnostics.")
+        task_detail.add_argument("task_id", help="Task id.")
+        task_detail.add_argument("--root", default=".", help="Project root.")
+        task_detail.add_argument(
+            "--log-tail-chars",
+            type=int,
+            default=2000,
+            help="Maximum log tail characters per log file.",
+        )
 
     backup = sub.add_parser("backup", help="Back up files into .agent/backups.")
     backup.add_argument("--task-id", required=True, help="Existing task id.")
@@ -167,6 +179,11 @@ def main(argv: list[str] | None = None) -> int:
         record = load_task_record(Path(args.root), args.task_id)
         print(json.dumps(record, ensure_ascii=False, indent=2))
         return 0
+
+    if args.command in ("task-error-detail", "task_error_detail"):
+        result = error_detail(Path(args.root), args.task_id, log_tail_chars=args.log_tail_chars)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
 
     if args.command == "backup":
         result = backup_files(

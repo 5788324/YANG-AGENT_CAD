@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
@@ -10,6 +11,10 @@ from pathlib import Path
 from . import error_codes
 from .ledger import create_task_record, update_task_record
 from .lisp_validator import validate_lisp_file
+
+
+AUTOCAD_PROG_IDS = [f"AutoCAD.Application.{v}" for v in ["26", "25", "24", "23", "22", "21", "20"]]
+AUTOCAD_PROG_IDS.append("AutoCAD.Application")
 
 
 def _lisp_path(path: Path) -> str:
@@ -114,6 +119,48 @@ def wait_for_completion_marker(result_path: Path, timeout_seconds: float = 5.0) 
     return read_completion_marker(result_path)
 
 
+def _acad_process_state() -> dict:
+    try:
+        result = subprocess.run(
+            ["tasklist", "/FI", "IMAGENAME eq acad.exe", "/FO", "CSV", "/NH"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except Exception:
+        result = None
+    if result is not None and result.returncode == 0:
+        return {"running": "acad.exe" in result.stdout.lower(), "method": "tasklist"}
+
+    try:
+        ps_result = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                "if (Get-Process acad -ErrorAction SilentlyContinue) { 'running' } else { 'missing' }",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except Exception as exc:
+        return {"running": None, "method": "powershell", "error": str(exc)}
+    if ps_result.returncode == 0:
+        return {"running": "running" in ps_result.stdout.lower(), "method": "powershell"}
+    return {
+        "running": None,
+        "method": "tasklist+powershell",
+        "error": (ps_result.stderr or ps_result.stdout or "").strip(),
+    }
+
+
+def _is_acad_process_running() -> bool | None:
+    return _acad_process_state()["running"]
+
+
 def _send_command_to_autocad(command: str) -> dict:
     try:
         import win32com.client  # type: ignore
@@ -124,10 +171,8 @@ def _send_command_to_autocad(command: str) -> dict:
             "message": "pywin32 is not installed in this Python environment.",
         }
 
-    prog_ids = [f"AutoCAD.Application.{v}" for v in ["25", "24", "23", "22", "21", "20"]]
-    prog_ids.append("AutoCAD.Application")
     last_error = ""
-    for prog_id in prog_ids:
+    for prog_id in AUTOCAD_PROG_IDS:
         try:
             acad = win32com.client.GetActiveObject(prog_id)
             doc = acad.ActiveDocument
@@ -153,6 +198,8 @@ def _send_command_to_autocad(command: str) -> dict:
         "error_code": error_codes.ACAD_COM_UNAVAILABLE,
         "message": "Could not connect to a running AutoCAD COM instance.",
         "last_error": last_error,
+        "tried_prog_ids": AUTOCAD_PROG_IDS,
+        "acad_process": _acad_process_state(),
     }
 
 
@@ -253,6 +300,7 @@ def feed_current_lisp(project_root: Path, script_path: Path, execute: bool = Fal
             "wrapper_path": run_files["wrapper_path"],
             "completion_marker": run_files["result_path"],
             "completion": completion,
+            "send_result": sent,
         },
         finished_at=datetime.now().isoformat(timespec="seconds"),
     )

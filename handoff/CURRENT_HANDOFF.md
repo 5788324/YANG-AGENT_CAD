@@ -1,5 +1,41 @@
 # 当前交接日志
 
+## 2026-06-04 23:50 交接更新
+
+本轮完成：
+
+- 已执行 `git fetch` 和 `git pull --rebase`，远端无新提交。
+- 已为默认 Python 安装 `pywin32`，并验证 `win32com.client` 可导入。
+- 已补 `AutoCAD.Application.26`，覆盖 AutoCAD 2027 COM ProgID。
+- 已补当前图执行失败诊断：
+  - `send_result.tried_prog_ids`
+  - `send_result.acad_process`
+  - 任务记录保存 `send_result`
+- 已新增 CLI 只读排障入口：
+  - `task-error-detail`
+  - `task_error_detail`
+- 已补 `task_error_detail` 专项诊断规则：`acad_process_without_com`。
+
+本机真实执行结果：
+
+- 命令：`scripts\current-smoke-test.cmd --execute`
+- 最新任务：`20260604-234553-07493147`
+- 结果：`failed`
+- 错误码：`ACAD_COM_UNAVAILABLE`
+- 关键诊断：`acad_process.running = true`，说明 AutoCAD 进程存在，但 Python 不能通过 COM 附着。
+
+下一步：
+
+1. 不要重复安装 `pywin32`。
+2. 让 AutoCAD 关闭后用普通权限重开，不要“以管理员身份运行”。
+3. 打开测试 DWG，等命令行可输入。
+4. 再运行 `scripts\current-smoke-test.cmd --execute`。
+5. 如果仍失败，运行：
+
+```cmd
+python -m yang_cad_agent.cli task-error-detail 任务ID
+```
+
 ## 2026-06-04 当前图一键烟测入口
 
 - 新增 `scripts\current-smoke-test.cmd`。

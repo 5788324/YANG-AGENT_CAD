@@ -6,6 +6,7 @@ from uuid import uuid4
 from unittest.mock import patch
 
 from yang_cad_agent.current_lisp import (
+    AUTOCAD_PROG_IDS,
     build_load_command,
     build_wrapper_lisp,
     feed_current_lisp,
@@ -84,6 +85,11 @@ class CurrentLispTests(unittest.TestCase):
             record = load_task_record(root, result["task_id"])
             self.assertEqual(record["status"], "sent_unconfirmed")
             self.assertIsNone(record["error_code"])
+            self.assertEqual(record["params"]["send_result"]["document"], "demo.dwg")
+
+    def test_autocad_2027_prog_id_is_attempted_first(self):
+        self.assertEqual(AUTOCAD_PROG_IDS[0], "AutoCAD.Application.26")
+        self.assertIn("AutoCAD.Application", AUTOCAD_PROG_IDS)
 
 
 if __name__ == "__main__":

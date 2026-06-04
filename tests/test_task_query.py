@@ -95,6 +95,32 @@ class TaskQueryTests(unittest.TestCase):
         self.assertIn("Unclassified", result["error"]["meaning"])
         self.assertEqual(result["diagnostics"][0]["rule_id"], "no_log_rule_match")
 
+    def test_error_detail_diagnoses_running_acad_without_com(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            task_dir = root / ".agent" / "tasks"
+            task_dir.mkdir(parents=True)
+            task = {
+                "task_id": "fail-com",
+                "status": "failed",
+                "error_code": "ACAD_COM_UNAVAILABLE",
+                "rollback_available": False,
+                "params": {
+                    "send_result": {
+                        "acad_process": {
+                            "running": True,
+                            "method": "powershell",
+                        }
+                    }
+                },
+            }
+            (task_dir / "fail-com.json").write_text(json.dumps(task), encoding="utf-8")
+
+            result = error_detail(root, "fail-com")
+
+        self.assertEqual(result["diagnostics"][0]["rule_id"], "acad_process_without_com")
+        self.assertIn("reopen it normally", result["diagnostics"][0]["suggestion"])
+
     def test_error_detail_diagnoses_config_locked_log(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

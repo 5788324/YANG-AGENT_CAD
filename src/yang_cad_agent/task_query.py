@@ -75,6 +75,24 @@ def error_detail(project_root: Path, task_id: str, log_tail_chars: int = 2000) -
     record = load_task_record(project_root, task_id)
     log_paths = _log_paths(project_root, task_id)
     log_tails = _log_tails(log_paths, log_tail_chars)
+    diagnostics = diagnose_log_tails(log_tails, record.get("error_code"))
+    send_result = record.get("params", {}).get("send_result", {})
+    acad_process = send_result.get("acad_process", {})
+    if record.get("error_code") == "ACAD_COM_UNAVAILABLE" and acad_process.get("running") is True:
+        diagnostics = [
+            {
+                "rule_id": "acad_process_without_com",
+                "severity": "error",
+                "evidence": "acad.exe is running but GetActiveObject failed",
+                "message": "AutoCAD is running, but the current Python process cannot attach to its COM object.",
+                "suggestion": (
+                    "Close AutoCAD, reopen it normally instead of as administrator, open a test DWG, "
+                    "wait until the command line is ready, then retry current-smoke-test --execute."
+                ),
+                "log_path": "",
+            },
+            *[item for item in diagnostics if item.get("rule_id") != "no_log_rule_match"],
+        ]
     rollback = None
     if record.get("rollback_available"):
         rollback = rollback_task(project_root, task_id, dry_run=True)
@@ -88,5 +106,5 @@ def error_detail(project_root: Path, task_id: str, log_tail_chars: int = 2000) -
         "rollback_dry_run": rollback,
         "log_paths": log_paths,
         "log_tails": log_tails,
-        "diagnostics": diagnose_log_tails(log_tails, record.get("error_code")),
+        "diagnostics": diagnostics,
     }

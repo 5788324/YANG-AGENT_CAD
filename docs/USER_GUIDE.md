@@ -337,6 +337,36 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 - 看到 `failed` 或 `error_code` 时。
 - 不知道任务 ID 是什么时。
 
+## 当前图烟测失败时怎么判断
+
+如果 `scripts\current-smoke-test.cmd --execute` 返回 `ACAD_COM_UNAVAILABLE`，先看输出里的：
+
+```text
+send_result.acad_process.running
+```
+
+- `false`：AutoCAD 没开，或系统当前看不到 `acad.exe`。
+- `true`：AutoCAD 已经在运行，但 Python 不能附着到 AutoCAD COM。
+
+当 `running: true` 但仍然失败时，优先按下面处理：
+
+1. 关闭 AutoCAD。
+2. 不要用“以管理员身份运行”，用普通方式重新打开 AutoCAD。
+3. 打开一张测试 DWG，等待命令行完全可输入。
+4. 再运行：
+
+```cmd
+scripts\current-smoke-test.cmd --execute
+```
+
+如果仍失败，把输出里的 `task_id` 交给 AI，让 AI 运行：
+
+```cmd
+python -m yang_cad_agent.cli task-error-detail 任务ID
+```
+
+`task_error_detail` 和 `task-error-detail` 都可以用。
+
 ## 一键图纸体检
 
 如果只是想快速看一张测试图纸里有哪些图层、块、文字标注，可以让 AI 运行这个命令。它会一次完成三种统计，并生成一份总报告。
