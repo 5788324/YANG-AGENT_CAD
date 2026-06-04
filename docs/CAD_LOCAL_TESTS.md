@@ -136,3 +136,23 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 ```
 
 不要在未确认备份路径前加 `--execute`。
+## 2026-06-05 AutoCAD 启动和 COM 复测
+
+新增本地启动入口：
+```cmd
+scripts\open-autocad-test.cmd
+scripts\open-autocad-test.cmd --execute
+```
+
+实测结果：
+- dry-run 能正确识别 `C:\Program Files\Autodesk\AutoCAD 2027\acad.exe`。
+- execute 已启动 AutoCAD，PID 为 `56860`。
+- 启动目标为 `.agent\tmp\current-open\S001-current-test.dwg`，不是 `sample` 原图。
+- 启动后两次运行 `scripts\current-com-diagnose.cmd`，结果仍为 `attachable: false`。
+- `scripts\current-smoke-test.cmd --execute` 按预期返回 `status: blocked` 和 `ACAD_COM_UNAVAILABLE`，未发送 LISP。
+
+当前结论：
+- 本地脚本可以主动启动 AutoCAD。
+- MCP 仍保持只读/诊断边界，不直接启动或关闭 AutoCAD。
+- 自动当前图测试还卡在 AutoCAD COM 不可附着；下一步需要排查 AutoCAD 是否完成初始化、是否有弹窗/许可界面、COM 注册是否正常。
+- 不自动关闭 AutoCAD；关闭前必须人工确认没有未保存图纸。

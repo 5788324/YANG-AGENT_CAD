@@ -571,3 +571,40 @@ python -m yang_cad_agent.cli task-error-detail 任务ID
   - 生成的 wrapper Track B LISP 校验通过。
 - 尚未做真实 AutoCAD 当前图 execute，因为本轮没有确认 AutoCAD 当前打开图纸状态。下一位 AI 可在 AutoCAD 打开 DWG 后执行：
   `C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli current-lisp --script toolbox\plugins\current_smoke\main.lsp --execute`
+## 2026-06-05 00:55 交接更新
+
+本轮回答并验证了“AI/MCP 能否主动开关 CAD 自测”的边界：
+
+- MCP 仍不负责真实打开/关闭 AutoCAD，保持只读、dry-run、诊断工具边界。
+- 新增本地启动入口：
+  - `src\yang_cad_agent\acad_launch.py`
+  - CLI：`acad-open`
+  - 脚本：`scripts\open-autocad-test.cmd`
+- `scripts\open-autocad-test.cmd` 默认 dry-run；`--execute` 才启动 AutoCAD。
+- 默认把 `sample\S001.dwg` 复制到 `.agent\tmp\current-open\S001-current-test.dwg`，再打开测试副本。
+
+本机真实复测：
+
+- `scripts\open-autocad-test.cmd` dry-run 通过。
+- `scripts\open-autocad-test.cmd --execute` 已启动 AutoCAD 2027，PID `56860`。
+- 两次运行 `scripts\current-com-diagnose.cmd` 后仍为：
+  - `acad_process.running = true`
+  - `attachable = false`
+  - `AutoCAD.Application.26` 返回 `操作无法使用`
+- `scripts\current-smoke-test.cmd --execute` 返回：
+  - `status: blocked`
+  - `error_code: ACAD_COM_UNAVAILABLE`
+  - 未发送 LISP
+
+下一步建议：
+
+1. 不要自动关闭 AutoCAD，除非用户明确确认没有未保存图纸。
+2. 优先排查 AutoCAD COM 不可附着：是否有许可/欢迎弹窗、是否真正进入命令行可输入状态、COM 注册是否正常。
+3. 只有 `scripts\current-com-diagnose.cmd` 返回 `attachable: true` 后，再运行 `scripts\current-smoke-test.cmd --execute`。
+
+结束前验证：
+- `scripts\doctor.cmd`：通过；提示 AutoCAD 进程 `56860` 正在运行。
+- `python -m compileall src tests`：通过。
+- MCP `server_info`：通过，`tool_count = 11`。
+- `validate-lisp toolbox\plugins\current_smoke\main.lsp --track B`：通过。
+- `scripts\test.cmd`：普通沙箱因 Windows Temp ACL 失败；提升权限重跑通过，71 tests OK。

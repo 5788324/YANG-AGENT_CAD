@@ -61,6 +61,18 @@ class CliCommandTests(unittest.TestCase):
         self.assertEqual(result["mode"], "read_only")
         self.assertEqual(diagnose.call_count, 1)
 
+    def test_acad_open_command(self) -> None:
+        output = io.StringIO()
+        with patch("yang_cad_agent.cli.launch_autocad") as launch:
+            launch.return_value = {"ok": True, "mode": "dry_run"}
+            with contextlib.redirect_stdout(output):
+                exit_code = main(["acad-open", "--root", "."])
+
+        result = json.loads(output.getvalue())
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(result["mode"], "dry_run")
+        self.assertFalse(launch.call_args.kwargs["execute"])
+
     def test_current_smoke_command(self) -> None:
         output = io.StringIO()
         with patch("yang_cad_agent.cli.run_current_smoke") as current_smoke:

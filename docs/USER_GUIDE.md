@@ -442,3 +442,26 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 - `status: completed`：AutoCAD 执行完并写入完成标记。
 - `status: sent_unconfirmed`：命令已发送给 AutoCAD，但 CLI 暂时没看到完成标记。检查 AutoCAD 命令行和 `completion_marker` 路径。
 - `status: failed`：执行失败，复制 `task_id` 让 AI 运行 `task_error_detail` 排障。
+## 2026-06-05 AutoCAD 测试启动入口
+
+AI 可以通过本地脚本启动 AutoCAD 2027，但不会通过 MCP 直接开关 CAD。
+
+先看计划，不启动：
+```cmd
+scripts\open-autocad-test.cmd
+```
+
+确认安全后再启动：
+```cmd
+scripts\open-autocad-test.cmd --execute
+```
+
+这个脚本默认会把 `sample\S001.dwg` 复制到 `.agent\tmp\current-open\S001-current-test.dwg`，然后打开这个测试副本。它不会保存 DWG，也不会关闭 AutoCAD。
+
+AutoCAD 打开后，按顺序运行：
+```cmd
+scripts\current-com-diagnose.cmd
+scripts\current-smoke-test.cmd --execute
+```
+
+只有 `current-com-diagnose` 返回 `attachable: true` 时，第二个命令才会真正发送测试 LISP。关闭 AutoCAD 必须手动确认，因为可能有未保存图纸，AI 不会自动杀掉 CAD 进程。

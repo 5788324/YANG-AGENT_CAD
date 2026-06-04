@@ -341,3 +341,14 @@
   - `sent_unconfirmed`：命令已发送，但暂未看到完成标记。
   - `failed`：COM 发送失败或 wrapper 写入失败标记。
 - MCP stdio 仍不暴露真实当前图执行能力，保持只读、dry-run 和排障边界。
+## 2026-06-05 AutoCAD 启动入口和真实 COM 复测
+
+- 新增安全启动模块 `src\yang_cad_agent\acad_launch.py`。
+- 新增 CLI：`python -m yang_cad_agent.cli acad-open`。
+- 新增 Windows 脚本：`scripts\open-autocad-test.cmd`。
+- 默认 dry-run 只显示启动计划；`--execute` 才启动 AutoCAD。
+- 默认打开 `.agent\tmp\current-open\S001-current-test.dwg` 测试副本，不直接打开或修改 `sample` 原图。
+- 已真实启动 AutoCAD 2027，PID `56860`。
+- 启动后两次运行 `scripts\current-com-diagnose.cmd`，结果仍为 `attachable = false`，`AutoCAD.Application.26` 返回 `操作无法使用`。
+- 已运行 `scripts\current-smoke-test.cmd --execute`，返回 `status: blocked` / `ACAD_COM_UNAVAILABLE`，未发送 LISP。
+- 当前安全边界：MCP 不主动打开/关闭 CAD；打开 CAD 只通过本地 CLI/脚本；关闭 CAD 不自动执行，避免误关未保存图纸。

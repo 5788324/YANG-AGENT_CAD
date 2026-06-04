@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from .acad_com_diagnose import diagnose_acad_com
+from .acad_launch import launch_autocad
 from .accore import run_accore_batch
 from .batch_workflow import run_batch_workflow
 from .backup import backup_files, rollback_task
@@ -88,6 +89,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     acad_com = sub.add_parser("acad-com-diagnose", help="Read-only AutoCAD COM diagnostics.")
     acad_com.add_argument("--root", default=".", help="Project root.")
+
+    acad_open = sub.add_parser("acad-open", help="Plan or launch AutoCAD with a test DWG copy.")
+    acad_open.add_argument("--root", default=".", help="Project root.")
+    acad_open.add_argument("--dwg", default="", help="Optional DWG path to open. Omit to use a sample test copy.")
+    acad_open.add_argument("--no-sample-copy", action="store_true", help="Do not use sample DWG test copy when --dwg is omitted.")
+    acad_open.add_argument("--execute", action="store_true", help="Actually launch AutoCAD. Omit for dry-run.")
 
     accore = sub.add_parser("accore-run", help="Run or dry-run accoreconsole batch.")
     accore.add_argument("--script", required=True, help="LISP script path.")
@@ -233,6 +240,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "acad-com-diagnose":
         result = diagnose_acad_com(Path(args.root))
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
+
+    if args.command == "acad-open":
+        result = launch_autocad(
+            project_root=Path(args.root),
+            execute=args.execute,
+            dwg=Path(args.dwg) if args.dwg else None,
+            use_sample_copy=not args.no_sample_copy,
+        )
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["ok"] else 1
 
