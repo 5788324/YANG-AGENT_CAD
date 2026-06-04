@@ -1,5 +1,23 @@
 # 小白操作文档
 
+## 当前图一键烟测脚本
+
+更简单的当前图测试入口是：
+
+```cmd
+scripts\current-smoke-test.cmd
+```
+
+默认只做 dry-run，会显示 `task_id`、`wrapper_path` 和 `completion_marker`，不会连接 AutoCAD。
+
+如果已经打开 AutoCAD，并且当前打开的是测试 DWG，再运行：
+
+```cmd
+scripts\current-smoke-test.cmd --execute
+```
+
+这个脚本只运行内置 `current_smoke`，只在 AutoCAD 命令行打印测试文字，不保存 DWG。失败时复制输出里的 `task_id`，让 AI 用 `task_error_detail` 排障。
+
 这份文档给完全不懂代码、CAD 也刚入门的人使用。你只需要知道：默认命令只做检查或预演，不会修改图纸；真正修改图纸的命令会明确要求加 `--execute`。
 
 ## accoreconsole 配置修复

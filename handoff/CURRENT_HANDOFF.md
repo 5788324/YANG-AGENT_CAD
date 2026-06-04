@@ -1,5 +1,15 @@
 # 当前交接日志
 
+## 2026-06-04 当前图一键烟测入口
+
+- 新增 `scripts\current-smoke-test.cmd`。
+- 不带参数时只 dry-run，输出 `task_id`、`wrapper_path`、`completion_marker`。
+- 加 `--execute` 时只执行内置 `current_smoke`，不批量、不保存 DWG、不走 MCP。
+- 脚本会解释 `completed`、`sent_unconfirmed`、`failed`，并提示失败时用 `task_error_detail` 排障。
+- 已验证 dry-run 通过，任务 `20260604-224020-76802b31` 输出 wrapper 和 completion marker。
+- 已验证 execute 失败路径，任务 `20260604-224027-0b90ef9e` 返回 `ACAD_COM_DEPENDENCY_MISSING`，说明当前 Python 环境缺 pywin32；未修改 DWG。
+- 下一步建议：安装/配置 pywin32 后，用户打开 AutoCAD 和测试 DWG，再运行 `scripts\current-smoke-test.cmd --execute` 做真实当前图验证。
+
 ## 2026-05-24 图纸体检总报告汇总器进展
 
 - 新增模块 `src\yang_cad_agent\report_summary.py`。

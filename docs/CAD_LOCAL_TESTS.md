@@ -1,5 +1,31 @@
 # AutoCAD 本地实测清单
 
+## 当前图一键烟测脚本
+
+推荐优先使用这个入口验证当前图 LISP 链路。
+
+dry-run：
+
+```cmd
+scripts\current-smoke-test.cmd
+```
+
+预期：不连接 AutoCAD，不修改 DWG，输出 `task_id`、`wrapper_path`、`completion_marker`。
+
+execute：
+
+```cmd
+scripts\current-smoke-test.cmd --execute
+```
+
+执行前必须确认 AutoCAD 2027 已打开，并且当前打开的是测试 DWG。该脚本只运行 `current_smoke`，只在 AutoCAD 命令行打印测试文字，不保存 DWG。
+
+结果判断：
+
+- `completed`：AutoCAD 已执行并写入完成标记。
+- `sent_unconfirmed`：命令已发送，但暂时没看到完成标记；检查 AutoCAD 命令行和 `completion_marker`。
+- `failed`：复制 `task_id`，让 AI 使用 `task_error_detail` 排障。
+
 本文件用于真实 AutoCAD 环境测试。不要使用客户项目图纸。优先使用空白图纸或专门创建的测试 DWG。
 
 如果使用用户提供的 `sample` 目录，请先阅读 [SAMPLE_DWGS.md](SAMPLE_DWGS.md)。

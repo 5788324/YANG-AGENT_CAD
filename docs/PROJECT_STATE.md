@@ -1,5 +1,13 @@
 # 项目状态
 
+## 2026-06-04 当前图一键烟测入口
+
+- 新增 `scripts\current-smoke-test.cmd`。
+- 默认 dry-run：只调用 `current-lisp` 生成 `wrapper_path` 和 `completion_marker`，不连接 AutoCAD。
+- `--execute` 模式：只运行 `toolbox\plugins\current_smoke\main.lsp`，用于当前 AutoCAD 图纸链路烟测。
+- 脚本会打印 `completed`、`sent_unconfirmed`、`failed` 的含义，并提示复制 `task_id` 让 AI 用 `task_error_detail` 排障。
+- 真实当前图 execute 仍不通过 MCP 暴露。
+
 ## 2026-05-24 图纸体检总报告汇总器
 
 - 新增 CLI 命令 `summarize-reports`，用于把 `*.layer-report.csv`、`*.block-report.csv`、`*.annotation-report.csv` 汇总为 `CAD_REPORT_SUMMARY.md`。
