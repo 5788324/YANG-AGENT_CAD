@@ -36,6 +36,8 @@ set "RC=%ERRORLEVEL%"
 echo.
 echo [YANG Agent CAD] If attachable is false and acad_process.running is true:
 echo   Close AutoCAD, reopen it normally, open a test DWG, wait for command line, then retry.
+echo [YANG Agent CAD] If diagnostics include acad_not_in_running_object_table:
+echo   AutoCAD is running but not visible to COM ROT. Check startup/license dialogs or repair COM registration.
 echo [YANG Agent CAD] If attachable is true:
 echo   You can retry scripts\current-smoke-test.cmd --execute on a test DWG.
 exit /b %RC%

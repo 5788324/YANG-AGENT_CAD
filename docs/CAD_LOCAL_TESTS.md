@@ -156,3 +156,20 @@ scripts\open-autocad-test.cmd --execute
 - MCP 仍保持只读/诊断边界，不直接启动或关闭 AutoCAD。
 - 自动当前图测试还卡在 AutoCAD COM 不可附着；下一步需要排查 AutoCAD 是否完成初始化、是否有弹窗/许可界面、COM 注册是否正常。
 - 不自动关闭 AutoCAD；关闭前必须人工确认没有未保存图纸。
+
+## 2026-06-05 COM 深度诊断补充
+
+`scripts\current-com-diagnose.cmd` 现在会额外输出：
+- `acad_process_details`：AutoCAD 进程路径、PID、窗口标题。
+- `registered_prog_ids`：本机注册的 AutoCAD COM ProgID 和 CLSID。
+- `rot`：COM Running Object Table 中是否存在 AutoCAD/DWG 相关条目。
+
+本机当前结果：
+- `AutoCAD.Application.26` 已注册，CLSID 为 `{E76F49EB-7DAE-4682-ADE6-6C12ECA76DD7}`。
+- `AutoCAD.Application` 也指向同一个 CLSID。
+- AutoCAD 进程 `56860` 正在运行。
+- `MainWindowTitle` 为空。
+- ROT `entry_count = 0`，没有 AutoCAD-like 条目。
+- 诊断规则命中 `acad_not_in_running_object_table` 和 `acad_process_without_com`。
+
+这说明问题不是 Python 缺少 pywin32，也不是 AutoCAD 2027 ProgID 没注册；当前更可能是 AutoCAD 尚未真正进入可自动化状态，或者 COM Running Object Table 注册异常。

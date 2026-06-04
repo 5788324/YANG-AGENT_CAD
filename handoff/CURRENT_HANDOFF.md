@@ -608,3 +608,42 @@ python -m yang_cad_agent.cli task-error-detail 任务ID
 - MCP `server_info`：通过，`tool_count = 11`。
 - `validate-lisp toolbox\plugins\current_smoke\main.lsp --track B`：通过。
 - `scripts\test.cmd`：普通沙箱因 Windows Temp ACL 失败；提升权限重跑通过，71 tests OK。
+
+## 2026-06-05 继续交接：COM 深度诊断
+
+本轮增强 `acad-com-diagnose`：
+
+- 新增 `acad_process_details`。
+- 新增 `registered_prog_ids`。
+- 新增 `rot`，读取 COM Running Object Table。
+- 新增诊断规则 `acad_not_in_running_object_table`。
+
+本机复测结果：
+
+- AutoCAD 2027 进程仍在运行，PID `56860`。
+- `AutoCAD.Application.26` 已注册，CLSID `{E76F49EB-7DAE-4682-ADE6-6C12ECA76DD7}`。
+- `AutoCAD.Application` 已注册，同一 CLSID。
+- `MainWindowTitle` 为空。
+- ROT `entry_count = 0`，没有 AutoCAD/DWG 相关条目。
+- `attachable = false`。
+
+判断：
+
+- 不是 pywin32 缺失。
+- 不是 AutoCAD 2027 ProgID 未注册。
+- 更可能是 AutoCAD 没有完成初始化、卡在许可/欢迎/弹窗状态，或者当前实例没有注册到 Running Object Table。
+
+下一步：
+
+1. 需要用户或 Computer Use 观察 AutoCAD 界面是否有许可/欢迎/错误弹窗。
+2. 如果界面正常且命令行可输入，再考虑 AutoCAD COM 注册修复命令。
+3. 仍不要自动关闭 AutoCAD，除非用户确认没有未保存图纸。
+
+验证：
+- `python -m unittest tests.test_acad_com_diagnose tests.test_cli_commands`：通过。
+- `scripts\current-com-diagnose.cmd`：通过，返回 ROT `entry_count = 0`。
+- `python -m compileall src tests`：通过。
+- `scripts\doctor.cmd`：通过；提示 AutoCAD PID `56860` 正在运行。
+- MCP `server_info`：通过，`tool_count = 11`。
+- `validate-lisp toolbox\plugins\current_smoke\main.lsp --track B`：通过。
+- `scripts\test.cmd`：普通沙箱因 Windows Temp ACL 失败；提升权限重跑通过，72 tests OK。

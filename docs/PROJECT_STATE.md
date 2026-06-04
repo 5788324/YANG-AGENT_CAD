@@ -352,3 +352,18 @@
 - 启动后两次运行 `scripts\current-com-diagnose.cmd`，结果仍为 `attachable = false`，`AutoCAD.Application.26` 返回 `操作无法使用`。
 - 已运行 `scripts\current-smoke-test.cmd --execute`，返回 `status: blocked` / `ACAD_COM_UNAVAILABLE`，未发送 LISP。
 - 当前安全边界：MCP 不主动打开/关闭 CAD；打开 CAD 只通过本地 CLI/脚本；关闭 CAD 不自动执行，避免误关未保存图纸。
+
+## 2026-06-05 COM 深度诊断补充
+
+- `acad-com-diagnose` 新增：
+  - `acad_process_details`
+  - `registered_prog_ids`
+  - `rot`
+- 本机当前结论：
+  - `AutoCAD.Application.26` 已注册。
+  - `AutoCAD.Application` 已注册。
+  - `acad.exe` 正在运行，PID `56860`。
+  - AutoCAD 主窗口标题为空。
+  - COM Running Object Table `entry_count = 0`。
+  - 诊断命中 `acad_not_in_running_object_table`。
+- 下一步不应继续盲目发 LISP；应优先确认 AutoCAD 是否卡在启动、许可、欢迎页或弹窗状态，或执行 AutoCAD COM 注册修复。
