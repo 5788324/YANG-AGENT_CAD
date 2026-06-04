@@ -11,6 +11,7 @@ from .accore import run_accore_batch
 from .batch_workflow import run_batch_workflow
 from .backup import backup_files, rollback_task
 from .current_lisp import feed_current_lisp
+from .current_smoke import run_current_smoke
 from .doctor import run_doctor
 from .health_check import run_health_check
 from .ledger import create_task_record, list_task_records, load_task_record
@@ -80,6 +81,10 @@ def build_parser() -> argparse.ArgumentParser:
     current.add_argument("--script", required=True, help="LISP script path.")
     current.add_argument("--root", default=".", help="Project root.")
     current.add_argument("--execute", action="store_true", help="Actually send to AutoCAD COM.")
+
+    current_smoke = sub.add_parser("current-smoke", help="Run guarded current drawing smoke test.")
+    current_smoke.add_argument("--root", default=".", help="Project root.")
+    current_smoke.add_argument("--execute", action="store_true", help="Actually send to AutoCAD COM after preflight.")
 
     acad_com = sub.add_parser("acad-com-diagnose", help="Read-only AutoCAD COM diagnostics.")
     acad_com.add_argument("--root", default=".", help="Project root.")
@@ -218,6 +223,11 @@ def main(argv: list[str] | None = None) -> int:
             script_path=Path(args.script),
             execute=args.execute,
         )
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0 if result["ok"] else 1
+
+    if args.command == "current-smoke":
+        result = run_current_smoke(project_root=Path(args.root), execute=args.execute)
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0 if result["ok"] else 1
 

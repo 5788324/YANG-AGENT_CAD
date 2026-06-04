@@ -382,6 +382,11 @@ python -m yang_cad_agent.cli task-error-detail 任务ID
 
 当前本机已验证：`pywin32.available = true`，`acad_process.running = true`，但 `attachable = false`。这说明 AutoCAD 进程存在，但当前 Python 还不能附着到 AutoCAD COM；优先按“普通权限重开 AutoCAD + 打开测试 DWG + 等命令行可输入”处理。
 
+新版 `scripts\current-smoke-test.cmd --execute` 会先自动做 COM ready check：
+
+- `blocked`：预检已阻止执行，没有发送 LISP，通常也没有新的失败任务 ID。按 `next_step` 处理。
+- `completed` / `sent_unconfirmed` / `failed`：说明已经进入当前图执行流程，失败时再把 `task_id` 给 AI 排障。
+
 ## 一键图纸体检
 
 如果只是想快速看一张测试图纸里有哪些图层、块、文字标注，可以让 AI 运行这个命令。它会一次完成三种统计，并生成一份总报告。

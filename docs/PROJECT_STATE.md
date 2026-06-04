@@ -12,7 +12,17 @@
   - Windows 脚本：`scripts\current-com-diagnose.cmd`
   - MCP stdio 工具：`acad_com_diagnose`
 - 本机诊断结果：默认 Python 非管理员、`pywin32` 可用、`acad.exe` 正在运行、`attachable = false`。
+- `scripts\current-smoke-test.cmd --execute` 现在走 guarded `current-smoke` 入口：先做只读 COM ready check；如果 `attachable = false`，直接返回 `status: blocked`，不发送 LISP。
 - 当前真实执行未完成闭环：任务 `20260604-234553-07493147` 仍失败，原因是 AutoCAD 进程存在但 COM Running Object Table 不可连接。下一步需要关闭 AutoCAD，用普通权限重开并打开测试 DWG 后再运行 `scripts\current-smoke-test.cmd --execute`。
+
+## 2026-06-05 当前最新状态
+
+- 复测 `scripts\current-com-diagnose.cmd`：当前 `acad_process.running = false`，AutoCAD 未运行。
+- 新增 guarded 当前图烟测入口：
+  - CLI：`python -m yang_cad_agent.cli current-smoke`
+  - Windows 脚本仍是：`scripts\current-smoke-test.cmd`
+- dry-run 行为不变：生成 wrapper 和 completion marker。
+- execute 行为变更：先运行 COM ready check；AutoCAD 未运行或 COM 不可附着时返回 `status: blocked`，不发送 LISP。
 
 ## 2026-06-04 当前图一键烟测入口
 

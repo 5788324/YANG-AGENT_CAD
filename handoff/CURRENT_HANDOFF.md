@@ -1,5 +1,37 @@
 # 当前交接日志
 
+## 2026-06-05 00:10 交接更新
+
+本轮新增 guarded 当前图烟测入口：
+
+- 新增 `src\yang_cad_agent\current_smoke.py`。
+- 新增 CLI：`current-smoke`。
+- 更新 `scripts\current-smoke-test.cmd`，现在不再直接调用 `current-lisp`。
+
+行为：
+
+- 不带参数：仍然 dry-run，生成 `wrapper_path` 和 `completion_marker`。
+- `--execute`：先运行 `acad-com-diagnose` 同等逻辑。
+- 只有 `attachable = true` 时才会调用 `current-lisp --execute` 发送 LISP。
+- 如果 AutoCAD 未运行或 COM 不可附着，返回：
+  - `status: blocked`
+  - `error_code: ACAD_COM_UNAVAILABLE`
+  - `diagnosis`
+  - `next_step`
+- blocked 不发送 LISP，且不会创建 current-lisp 失败任务。
+
+本机复测：
+
+- 当前 AutoCAD 未运行：`acad_process.running = false`。
+- `scripts\current-smoke-test.cmd` dry-run 通过，任务 `20260605-000828-eaf9e593`。
+- `scripts\current-smoke-test.cmd --execute` 返回 `status: blocked`，未发送 LISP。
+
+下一步：
+
+1. 用户打开 AutoCAD 2027 和测试 DWG 后，先运行 `scripts\current-com-diagnose.cmd`。
+2. 只有 `attachable: true` 时再运行 `scripts\current-smoke-test.cmd --execute`。
+3. 若仍 blocked，继续按 diagnosis 的 `rule_id` 和 `next_step` 排障。
+
 ## 2026-06-04 23:50 交接更新
 
 ## 2026-06-04 继续工作流：COM 只读诊断入口
