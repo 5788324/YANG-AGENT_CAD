@@ -93,6 +93,19 @@ scripts\personal-health-check.cmd .agent\tmp\sample-run --execute
 
 不要直接对客户原图目录加 `--execute`。先让 AI 复制测试副本，再执行。
 
+当前测试副本已经验证成功。运行上面的 `--execute` 后，会在 `.agent\tmp\sample-run` 生成：
+
+```text
+S001-test.dwg.layer-report.csv
+S001-test.dwg.block-report.csv
+S001-test.dwg.annotation-report.csv
+S001-test.dwg.xref-image-report.csv
+S001-test.dwg.title-block-candidate-report.csv
+CAD_REPORT_SUMMARY.md
+```
+
+这 5 个 CSV 和 1 个总报告都是只读检查结果，不会主动修改 DWG。
+
 ## 第二步：运行测试
 
 运行：
@@ -330,4 +343,4 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 .agent\tmp\sample-run\CAD_REPORT_SUMMARY.md
 ```
 
-当前测试副本已经验证成功：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24。以后正式处理客户图纸时，仍然先让 AI 复制副本、dry-run、确认备份，再执行。
+当前测试副本已经验证成功：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24，外参/图片/底图引用 4，图框标题栏候选 0。以后正式处理客户图纸时，仍然先让 AI 复制副本、dry-run、确认备份，再执行。

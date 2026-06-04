@@ -14,7 +14,13 @@ class HealthCheckTests(unittest.TestCase):
 
         self.assertEqual(
             [item["id"] for item in scripts],
-            ["batch.layer_report", "batch.block_report", "batch.annotation_report"],
+            [
+                "batch.layer_report",
+                "batch.block_report",
+                "batch.annotation_report",
+                "batch.xref_image_report",
+                "batch.title_block_candidate_report",
+            ],
         )
         self.assertTrue(all(item["exists"] for item in scripts))
 

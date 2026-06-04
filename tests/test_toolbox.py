@@ -41,6 +41,8 @@ class ToolboxTests(unittest.TestCase):
         self.assertIn("batch.annotation_report", plugin_ids)
         self.assertIn("batch.block_report", plugin_ids)
         self.assertIn("batch.layer_report", plugin_ids)
+        self.assertIn("batch.title_block_candidate_report", plugin_ids)
+        self.assertIn("batch.xref_image_report", plugin_ids)
         self.assertIn("batch.smoke_qsave", plugin_ids)
         self.assertIn("current.smoke_test", plugin_ids)
 

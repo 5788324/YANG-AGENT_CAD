@@ -284,3 +284,18 @@
   - `batch.block_report` dry-run 成功。
   - `batch.annotation_report` dry-run 成功。
   - 已生成 `.agent\reports\PERSONAL_HEALTH_PLAN.md`。
+
+## 2026-06-04 测试副本真实只读体检和新增报告插件
+
+- 新增内置只读插件：
+  - `batch.xref_image_report`：统计外参、IMAGE、PDF/DGN/DWF 底图引用，输出 `*.xref-image-report.csv`。
+  - `batch.title_block_candidate_report`：根据块名模式识别疑似图框/标题栏块，输出 `*.title-block-candidate-report.csv`。
+- `health-check` / `personal-health` 已从 3 个报告插件扩展到 5 个报告插件。
+- `summarize-reports` 已支持汇总外参/图片引用和图框标题栏候选。
+- `personal-health` dry-run 报告现在会显示可对测试副本执行的下一步命令。
+- 已对测试副本 `.agent\tmp\sample-run\S001-test.dwg` 运行真实只读体检：
+  - 5 个插件全部成功。
+  - 生成 5 个 CSV。
+  - 生成 `.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md`。
+  - 汇总结果：图层 12、图层对象 93、普通块参照 1、文字/标注对象 24、外参/图片/底图引用 4、图框标题栏候选 0。
+  - 回滚 dry-run 对任务 `20260604-214229-d4f6c53d` 验证通过。

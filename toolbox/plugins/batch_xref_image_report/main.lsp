@@ -1,0 +1,57 @@
+(setvar "CMDDIA" 0)
+(setvar "FILEDIA" 0)
+
+(defun yang-xref-image-count (entity-type / ss)
+  (setq ss (ssget "X" (list (cons 0 entity-type))))
+  (if ss (sslength ss) 0)
+)
+
+(defun yang-xref-image-write-row (handle dwg-name ref-type name path count)
+  (write-line
+    (strcat dwg-name "," ref-type "," name "," path "," (itoa count))
+    handle
+  )
+)
+
+(defun yang-xref-image-report-write (/ dwg-prefix dwg-name report-path handle block name flags path xref-total image-count pdf-count dgn-count dwf-count total)
+  (setq dwg-prefix (getvar "DWGPREFIX"))
+  (setq dwg-name (getvar "DWGNAME"))
+  (setq report-path (strcat dwg-prefix dwg-name ".xref-image-report.csv"))
+  (setq handle (open report-path "w"))
+  (if handle
+    (progn
+      (write-line "dwg,ref_type,name,path_or_source,count" handle)
+      (setq xref-total 0)
+      (setq block (tblnext "BLOCK" T))
+      (while block
+        (setq name (cdr (assoc 2 block)))
+        (setq flags (cdr (assoc 70 block)))
+        (setq path (cdr (assoc 1 block)))
+        (if (= 4 (logand flags 4))
+          (progn
+            (setq xref-total (+ xref-total 1))
+            (if (not path) (setq path ""))
+            (yang-xref-image-write-row handle dwg-name "XREF" name path 1)
+          )
+        )
+        (setq block (tblnext "BLOCK"))
+      )
+      (setq image-count (yang-xref-image-count "IMAGE"))
+      (setq pdf-count (yang-xref-image-count "PDFUNDERLAY"))
+      (setq dgn-count (yang-xref-image-count "DGNUNDERLAY"))
+      (setq dwf-count (yang-xref-image-count "DWFUNDERLAY"))
+      (yang-xref-image-write-row handle dwg-name "IMAGE" "__IMAGE_OBJECTS__" "" image-count)
+      (yang-xref-image-write-row handle dwg-name "PDFUNDERLAY" "__PDF_UNDERLAY__" "" pdf-count)
+      (yang-xref-image-write-row handle dwg-name "DGNUNDERLAY" "__DGN_UNDERLAY__" "" dgn-count)
+      (yang-xref-image-write-row handle dwg-name "DWFUNDERLAY" "__DWF_UNDERLAY__" "" dwf-count)
+      (setq total (+ xref-total image-count pdf-count dgn-count dwf-count))
+      (yang-xref-image-write-row handle dwg-name "__TOTAL__" "reference_total" "" total)
+      (close handle)
+      (princ (strcat "\nYANG AGENT CAD: xref/image report written to " report-path))
+    )
+    (princ (strcat "\nYANG AGENT CAD: failed to open report file " report-path))
+  )
+)
+
+(yang-xref-image-report-write)
+(princ)

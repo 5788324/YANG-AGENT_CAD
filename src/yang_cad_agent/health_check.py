@@ -22,6 +22,14 @@ REPORT_PLUGINS = [
         "id": "batch.annotation_report",
         "script": Path("toolbox/plugins/batch_annotation_report/main.lsp"),
     },
+    {
+        "id": "batch.xref_image_report",
+        "script": Path("toolbox/plugins/batch_xref_image_report/main.lsp"),
+    },
+    {
+        "id": "batch.title_block_candidate_report",
+        "script": Path("toolbox/plugins/batch_title_block_candidate_report/main.lsp"),
+    },
 ]
 
 

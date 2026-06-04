@@ -16,6 +16,7 @@ venv/
 .agent/tmp/
 !/.agent/.gitkeep
 tmp-tests/
+ErrorReports/
 
 # CAD/user artifacts
 *.dwg

@@ -50,7 +50,9 @@ def summarize_reports(folder: Path, output: Path | None = None) -> dict:
     layer_files = _find_report_files(folder, ".layer-report.csv")
     block_files = _find_report_files(folder, ".block-report.csv")
     annotation_files = _find_report_files(folder, ".annotation-report.csv")
-    report_files = layer_files + block_files + annotation_files
+    xref_image_files = _find_report_files(folder, ".xref-image-report.csv")
+    title_block_files = _find_report_files(folder, ".title-block-candidate-report.csv")
+    report_files = layer_files + block_files + annotation_files + xref_image_files + title_block_files
     if not report_files:
         return {
             "ok": False,
@@ -61,11 +63,17 @@ def summarize_reports(folder: Path, output: Path | None = None) -> dict:
     layer_rows = [row for path in layer_files for row in _read_csv(path)]
     block_rows = [row for path in block_files for row in _read_csv(path)]
     annotation_rows = [row for path in annotation_files for row in _read_csv(path)]
+    xref_image_rows = [row for path in xref_image_files for row in _read_csv(path)]
+    title_block_rows = [row for path in title_block_files for row in _read_csv(path)]
 
     total_layers = sum(1 for row in layer_rows if row.get("layer") != "__TOTAL__")
     total_entities = sum(_int_value(row.get("entity_count")) for row in layer_rows if row.get("layer") == "__TOTAL__")
     total_blocks = sum(_int_value(row.get("insert_count")) for row in block_rows if row.get("block") == "__TOTAL__")
     total_annotations = sum(_int_value(row.get("count")) for row in annotation_rows if row.get("entity_type") == "__TOTAL__")
+    total_references = sum(_int_value(row.get("count")) for row in xref_image_rows if row.get("ref_type") == "__TOTAL__")
+    total_title_candidates = sum(
+        _int_value(row.get("insert_count")) for row in title_block_rows if row.get("block") == "__TOTAL__"
+    )
 
     lines = [
         "# CAD 图纸体检总报告",
@@ -81,6 +89,8 @@ def summarize_reports(folder: Path, output: Path | None = None) -> dict:
             ["图层对象总数", str(total_entities)],
             ["普通块参照总数", str(total_blocks)],
             ["文字/标注对象总数", str(total_annotations)],
+            ["外参/图片/底图引用总数", str(total_references)],
+            ["图框标题栏候选数", str(total_title_candidates)],
             ["CSV 报告文件数", str(len(report_files))],
         ],
     )
@@ -123,6 +133,34 @@ def summarize_reports(folder: Path, output: Path | None = None) -> dict:
     ]
     _append_table(lines, ["DWG", "类型", "说明", "数量"], annotation_table)
 
+    lines.extend(["", "## 外参和图片引用", ""])
+    reference_table = [
+        [
+            row.get("dwg", ""),
+            row.get("ref_type", ""),
+            row.get("name", ""),
+            row.get("path_or_source", ""),
+            row.get("count", "0"),
+        ]
+        for row in xref_image_rows
+        if row.get("ref_type") != "__TOTAL__"
+    ]
+    _append_table(lines, ["DWG", "类型", "名称", "路径/来源", "数量"], reference_table)
+
+    lines.extend(["", "## 图框标题栏候选", ""])
+    title_table = [
+        [
+            row.get("dwg", ""),
+            row.get("block", ""),
+            row.get("insert_count", "0"),
+            row.get("has_attributes", ""),
+            row.get("reason", ""),
+        ]
+        for row in title_block_rows
+        if row.get("block") != "__TOTAL__"
+    ]
+    _append_table(lines, ["DWG", "块名", "插入次数", "有属性", "原因"], title_table)
+
     lines.extend(
         [
             "",
@@ -142,6 +180,8 @@ def summarize_reports(folder: Path, output: Path | None = None) -> dict:
             "entities": total_entities,
             "blocks": total_blocks,
             "annotations": total_annotations,
+            "references": total_references,
+            "title_block_candidates": total_title_candidates,
             "csv_files": len(report_files),
         },
     }

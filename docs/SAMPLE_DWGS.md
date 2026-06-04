@@ -45,6 +45,45 @@ scripts\personal-health-check.cmd
 
 当前已验证：该命令能匹配 11 个 DWG，并为图层统计、块统计、文字标注统计三个只读插件生成 dry-run 任务。
 
+## 当前测试副本真实只读体检结果
+
+已复制：
+
+```text
+sample\S001.dwg -> .agent\tmp\sample-run\S001-test.dwg
+```
+
+已对测试副本运行：
+
+```cmd
+scripts\personal-health-check.cmd .agent\tmp\sample-run --execute
+```
+
+结果：
+
+- 只匹配 1 个 DWG：`.agent\tmp\sample-run\S001-test.dwg`
+- 5 个只读插件全部执行成功：
+  - `batch.layer_report`
+  - `batch.block_report`
+  - `batch.annotation_report`
+  - `batch.xref_image_report`
+  - `batch.title_block_candidate_report`
+- 已生成 5 个 CSV 和 1 个总报告：
+  - `.layer-report.csv`
+  - `.block-report.csv`
+  - `.annotation-report.csv`
+  - `.xref-image-report.csv`
+  - `.title-block-candidate-report.csv`
+  - `CAD_REPORT_SUMMARY.md`
+- 总报告摘要：
+  - 图层 12
+  - 图层对象 93
+  - 普通块参照 1
+  - 文字/标注对象 24
+  - 外参/图片/底图引用 4
+  - 图框标题栏候选 0
+- 回滚 dry-run 已验证成功，任务 `20260604-214229-d4f6c53d` 可预览恢复测试副本。
+
 这个命令只预演，不修改 DWG：
 
 ```cmd

@@ -91,7 +91,7 @@ $env:PYTHONPATH='src'
 
 ## 一键图纸体检 MCP 工具
 
-`health_check` 用于让 Codex/Antigravity 通过 MCP 做图纸体检预演。它当前只暴露 dry-run，不接受真实执行。即使调用参数里传入 `execute: true`，MCP 层也会固定按 `execute=false` 调用底层流程。
+`health_check` 用于让 Codex/Antigravity 通过 MCP 做图纸体检预演。它当前只暴露 dry-run，不接受真实执行。即使调用参数里传入 `execute: true`，MCP 层也会固定按 `execute=false` 调用底层流程。当前体检包含图层、块、文字标注、外参/图片引用、图框标题栏候选 5 个只读报告插件。
 
 调用示例：
 
@@ -111,7 +111,7 @@ $env:PYTHONPATH='src'
 
 ## 报告汇总 MCP 工具
 
-`summarize_reports` 用于让 Codex/Antigravity 通过 MCP 汇总已有 CSV 报告。它不启动 accoreconsole，不修改 DWG，只读取 `*.layer-report.csv`、`*.block-report.csv`、`*.annotation-report.csv` 并写出 Markdown 总报告。
+`summarize_reports` 用于让 Codex/Antigravity 通过 MCP 汇总已有 CSV 报告。它不启动 accoreconsole，不修改 DWG，只读取图层、块、文字标注、外参/图片引用、图框标题栏候选 CSV 并写出 Markdown 总报告。
 
 调用示例：
 
@@ -144,7 +144,7 @@ $env:PYTHONPATH='src'
 - `mode`：固定为 `dry_run`
 - `folder`：扫描的 DWG 目录
 - `report.output`：生成的 Markdown 计划报告
-- `health_check.steps`：三个只读统计插件的 dry-run 任务
+- `health_check.steps`：5 个只读统计插件的 dry-run 任务
 
 当前工具清单还包括：
 

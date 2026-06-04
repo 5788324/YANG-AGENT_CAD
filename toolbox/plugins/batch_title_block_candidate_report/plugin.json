@@ -1,0 +1,20 @@
+{
+  "id": "batch.title_block_candidate_report",
+  "name": "批量图框标题栏候选检查",
+  "version": "0.1.0",
+  "category": "reports",
+  "description": "使用 accoreconsole 根据块名和插入属性识别疑似图框或标题栏块，并在图纸同目录输出 CSV 报告。该插件不修改 DWG。",
+  "author": "YANG AGENT CAD",
+  "source": "builtin",
+  "tracks": ["C"],
+  "accore_safe": true,
+  "risk": "read",
+  "requires_backup": false,
+  "supports_dry_run": true,
+  "params_schema": {},
+  "entry": {
+    "type": "lisp",
+    "path": "main.lsp",
+    "command": "batch-title-block-candidate-report"
+  }
+}

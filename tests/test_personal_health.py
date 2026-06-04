@@ -36,6 +36,7 @@ class PersonalHealthTests(unittest.TestCase):
             folder=Path("sample"),
             pattern="*.dwg",
             recursive=False,
+            execute_command='scripts\\personal-health-check.cmd "sample" --execute',
         )
 
         self.assertTrue(report["ok"])
@@ -43,6 +44,7 @@ class PersonalHealthTests(unittest.TestCase):
         self.assertIn("安全预演 dry-run", text)
         self.assertIn("batch.layer_report", text)
         self.assertIn("匹配 DWG 数量：2", text)
+        self.assertIn("scripts\\personal-health-check.cmd", text)
 
     def test_run_personal_health_defaults_to_sample_and_writes_report(self) -> None:
         root = TMP_ROOT / "project"

@@ -418,3 +418,33 @@
 - 下一步建议：
   1. 复制 `sample\S001.dwg` 到 `.agent\tmp\sample-run`，对测试副本运行 `scripts\personal-health-check.cmd .agent\tmp\sample-run --execute`，生成真实 CSV 和总报告。
   2. 补第一批个人常用只读插件：图框/标题栏候选识别、外参/图片引用检查。
+
+## 2026-06-04 测试副本真实只读体检和两个新插件
+
+- 已新增两个个人常用只读插件：
+  - `batch.xref_image_report`
+  - `batch.title_block_candidate_report`
+- 已把它们纳入 `health-check` 和 `personal-health`。
+- 已增强 `summarize-reports`，总报告现在包含：
+  - 外参和图片引用
+  - 图框标题栏候选
+- 已对 `.agent\tmp\sample-run\S001-test.dwg` 运行真实只读体检：
+  - `batch.layer_report` 成功，任务 `20260604-214229-d4f6c53d`
+  - `batch.block_report` 成功，任务 `20260604-214235-a1e94f34`
+  - `batch.annotation_report` 成功，任务 `20260604-214314-a3d4ecf0`
+  - `batch.xref_image_report` 成功，任务 `20260604-214316-da72818f`
+  - `batch.title_block_candidate_report` 成功，任务 `20260604-214318-2e40c127`
+- 生成文件位于 `.agent\tmp\sample-run`，不要提交：
+  - 5 个 CSV
+  - `CAD_REPORT_SUMMARY.md`
+- 汇总结果：
+  - 图层 12
+  - 图层对象 93
+  - 普通块参照 1
+  - 文字/标注对象 24
+  - 外参/图片/底图引用 4
+  - 图框标题栏候选 0
+- 回滚 dry-run 已验证：任务 `20260604-214229-d4f6c53d` 可预览恢复 `S001-test.dwg`。
+- 下一步建议：
+  1. 给 `batch.title_block_candidate_report` 增加更多图框命名规则样本。
+  2. 增加当前图执行完成标记监听，改善 AutoCAD 当前图插件体验。

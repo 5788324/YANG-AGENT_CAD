@@ -22,6 +22,8 @@
 | 批量图层统计报告 | `batch.layer_report` | 可用，已在测试副本验证 | 只读报告 |
 | 批量块统计报告 | `batch.block_report` | 可用，已在测试副本验证 | 只读报告 |
 | 批量文字标注统计报告 | `batch.annotation_report` | 可用，已在测试副本验证 | 只读报告 |
+| 批量外参和图片引用检查 | `batch.xref_image_report` | 可用，已在测试副本验证 | 只读报告 |
+| 批量图框标题栏候选检查 | `batch.title_block_candidate_report` | 可用，已在测试副本验证 | 只读报告 |
 | 图纸体检总报告 | `summarize-reports` | 可用，已在测试副本验证 | 只读报告 |
 
 ## 环境自检
@@ -166,6 +168,8 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 - `batch.layer_report`：批量图层统计报告，不修改 DWG，会在图纸同目录生成 `*.layer-report.csv`。
 - `batch.block_report`：批量块统计报告，不修改 DWG，会在图纸同目录生成 `*.block-report.csv`。
 - `batch.annotation_report`：批量文字标注统计报告，不修改 DWG，会在图纸同目录生成 `*.annotation-report.csv`。
+- `batch.xref_image_report`：批量外参和图片引用检查，不修改 DWG，会在图纸同目录生成 `*.xref-image-report.csv`。
+- `batch.title_block_candidate_report`：批量图框标题栏候选检查，不修改 DWG，会在图纸同目录生成 `*.title-block-candidate-report.csv`。
 
 图层统计报告示例：
 
@@ -233,9 +237,53 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 
 说明：该插件统计 `TEXT`、`MTEXT`、`DIMENSION`、`LEADER`、`MULTILEADER`、`ACAD_TABLE` 的数量，后续可扩展为按图层和文字样式分组。
 
+外参和图片引用检查示例：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_xref_image_report\main.lsp .agent\tmp\sample-run
+```
+
+确认 dry-run 只匹配测试副本后，再执行：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_xref_image_report\main.lsp .agent\tmp\sample-run --execute
+```
+
+已验证输出：
+
+```text
+.agent\tmp\sample-run\S001-test.dwg.xref-image-report.csv
+```
+
+说明：该插件统计外部参照块、IMAGE、PDFUNDERLAY、DGNUNDERLAY、DWFUNDERLAY。当前测试副本统计到 IMAGE 对象 4 个。
+
+图框标题栏候选检查示例：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_title_block_candidate_report\main.lsp .agent\tmp\sample-run
+```
+
+确认 dry-run 只匹配测试副本后，再执行：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_title_block_candidate_report\main.lsp .agent\tmp\sample-run --execute
+```
+
+已验证输出：
+
+```text
+.agent\tmp\sample-run\S001-test.dwg.title-block-candidate-report.csv
+```
+
+说明：该插件根据块名模式识别疑似图框/标题栏块。当前测试副本候选数为 0，后续可以继续补充你的常用图框命名规则。
+
 ## 图纸体检总报告
 
-用途：把图层、块、文字标注三类 CSV 报告汇总成一份 Markdown 文件。
+用途：把图层、块、文字标注、外参/图片引用、图框标题栏候选 CSV 报告汇总成一份 Markdown 文件。
 
 ```cmd
 set PYTHONPATH=src
@@ -254,7 +302,9 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 - 图层对象总数：93
 - 普通块参照总数：1
 - 文字/标注对象总数：24
-- CSV 报告文件数：3
+- 外参/图片/底图引用总数：4
+- 图框标题栏候选数：0
+- CSV 报告文件数：5
 
 ## MCP stdio
 
@@ -273,10 +323,16 @@ $env:PYTHONPATH='src'
 - `toolbox_list`
 - `task_list`
 - `task_show`
+- `health_check`
+- `summarize_reports`
+- `rollback_dry_run`
+- `task_recent_failures`
+- `task_error_detail`
+- `personal_health`
 
 ## 一键图纸体检
 
-用途：把图层统计、块统计、文字标注统计、总报告汇总串成一个命令。默认 dry-run，只检查会处理哪些 DWG，不修改图纸。
+用途：把图层统计、块统计、文字标注统计、外参/图片引用、图框标题栏候选和总报告汇总串成一个命令。默认 dry-run，只检查会处理哪些 DWG，不修改图纸。
 
 预演：
 
@@ -298,10 +354,12 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 .agent\tmp\sample-run\S001-test.dwg.layer-report.csv
 .agent\tmp\sample-run\S001-test.dwg.block-report.csv
 .agent\tmp\sample-run\S001-test.dwg.annotation-report.csv
+.agent\tmp\sample-run\S001-test.dwg.xref-image-report.csv
+.agent\tmp\sample-run\S001-test.dwg.title-block-candidate-report.csv
 .agent\tmp\sample-run\CAD_REPORT_SUMMARY.md
 ```
 
-测试副本汇总结果：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24，CSV 文件 3。
+测试副本汇总结果：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24，外参/图片/底图引用 4，图框标题栏候选 0，CSV 文件 5。
 
 注意：这个命令虽然当前使用的是只读报告插件，但 `--execute` 会启动 accoreconsole。正式对整批图纸执行前，仍然要先 dry-run、确认匹配文件、保留备份记录。
 

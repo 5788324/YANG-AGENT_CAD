@@ -51,6 +51,7 @@ def write_personal_health_report(
     folder: Path,
     pattern: str,
     recursive: bool,
+    execute_command: str = "",
 ) -> dict:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     mode = result.get("mode", "unknown")
@@ -86,13 +87,26 @@ def write_personal_health_report(
         lines.append("- 已完成只读报告生成，没有主动修改 DWG。")
         if output:
             lines.append(f"- 查看总报告：`{output}`")
+        lines.append("- 如需回滚测试副本，可先运行对应任务的 rollback dry-run。")
     elif result.get("ok"):
         lines.append("- 这次只是预演，没有修改 DWG。")
         lines.append("- 确认匹配图纸无误后，再让 AI 对测试副本运行真实只读报告。")
         lines.append("- 不要直接对客户原图批量 `--execute`，先复制到临时目录。")
+        if execute_command:
+            lines.append("")
+            lines.append("可对测试副本执行的命令：")
+            lines.append("")
+            lines.append("```cmd")
+            lines.append(execute_command)
+            lines.append("```")
     else:
         lines.append("- 不要继续执行。")
         lines.append("- 先把错误码交给 AI，用 `task_error_detail` 查看失败任务。")
+        for step in result.get("steps", []):
+            step_result = _safe_get_step_result(step)
+            task_id = step_result.get("task_id")
+            if task_id:
+                lines.append(f"- 排障命令：`task_error_detail` / 任务ID `{task_id}`")
 
     lines.extend(
         [
@@ -131,12 +145,19 @@ def run_personal_health(
         pattern=pattern,
         recursive=recursive,
     )
+    command_folder = str(target_folder)
+    execute_command = (
+        f"scripts\\personal-health-check.cmd \"{command_folder}\" --execute"
+        if not execute
+        else ""
+    )
     report = write_personal_health_report(
         result=result,
         output_path=output_path,
         folder=target_folder,
         pattern=pattern,
         recursive=recursive,
+        execute_command=execute_command,
     )
     return {
         "ok": result.get("ok", False),
