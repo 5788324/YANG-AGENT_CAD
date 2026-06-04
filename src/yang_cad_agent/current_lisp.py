@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -10,9 +12,106 @@ from .ledger import create_task_record, update_task_record
 from .lisp_validator import validate_lisp_file
 
 
+def _lisp_path(path: Path) -> str:
+    return str(path.resolve()).replace("\\", "/")
+
+
 def build_load_command(script_path: Path) -> str:
     resolved = str(script_path.resolve()).replace("\\", "\\\\")
     return f'(load "{resolved}")\n'
+
+
+def _lisp_string_literal(value: str) -> str:
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def build_wrapper_lisp(original_script: Path, result_path: Path, task_id: str) -> str:
+    """Build a wrapper that records whether AutoCAD reached the end of the load."""
+    original = _lisp_path(original_script)
+    result = _lisp_path(result_path)
+    task_id_line = f'  "task_id": {json.dumps(task_id, ensure_ascii=False)},'
+    return "\n".join(
+        [
+            "(defun yang-agent-current-write-result (status message / fh)",
+            f'  (setq fh (open "{result}" "w"))',
+            "  (if fh",
+            "    (progn",
+            '      (write-line "{" fh)',
+            f"      (write-line {_lisp_string_literal(task_id_line)} fh)",
+            '      (write-line "  \\"track\\": \\"B\\"," fh)',
+            '      (write-line "  \\"mode\\": \\"current_lisp\\"," fh)',
+            '      (write-line (strcat "  \\"status\\": \\"" status "\\",") fh)',
+            '      (write-line (strcat "  \\"message\\": \\"" message "\\"") fh)',
+            '      (write-line "}" fh)',
+            "      (close fh)",
+            "    )",
+            "  )",
+            "  (princ)",
+            ")",
+            "",
+            "(setq yang-agent-current-result",
+            f'  (vl-catch-all-apply (function load) (list "{original}"))',
+            ")",
+            "(if (vl-catch-all-error-p yang-agent-current-result)",
+            '  (yang-agent-current-write-result "failed" "LISP load or runtime failed; inspect AutoCAD command line.")',
+            '  (yang-agent-current-write-result "completed" "LISP finished and wrote completion marker.")',
+            ")",
+            '(princ "\\nYANG AGENT CAD: current LISP wrapper finished.")',
+            "(princ)",
+            "",
+        ]
+    )
+
+
+def prepare_current_lisp_run(project_root: Path, task_id: str, script_path: Path) -> dict:
+    current_dir = project_root / ".agent" / "current" / task_id
+    current_dir.mkdir(parents=True, exist_ok=True)
+    wrapper_path = current_dir / "wrapper.lsp"
+    result_path = current_dir / "result.json"
+    wrapper_path.write_text(
+        build_wrapper_lisp(script_path, result_path, task_id),
+        encoding="utf-8",
+    )
+    command = build_load_command(wrapper_path)
+    return {
+        "wrapper_path": str(wrapper_path),
+        "result_path": str(result_path),
+        "command": command,
+    }
+
+
+def read_completion_marker(result_path: Path) -> dict:
+    if not result_path.exists():
+        return {
+            "confirmed": False,
+            "status": "not_found",
+            "path": str(result_path),
+        }
+    try:
+        marker = json.loads(result_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {
+            "confirmed": True,
+            "status": "unreadable",
+            "path": str(result_path),
+            "error_code": error_codes.VERIFY_FAILED,
+        }
+    return {
+        "confirmed": True,
+        "status": marker.get("status", "unknown"),
+        "path": str(result_path),
+        "marker": marker,
+    }
+
+
+def wait_for_completion_marker(result_path: Path, timeout_seconds: float = 5.0) -> dict:
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        marker = read_completion_marker(result_path)
+        if marker["confirmed"]:
+            return marker
+        time.sleep(0.25)
+    return read_completion_marker(result_path)
 
 
 def _send_command_to_autocad(command: str) -> dict:
@@ -59,6 +158,8 @@ def _send_command_to_autocad(command: str) -> dict:
 
 def feed_current_lisp(project_root: Path, script_path: Path, execute: bool = False) -> dict:
     """Validate a LISP file and dry-run or feed it to the current AutoCAD drawing."""
+    project_root = project_root.resolve()
+    script_path = script_path.resolve()
     task = create_task_record(
         project_root=project_root,
         user_goal=f"current drawing LISP: {script_path}",
@@ -67,13 +168,23 @@ def feed_current_lisp(project_root: Path, script_path: Path, execute: bool = Fal
     )
     task_id = task["task_id"]
     validation = validate_lisp_file(script_path, target_track="B")
-    command = build_load_command(script_path)
+    run_files = None
+    if validation["ok"]:
+        run_files = prepare_current_lisp_run(project_root, task_id, script_path)
+        command = run_files["command"]
+    else:
+        command = build_load_command(script_path)
     update_task_record(
         project_root,
         task_id,
         status="dry_run" if not execute else "running",
         script_path=str(script_path),
-        params={"execute": execute, "command": command},
+        params={
+            "execute": execute,
+            "command": command,
+            "wrapper_path": "" if run_files is None else run_files["wrapper_path"],
+            "completion_marker": "" if run_files is None else run_files["result_path"],
+        },
         started_at=datetime.now().isoformat(timespec="seconds"),
     )
 
@@ -92,6 +203,12 @@ def feed_current_lisp(project_root: Path, script_path: Path, execute: bool = Fal
             "validation": validation,
         }
 
+    assert run_files is not None
+    completion = {
+        "confirmed": False,
+        "status": "not_run",
+        "path": run_files["result_path"],
+    }
     if not execute:
         return {
             "ok": True,
@@ -100,15 +217,43 @@ def feed_current_lisp(project_root: Path, script_path: Path, execute: bool = Fal
             "requires_confirmation": True,
             "next_step": "Review the command, then re-run with --execute while AutoCAD is open.",
             "command": command,
+            "wrapper_path": run_files["wrapper_path"],
+            "completion_marker": run_files["result_path"],
+            "completion": completion,
             "validation": validation,
         }
 
     sent = _send_command_to_autocad(command)
+    status = "failed"
+    error_code = sent.get("error_code", error_codes.UNKNOWN_ERROR)
+    next_step = "Run task_error_detail for this task id and inspect AutoCAD command output."
+    if sent["ok"]:
+        marker = wait_for_completion_marker(Path(run_files["result_path"]))
+        completion = marker
+        if marker["confirmed"] and marker["status"] == "completed":
+            status = "completed"
+            error_code = None
+            next_step = "Current drawing LISP completed and wrote the result marker."
+        elif marker["confirmed"]:
+            status = "failed"
+            error_code = marker.get("error_code", error_codes.LISP_RUNTIME_FAILED)
+            next_step = "AutoCAD wrote a failure marker. Inspect AutoCAD command output and task_error_detail."
+        else:
+            status = "sent_unconfirmed"
+            error_code = None
+            next_step = "Command was sent to AutoCAD, but no completion marker was seen yet. Check the marker path and AutoCAD command line."
     update_task_record(
         project_root,
         task_id,
-        status="sent" if sent["ok"] else "failed",
-        error_code=None if sent["ok"] else sent.get("error_code", error_codes.UNKNOWN_ERROR),
+        status=status,
+        error_code=error_code,
+        params={
+            "execute": execute,
+            "command": command,
+            "wrapper_path": run_files["wrapper_path"],
+            "completion_marker": run_files["result_path"],
+            "completion": completion,
+        },
         finished_at=datetime.now().isoformat(timespec="seconds"),
     )
     return {
@@ -116,7 +261,12 @@ def feed_current_lisp(project_root: Path, script_path: Path, execute: bool = Fal
         "task_id": task_id,
         "mode": "execute",
         "command": command,
+        "status": status,
+        "error_code": error_code,
+        "next_step": next_step,
+        "wrapper_path": run_files["wrapper_path"],
+        "completion_marker": run_files["result_path"],
+        "completion": completion,
         "validation": validation,
         "send_result": sent,
     }
-

@@ -11,6 +11,7 @@ venv/
 .agent/tasks/
 .agent/backups/
 .agent/logs/
+.agent/current/
 .agent/reports/
 .agent/scripts/
 .agent/tmp/

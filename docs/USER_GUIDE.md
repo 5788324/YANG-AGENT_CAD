@@ -344,3 +344,33 @@ C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\py
 ```
 
 当前测试副本已经验证成功：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24，外参/图片/底图引用 4，图框标题栏候选 0。以后正式处理客户图纸时，仍然先让 AI 复制副本、dry-run、确认备份，再执行。
+## 当前 AutoCAD 图纸 LISP 测试
+
+这个入口用于验证“AutoCAD 已打开的当前图纸”能不能收到 LISP。它不是批量处理，不会通过 MCP 真实执行。
+
+先 dry-run：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli current-lisp --script toolbox\plugins\current_smoke\main.lsp
+```
+
+dry-run 会返回：
+
+- `task_id`：本次任务编号。
+- `wrapper_path`：AI 自动生成的包装 LISP。
+- `completion_marker`：AutoCAD 执行完成后应写入的 `result.json`。
+- `command`：实际会发送给 AutoCAD 的命令。
+
+确认 AutoCAD 已打开并且当前有 DWG 后，再执行：
+
+```cmd
+set PYTHONPATH=src
+C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli current-lisp --script toolbox\plugins\current_smoke\main.lsp --execute
+```
+
+结果判断：
+
+- `status: completed`：AutoCAD 执行完并写入完成标记。
+- `status: sent_unconfirmed`：命令已发送给 AutoCAD，但 CLI 暂时没看到完成标记。检查 AutoCAD 命令行和 `completion_marker` 路径。
+- `status: failed`：执行失败，复制 `task_id` 让 AI 运行 `task_error_detail` 排障。

@@ -437,3 +437,18 @@ $env:PYTHONPATH='src'
 - `accore_nonzero_exit`：accoreconsole 返回非 0。
 - `secure_load_blocked`：安全加载或受信任路径规则阻止脚本。
 - `no_log_rule_match`：没有命中已知日志规则，需要查看完整日志。
+## 当前图 LISP 完成标记
+
+`current-lisp` 现在会为每次任务生成一个 wrapper LISP，并返回 `completion_marker`：
+
+```text
+.agent\current\任务ID\result.json
+```
+
+执行流程：
+
+- dry-run：只生成任务记录、wrapper 路径、完成标记路径，不连接 AutoCAD。
+- execute：通过 AutoCAD COM 发送 wrapper；wrapper 加载原始 LISP，结束后写入 `result.json`。
+- 如果 CLI 没等到 `result.json`，状态为 `sent_unconfirmed`，表示“命令已发送，但尚未确认完成”。
+
+安全边界：真实当前图执行仍只走 CLI，不通过 MCP stdio 暴露；MCP 继续只提供只读/预演/排障工具。

@@ -448,3 +448,17 @@
 - 下一步建议：
   1. 给 `batch.title_block_candidate_report` 增加更多图框命名规则样本。
   2. 增加当前图执行完成标记监听，改善 AutoCAD 当前图插件体验。
+## 2026-06-04 当前图 LISP 执行反馈闭环
+
+- 已增强 `current-lisp`：
+  - dry-run 返回 `wrapper_path` 和 `completion_marker`。
+  - 每个任务生成 `.agent\current\<task_id>\wrapper.lsp`。
+  - wrapper 加载原始 LISP，并写入 `.agent\current\<task_id>\result.json`。
+  - execute 会区分 `completed`、`sent_unconfirmed`、`failed`。
+- `.agent\current/` 已加入 `.gitignore`，不要提交本地 wrapper/result。
+- 已验证：
+  - `tests.test_current_lisp` 通过。
+  - `current_smoke` Track B LISP 校验通过。
+  - 生成的 wrapper Track B LISP 校验通过。
+- 尚未做真实 AutoCAD 当前图 execute，因为本轮没有确认 AutoCAD 当前打开图纸状态。下一位 AI 可在 AutoCAD 打开 DWG 后执行：
+  `C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli current-lisp --script toolbox\plugins\current_smoke\main.lsp --execute`

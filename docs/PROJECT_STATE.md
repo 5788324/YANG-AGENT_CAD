@@ -299,3 +299,13 @@
   - 生成 `.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md`。
   - 汇总结果：图层 12、图层对象 93、普通块参照 1、文字/标注对象 24、外参/图片/底图引用 4、图框标题栏候选 0。
   - 回滚 dry-run 对任务 `20260604-214229-d4f6c53d` 验证通过。
+## 2026-06-04 当前图 LISP 执行反馈闭环
+
+- `current-lisp` 现在会为每个任务生成 `.agent\current\<task_id>\wrapper.lsp`。
+- dry-run 返回 `wrapper_path`、`completion_marker`、`command` 和任务记录，不连接 AutoCAD。
+- execute 通过 AutoCAD COM 发送 wrapper，wrapper 会加载原始 LISP，并尽量写入 `.agent\current\<task_id>\result.json`。
+- CLI 会等待短时间读取完成标记：
+  - `completed`：AutoCAD 已写入完成标记。
+  - `sent_unconfirmed`：命令已发送，但暂未看到完成标记。
+  - `failed`：COM 发送失败或 wrapper 写入失败标记。
+- MCP stdio 仍不暴露真实当前图执行能力，保持只读、dry-run 和排障边界。
