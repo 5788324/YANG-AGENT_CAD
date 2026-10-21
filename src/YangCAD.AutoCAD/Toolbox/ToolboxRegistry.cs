@@ -81,7 +81,8 @@ namespace YangCAD.AutoCADHost.Toolbox
                     Shape("output_folder", "输出目录", ToolboxParameterKind.Folder, false, "", description: "留空时优先输出到当前 DWG 同目录；未命名图纸输出到 Documents\\YangCADExports。可输入尚未创建的新目录。"),
                     Shape("output_suffix", "文件后缀", ToolboxParameterKind.Text, true, "_RVT", description: "输出 DWG 文件名后缀，例如 _RVT。已存在时自动生成不覆盖的新文件名。"),
                     Shape("scan_blocks", "检查普通块定义", ToolboxParameterKind.Bool, false, true, description: "仅统计普通块定义并写入诊断；RVT Exchange v1 不导出块定义子实体，因为协议未包含 BlockReference 实例变换。块引用会作为 unsupported 明确报告。"),
-                    Shape("include_paperspace", "包含布局空间", ToolboxParameterKind.Bool, false, true, description: "处理 ModelSpace 与所有布局空间。"),
+                    Shape("include_paperspace", "包含布局空间（混合输出，不推荐）", ToolboxParameterKind.Bool, false, false, description: "默认仅发布模型空间的MAP；勾选会混合模型空间及所有布局空间，无法使用单一原点用于Revit原生重建。"),
+                    Shape("coordinate_origin_mode", "Revit 坐标定位", ToolboxParameterKind.Choice, false, "local", options: new[] { "local", "source" }, description: "local: 将所选空间包围盒最小点写到MAP origin，不移动CAD对象；source: 保留WCS原点。")
                     Shape("normalize_geometry", "线条归一为 ByLayer", ToolboxParameterKind.Bool, false, true, description: "几何线条迁移到交换层后，将颜色/线型/线宽覆盖归一为 ByLayer。标注、文字、引线、填充保留自身语义。")
                 }
             }, new DelegateToolboxRuntimeAdapter("project.revit.prepare", doc => doc != null, (doc, values) =>
@@ -153,7 +154,8 @@ namespace YangCAD.AutoCADHost.Toolbox
                 OutputFolder = TextValue("output_folder", "").Trim(),
                 OutputSuffix = TextValue("output_suffix", "_RVT").Trim(),
                 ScanBlockDefinitions = BoolValue("scan_blocks", true),
-                IncludePaperSpace = BoolValue("include_paperspace", true),
+                IncludePaperSpace = BoolValue("include_paperspace", false),
+                CoordinateOriginMode = TextValue("coordinate_origin_mode", "local"),
                 NormalizeGeometryOverrides = BoolValue("normalize_geometry", true)
             };
         }
