@@ -373,8 +373,9 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 else if (analysis.ClassifiedEntities > 0)
                     analysis.Warnings.Add("无法计算当前选择空间的几何范围；保留原始 origin=[0,0,0]。");
             }
-            if (analysis.HasExtents && (analysis.MaxX - analysis.MinX > 10000 || analysis.MaxY - analysis.MinY > 10000))
-                analysis.Warnings.Add("选中对象的坐标跨度超过 10000 个图纸单位；局部原点只平移不缩放，请在 Revit 端核对范围。");
+            // Do not use an arbitrary numeric span threshold: e.g. 10000 mm is only 10 m.
+            // The preview preserves WCS values and the local origin; host-specific view limits
+            // belong in the downstream placement diagnostic.
             if (!request.IncludePaperSpace)
                 analysis.Warnings.Add("MAP仅包含模型空间；_RVT.dwg为整个源DWG的独立克隆，仍保留原有布局实体，直接导入DWG与按MAP重建的范围不相同。");
 
