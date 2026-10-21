@@ -1,0 +1,285 @@
+YangCAD 0.9 Scale Converter + MCP Alignment Static Tests
+Date: 2026-09-07
+
+cs=67 xaml=9 python=21 themes=3 tools=68 xml=15 errors=0
+release source checks: errors=0
+===== tools/test_civil_api_compat_policy.py =====
+civil api compatibility regression: 8/8 PASS
+===== tools/test_extension_policy.py =====
+extension policy regression: 12/12 PASS
+===== tools/test_image_embed_batch_policy.py =====
+PASS: single image embed toolbox tool
+PASS: tool is preview batch output-copy
+PASS: tool has product MCP coverage
+PASS: service exposes stable shared Request/Result
+PASS: service does not access active cad document
+PASS: preview does not create output folder
+PASS: execute uses independent STA powershell worker
+PASS: worker uses exact-year autocad progid
+PASS: input overwrite is refused
+PASS: batch is bounded
+PASS: job/status are user-local
+PASS: worker output is working-copy then no-overwrite publish
+PASS: source sha is verified before and after output publication
+PASS: worker embeds via clipboard pasteclip
+PASS: paper/model paste context is explicit
+PASS: status updates use replace instead of delete gap
+PASS: raster snapshot failures cannot become no-image skip
+PASS: new ole is identified by delta and stray delta is cleaned
+PASS: source raster deletes only after new ole normalized
+PASS: unsafe raster visuals are refused
+PASS: nested block raster is not falsely claimed embedded
+PASS: drawings without raster images are skipped without output copy
+PASS: xref presence is reported separately
+PASS: require all images discards partial dwg
+PASS: release bundle packages worker
+PASS: release verification requires worker
+PASS: worker also embedded for dll-only fallback
+image embed batch policy: 27/27 PASS
+===== tools/test_mcp_copy_config_policy.py =====
+PASS: ribbon exposes standalone MCP core button
+PASS: control center no longer duplicates MCP page
+PASS: dedicated MCP window exposes copy/config/permissions
+PASS: copy handler uses dedicated builder
+PASS: gateway status uses real running state
+PASS: self-check uses host-specific 31/61 expectation
+PASS: self-check verifies critical tools
+PASS: config contains standard mcpServers shape
+PASS: config launches powershell bridge
+PASS: config binds exact current process
+PASS: clipboard config does not expose gateway token
+PASS: config requires live gateway
+PASS: config documents recopy after cad restart
+PASS: bundle packages repository independent mcp bridge
+PASS: partial installed runtime triggers health fallback
+PASS: runtime health validates all embedded assets by content
+PASS: dll-only deployment self-heals embedded mcp runtime
+PASS: materialized runtime is revalidated
+PASS: mcp runtime is embedded in autocad assembly
+PASS: release verification requires complete mcp runtime
+PASS: installer requires complete mcp runtime
+PASS: self-heal runtime publish avoids delete gap
+PASS: launcher exists in mcp source
+PASS: launcher uses user local runtime venv
+PASS: launcher requires python 3.10 and MCP major v2
+PASS: launcher starts stdio module without printing config secrets
+PASS: user guide states token-free pid-bound behavior
+PASS: all ai development standard is authoritative
+mcp copy config policy: 28/28 PASS
+===== tools/test_mcp_product_coverage_policy.py =====
+PASS: project.revit.prepare GUI advertises MCP
+PASS: project.revit.prepare C# adapter exists
+PASS: project.revit.prepare live registration exists
+PASS: project.revit.prepare Python stdio adapter exists
+PASS: project.revit.prepare PID/document write binding exists
+PASS: project.revit.prepare coverage matrix row exists
+PASS: project.image.embed GUI advertises MCP
+PASS: project.image.embed C# adapter exists
+PASS: project.image.embed live registration exists
+PASS: project.image.embed Python stdio adapter exists
+PASS: project.image.embed PID/document write binding exists
+PASS: project.image.embed coverage matrix row exists
+PASS: Revit product result contract stable
+PASS: Image product result contract stable
+PASS: scale converter ribbon product entry exists
+PASS: scale converter C# adapter shares service
+PASS: scale converter live registration exists
+PASS: scale converter Python adapter exists
+PASS: scale converter PID/document write binding exists
+PASS: scale converter coverage matrix row exists
+PASS: scale converter structured result contract exists
+PASS: stdio tool contract is 68 unique
+PASS: coverage matrix declares 68/31/61
+PASS: coverage matrix has one row for every public MCP tool
+mcp product coverage policy: 24/24 PASS
+===== tools/test_quick_install_policy.py =====
+quick install policy regression: 10/10 PASS
+===== tools/test_revit_exchange_v1_policy.py =====
+PASS: single gui tool id
+PASS: revit tool status is available
+PASS: tool is write preview capable
+PASS: tool has product MCP coverage
+PASS: preview and export use runner-owned read context
+PASS: service does not acquire active document
+PASS: source clone uses Wblock
+PASS: detached clone saveas
+PASS: output names never overwrite existing triplet
+PASS: partial output cleanup deletes only files moved by this run
+PASS: three exchange outputs
+PASS: schema is explicit v1
+PASS: official V1 geometry supported and ellipse/spline fail closed
+PASS: text supported
+PASS: leader supported
+PASS: dimension supported
+PASS: hatch supported
+PASS: hatch boundary semantics exported
+PASS: legacy-compatible revit geometry layer naming
+PASS: text classification includes requested features
+PASS: geometry only normalized to bylayer
+PASS: existing exchange layer is reconciled to generated semantics
+PASS: block/xref boundaries are explicit
+PASS: block definition children are diagnostic-only in v1
+PASS: streamed map avoids whole-file json size coupling
+PASS: official entity discriminator is DxfType
+PASS: entity carries additive Traits and Data
+PASS: entity category and common traits use canonical exchange names
+PASS: text traits expose canonical TextStyle Font Height
+PASS: 2d points are serialized as xyz triples
+PASS: category counts aggregate canonical Curve Text Fill Dimension
+PASS: map root exports units and zero origin
+PASS: map exports source units counts and unsupported summary
+PASS: unsupported entities carry count plus Handle/DxfType/reason detail
+PASS: unsupported explicit drawing units fail closed
+PASS: preview validates units before returning a plan
+PASS: mleader exports text position and canonical leader_lines points
+PASS: leaders fail closed when reconstructable text or line is missing
+PASS: legacy leader exports leader_lines and annotation position
+PASS: linear dimensions use stable semantic roles
+PASS: dimension exposes Revit rebuild support and display text
+PASS: hatch curve boundaries use stable LINE/ARC payloads
+PASS: fixture exists and declares official schema
+PASS: fixture covers V1 YangTools object types
+PASS: fixture entities use Handle DxfType ExchangeLayer Traits Data
+PASS: fixture handles are unique
+PASS: fixture dimension carries three stable definition roles
+PASS: fixture hatch carries boundary loops
+PASS: fixture mleader locks arrow-to-text vertex order
+PASS: spec locks DxfType as official YangTools contract
+PASS: controlled E2E fixture is exactly 11 official objects
+PASS: controlled E2E locks bulge 0.5
+PASS: controlled E2E locks MLeader text and points
+PASS: rvt exchange is long-lived documented contract
+PASS: product result includes GUI/MCP reconciliation fields
+PASS: product MCP uses same RevitExchangeService
+revit exchange v1 policy: 56/56 PASS
+===== tools/test_scale_converter_policy.py =====
+PASS: ribbon exposes scale converter
+PASS: YGSCALE command exists
+PASS: command uses selection before modal options
+PASS: scaled mode prompts base point
+PASS: GUI routes through shared scale service
+PASS: GUI write uses one runner transaction
+PASS: window has standard 1to1 mode
+PASS: window has scaled drawing mode
+PASS: radio buttons use compatible style
+PASS: window keeps simple paper-preservation options
+PASS: window supports common presets and manual input
+PASS: standard factor is new over old
+PASS: same ratio is rejected
+PASS: scaled geometry factor is old over new
+PASS: standard mode never transforms geometry
+PASS: scaled mode uses Matrix3d.Scaling
+PASS: scaled text restores model text height
+PASS: standard text scales annotation height
+PASS: dimension keeps standard Dimlfac
+PASS: scaled dimension adjusts Dimlfac by inverse geometry factor
+PASS: dimension visual properties are object-level snapshots
+PASS: service does not mutate global style tables
+PASS: hatch paper scale handled
+PASS: linetype paper scale handled
+PASS: legacy block transform preserves attribute text height
+PASS: standard mode block ambiguity fails closed
+PASS: annotative/xref/underlay/civil/aec/proxy fail closed
+PASS: per-object failures are isolated
+PASS: result exposes processed skipped failed and undo
+PASS: all skipped is not reported as converted
+PASS: MCP adapter uses same service
+PASS: MCP defaults dry-run through descriptor
+PASS: MCP Python tool exists
+PASS: MCP write tool is PID/document bound
+PASS: live gateway registers scale tool
+PASS: stdio contract is 68 unique
+scale converter policy: 36/36 PASS
+===== tools/test_toolbox_foundation_policy.py =====
+PASS: old transaction runner signatures preserved
+PASS: explicit context runner names
+PASS: context constructor internal
+PASS: context stays four-field
+PASS: descriptor adapter split
+PASS: path parameter kinds added for production tools
+PASS: toolbox exposes exactly two production tools
+PASS: legacy gui tools and backlog removed
+PASS: toolbox navigation shell removed
+PASS: WPF palette uses AddVisual
+PASS: ribbon has standalone MCP core button
+PASS: ribbon keeps toolbox and control center
+PASS: control center is settings/about only
+PASS: control center does not initialize MCP runtime
+PASS: dedicated mcp window owns mcp controls
+PASS: navigation list is explicitly themed
+toolbox foundation policy: 16/16 PASS
+===== tools/test_toolbox_round2_interaction_policy.py =====
+PASS: parameter panel is separate WPF control
+PASS: all parameter kinds handled
+PASS: shape validation required and range
+PASS: choice validates allowed options
+PASS: file and folder browse are native
+PASS: file-or-folder existence validated
+PASS: output folders may be newly typed
+PASS: runtime unavailable is visible and execute disabled
+PASS: execution result and error stay in palette
+PASS: results can be copied
+PASS: favorites/recent/backlog ui removed
+PASS: only two descriptors remain
+PASS: document activation refreshes availability
+toolbox interaction policy: 13/13 PASS
+===== tools/test_toolbox_round3_real_cad_policy.py =====
+PASS: cad.drawing.audit not exposed as Toolbox GUI card
+PASS: cad.drawing.audit remains exposed by MCP core
+PASS: cad.layer.audit not exposed as Toolbox GUI card
+PASS: cad.layer.audit remains exposed by MCP core
+PASS: cad.polyline.inspect not exposed as Toolbox GUI card
+PASS: cad.polyline.inspect remains exposed by MCP core
+PASS: PolylineInspectionService.cs retained for MCP/shared backend
+PASS: LayerAuditService.cs retained for MCP/shared backend
+PASS: DrawingAuditService.cs retained for MCP/shared backend
+PASS: PolylineInspectionService still used by MCP
+PASS: LayerAuditService still used by MCP
+PASS: DrawingAuditService still used by MCP
+PASS: remaining Toolbox GUI does not call MCP/HTTP
+
+legacy CAD GUI retirement policy: ALL PASS
+===== tools/test_toolbox_round3b_write_cad_policy.py =====
+PASS: cad.polyline.clean retired from Toolbox GUI
+PASS: cad.polyline.clean preserved in MCP contract
+PASS: cad.layer.cleanup retired from Toolbox GUI
+PASS: cad.layer.cleanup preserved in MCP contract
+PASS: PolylineCleanupService remains MCP backend
+PASS: LayerCleanupService remains MCP backend
+PASS: Polyline fail-closed protections preserved
+PASS: Layer cleanup protections preserved
+PASS: remaining Toolbox GUI stays service-direct
+
+legacy write GUI retirement policy: ALL PASS
+===== tools/test_ui_surface_policy.py =====
+PASS: ribbon contains MCP/工具箱/比例转换/控制中心
+PASS: ribbon commands have command methods
+PASS: control center has no visible MCP controls
+PASS: mcp window has no duplicate theme selector
+PASS: toolbox registry is exactly two descriptors
+PASS: toolbox has no system/planning navigation
+PASS: control center xaml event handlers exist
+PASS: mcp window xaml event handlers exist
+PASS: toolbox xaml event handlers exist
+PASS: scale converter xaml event handlers exist
+PASS: toolbox path browser supports file/folder
+PASS: scale converter exposes both drawing modes
+PASS: mcp has copy refresh diagnostics selfcheck logs actions
+ui surface policy: 13/13 PASS
+===== tools/test_ui_theme_policy.py =====
+PASS: Obsidian has all required theme brushes
+PASS: Porcelain has all required theme brushes
+PASS: Mist has all required theme brushes
+PASS: three theme dictionaries have identical key sets
+PASS: navigation list owns themed background and foreground
+PASS: list item is explicitly themed
+PASS: combobox items are explicitly themed
+PASS: separator and scrollbar are explicitly themed
+PASS: result text box is explicitly themed
+PASS: control center nav uses NavigationList
+PASS: toolbox has no legacy navigation list
+PASS: all visible surfaces use dynamic theme background
+PASS: all XAML parses as XML
+ui theme policy: 13/13 PASS
+===== python compileall =====
+Python compileall: PASS

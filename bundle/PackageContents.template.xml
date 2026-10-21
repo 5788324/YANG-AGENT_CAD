@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ApplicationPackage SchemaVersion="1.0" AutodeskProduct="AutoCAD" Name="YangCAD Agent"
+                    Description="Local MCP automation toolkit for AutoCAD and Civil 3D."
+                    AppVersion="0.9.0"
+                    ProductCode="{95BE77C9-AD84-4EBB-A79C-1D77F552D2D4}"
+                    UpgradeCode="{418D807D-6E73-4AE4-A627-E610311485F4}">
+  <CompanyDetails Name="YangCAD"/>
+  <!-- __COMPONENTS__ -->
+</ApplicationPackage>

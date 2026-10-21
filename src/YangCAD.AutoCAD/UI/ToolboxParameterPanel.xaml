@@ -1,0 +1,9 @@
+<UserControl x:Class="YangCAD.AutoCADHost.UI.ToolboxParameterPanel"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <StackPanel>
+  <TextBlock x:Name="EmptyText" Text="此工具无需参数。" Style="{DynamicResource MutedText}" Margin="0,2,0,8"/>
+  <StackPanel x:Name="FieldsHost"/>
+  <TextBlock x:Name="ValidationText" Visibility="Collapsed" TextWrapping="Wrap" Margin="0,8,0,0" Foreground="{DynamicResource DangerBrush}" FontSize="12"/>
+ </StackPanel>
+</UserControl>

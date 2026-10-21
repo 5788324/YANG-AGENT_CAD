@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <CadYear Condition="'$(CadYear)' == ''">2024</CadYear>
+    <AcadRoot Condition="'$(AcadRoot)' == ''">C:\Program Files\Autodesk\AutoCAD $(CadYear)</AcadRoot>
+    <TargetFramework Condition="'$(CadYear)' == '2021' Or '$(CadYear)' == '2022' Or '$(CadYear)' == '2023' Or '$(CadYear)' == '2024'">net48</TargetFramework>
+    <TargetFramework Condition="'$(CadYear)' == '2025' Or '$(CadYear)' == '2026'">net8.0-windows</TargetFramework>
+    <TargetFramework Condition="'$(CadYear)' == '2027'">net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AssemblyName>YangCAD.BatchWorker</AssemblyName>
+    <RootNamespace>YangCAD.BatchWorker</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>$(MSBuildThisFileDirectory)..\..\artifacts\bin\$(CadYear)\BatchWorker\</OutputPath>
+    <DefineConstants>$(DefineConstants);ACAD_$(CadYear)</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)' == 'net48'">$(DefineConstants);YANGCAD_NETFRAMEWORK</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net48'">
+    <Reference Include="System.Web" />
+    <Reference Include="System.Web.Extensions" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="AcCoreMgd"><HintPath>$(AcadRoot)\AcCoreMgd.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="AcDbMgd"><HintPath>$(AcadRoot)\AcDbMgd.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="AcMgd"><HintPath>$(AcadRoot)\AcMgd.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

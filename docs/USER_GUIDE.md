@@ -1,475 +1,123 @@
-# 小白操作文档
+# User Guide
 
-## 当前图一键烟测脚本
+## YangCAD Ribbon
 
-更简单的当前图测试入口是：
+当前只保留三个一级入口：
 
-```cmd
-scripts\current-smoke-test.cmd
-```
+- **MCP**
+- **工具箱**
+- **控制中心**
 
-默认只做 dry-run，会显示 `task_id`、`wrapper_path` 和 `completion_marker`，不会连接 AutoCAD。
+## MCP
 
-如果已经打开 AutoCAD，并且当前打开的是测试 DWG，再运行：
+点击 YangCAD Ribbon 的 **MCP**。
 
-```cmd
-scripts\current-smoke-test.cmd --execute
-```
+MCP 窗口用于：
 
-这个脚本只运行内置 `current_smoke`，只在 AutoCAD 命令行打印测试文字，不保存 DWG。失败时复制输出里的 `task_id`，让 AI 用 `task_error_detail` 排障。
+- 查看 CAD Gateway、当前 PID、DWG Session、Live Tool 数；
+- **复制 MCP 配置**，直接交给本机 AI 添加 YangCAD MCP Server；
+- 刷新、复制不含 Token 的诊断、自检、打开日志；
+- 控制 MCP 写入 / 删除 / `cad.command.run` / `cad.extension.invoke` 权限。
 
-这份文档给完全不懂代码、CAD 也刚入门的人使用。你只需要知道：默认命令只做检查或预演，不会修改图纸；真正修改图纸的命令会明确要求加 `--execute`。
+状态文案 **CAD 网关就绪** 只表示 YangCAD localhost Gateway 正在监听；是否已有 AI 客户端连接，应以实际 MCP 调用结果为准。
 
-## accoreconsole 配置修复
+隐藏诊断命令：`YANGCAD_MCP_STATUS`。
 
-如果运行 `scripts\doctor.cmd` 时看到 `ACCORE_CONFIG_LOCKED`，并且提示用户配置文件已经存在，可以让 AI 先确认下面两个路径：
+### 复制 MCP 配置
 
-```text
-C:\Users\YANG\AppData\Local\Autodesk\AutoCAD 2027\R26.0\chs\acad2027.cfg
-C:\Program Files\Autodesk\AutoCAD 2027\acad2027.cfg
-```
+前提：
 
-当前机器的情况是：第一个文件存在，第二个文件缺少，普通权限不能写入 `C:\Program Files`。修复方式是右键运行：
+- 已打开一个真实 DWG；
+- Ribbon → MCP 显示 **CAD 网关就绪**。
 
-```cmd
-scripts\fix-acad-cfg.cmd
-```
+点击：
 
-一定要选“以管理员身份运行”。运行完成后，再执行：
+> **MCP → 复制 MCP 配置**
 
-```cmd
-scripts\doctor.cmd
-```
+剪贴板会得到：
 
-如果窗口弹开后马上关闭，先让 AI 更新到最新版脚本；新版脚本会停在结果页面，按任意键才会关闭。
+- 当前 CAD/Civil 进程 PID；
+- host/document 摘要；
+- 标准 `mcpServers.yangcad` JSON；
+- `powershell.exe` MCP launcher command/args；
+- `YANGCAD_INSTANCE_PID=<当前 PID>` 会话绑定。
 
-doctor 不再提示 `ACCORE_CONFIG_LOCKED` 后，AI 才会继续跑 accoreconsole 的真实测试。
+把整段内容直接发给本机 AI，让它：
 
-当前机器已经修复成功，并完成了一次只针对测试副本的 accoreconsole 小测试。以后仍然不要直接对原始 `sample` 图纸整批执行，先让 AI 复制副本再测试。
+1. 按客户端格式添加 `yangcad` MCP server；
+2. 启动 server；
+3. 调用 `cad.status` 验证；
+4. 写操作前先执行读取 Tool 建立目标 DWG 绑定。
 
-## 先记住三句话
+### 安全
 
-1. 不确定时，只运行 `scripts\doctor.cmd` 和 dry-run 命令。
-2. 看到 `--execute` 才代表可能真的修改图纸。
-3. 批量修改前必须确认已经备份。
+复制配置：
 
-## 打开项目目录
+- **不包含 Gateway Token**；
+- 不包含 Bearer header；
+- MCP bridge 从 `%LOCALAPPDATA%\YangCADAgent\instances` 读取当前本机会话描述，并验证 `/health`。
 
-项目目录是：
+配置绑定当前 PID。AutoCAD/Civil 3D 重启后 PID 会变化，请重新点击“复制 MCP 配置”。
 
-```text
-D:\codex\Yang Agent_CAD
-```
+### MCP Runtime / Self-Heal
 
-在 Windows 文件夹地址栏输入这个路径，或让 AI 帮你打开。
+正式 Bundle 应携带完整：
 
-## 第一步：自检
+`%APPDATA%\Autodesk\ApplicationPlugins\YangCADAgent.bundle\Contents\Mcp`
 
-双击或让 AI 运行：
+YangCAD 会验证完整 runtime，而不是只检查 `Start-YangCAD-Mcp.ps1`。如果安装目录缺文件、内容陈旧或 DLL-only/dev 部署没有完整 runtime，会从当前 DLL 的嵌入资源恢复到：
 
-```cmd
-scripts\doctor.cmd
-```
+`%LOCALAPPDATA%\YangCADAgent\runtime\Mcp`
 
-你看到这些就说明基础环境正常：
+启动脚本使用：
 
-- `ok: true`
-- 检测到 Python
-- 检测到 Git
-- 检测到 `accoreconsole`
+`%LOCALAPPDATA%\YangCADAgent\mcp-runtime`
 
-## 最快试用：个人版一键体检
+维护用户级 Python venv。要求 Python 3.10+，并验证 Python package `mcp` major version = 2；不满足时按 `mcp[cli]>=2.0,<3` 修复。
 
-如果你只想先看这个工具好不好用，运行：
+## 工具箱
 
-```cmd
-scripts\personal-health-check.cmd
-```
+点击 YangCAD Ribbon 的 **工具箱**。
 
-默认行为：
+当前只保留两个功能：
 
-- 扫描 `sample` 目录。
-- 只做 dry-run。
-- 不修改 DWG。
-- 生成一份给人看的计划报告：
+### Revit 图纸预处理
 
-```text
-.agent\reports\PERSONAL_HEALTH_PLAN.md
-```
+- 原 DWG 不修改；
+- 输出 `_RVT.dwg / _RVT_MAP.json / _RVT_REPORT.json`；
+- 支持 Preview；
+- 动态块、匿名块、Xref 等边界会在报告中提示。
 
-如果要换目录，例如只检查测试副本目录：
+### 批量图片内嵌
 
-```cmd
-scripts\personal-health-check.cmd .agent\tmp\sample-run
-```
+输入可以是单个 DWG 或一个文件夹。Preview 只列计划；Execute 启动独立 AutoCAD COM worker，将顶层外链 RasterImage 转换为 OLE 输出副本。
 
-真实生成图层、块、文字标注 CSV 报告时，必须明确加：
+当前仍需 AutoCAD 2024 Windows 最终 OLE Smoke。大量任务期间不要同时使用 Windows 剪贴板。V1 对 clipped / brightness-contrast-fade / transparency / block-nested RasterImage 采用 fail-closed，默认不会留下半成功 DWG。
 
-```cmd
-scripts\personal-health-check.cmd .agent\tmp\sample-run --execute
-```
+## 控制中心
 
-不要直接对客户原图目录加 `--execute`。先让 AI 复制测试副本，再执行。
+点击 YangCAD Ribbon 的 **控制中心**。
 
-当前测试副本已经验证成功。运行上面的 `--execute` 后，会在 `.agent\tmp\sample-run` 生成：
+控制中心只负责：
 
-```text
-S001-test.dwg.layer-report.csv
-S001-test.dwg.block-report.csv
-S001-test.dwg.annotation-report.csv
-S001-test.dwg.xref-image-report.csv
-S001-test.dwg.title-block-candidate-report.csv
-CAD_REPORT_SUMMARY.md
-```
+- 系统设置：墨曜 / 月瓷 / 雾蓝主题；
+- 关于：版本、运行环境、日志目录。
 
-这 5 个 CSV 和 1 个总报告都是只读检查结果，不会主动修改 DWG。
+MCP 功能不再重复放在控制中心。
 
-## 第二步：运行测试
+## AI 遇到没有专用 Tool
 
-运行：
+推荐顺序：
 
-```cmd
-scripts\test.cmd
-```
+1. `cad.object.describe(handle)`；
+2. `cad.property.get` / `cad.property.set`；
+3. `cad.api.describe` / `cad.api.invoke`；
+4. 必要时在 Ribbon → MCP 中授权 `cad.command.run` 或 `cad.extension.invoke`。
 
-看到类似下面内容就是正常：
+通用写 Tool 默认 dry_run；先看 before/after 再 real。
 
-```text
-Ran 16 tests
-OK
-```
+## 日志
 
-## 第三步：查看插件箱
+`%LOCALAPPDATA%\YangCADAgent\logs\runtime.log`
 
-运行：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli toolbox-list
-```
-
-现在应该能看到：
-
-```text
-current.smoke_test [ok] 当前图烟测
-```
-
-这是一个安全插件，只会在 AutoCAD 命令行打印一条测试文字。
-
-## 第四步：当前图插件预演
-
-预演不会改图纸。
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli current-lisp --script toolbox\plugins\current_smoke\main.lsp
-```
-
-你应该看到：
-
-- `mode: dry_run`
-- `requires_confirmation: true`
-- 一条 `(load "...main.lsp")` 命令
-
-这表示 AI 已经准备好要发给 AutoCAD 的命令，但还没有执行。
-
-## 第五步：当前图插件真实执行
-
-只有确认 AutoCAD 已打开、并且当前图纸是测试图纸时，才运行：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli current-lisp --script toolbox\plugins\current_smoke\main.lsp --execute
-```
-
-可能结果：
-
-- 成功：AutoCAD 命令行出现 `YANG AGENT CAD: current drawing LISP feed is working.`
-- `ACAD_COM_DEPENDENCY_MISSING`：当前 Python 缺少 pywin32，暂时不能通过 COM 投喂。
-- `ACAD_COM_UNAVAILABLE`：AutoCAD 没打开，或没有可连接实例。
-
-## 第六步：批量图纸预演
-
-你准备的测试图纸在：
-
-```text
-D:\codex\Yang Agent_CAD\sample
-```
-
-批量预演命令：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_smoke\main.lsp sample
-```
-
-注意：不要加 `--execute`。这一步只预演，不会修改 DWG。
-
-## 第七步：生成图层统计报告
-
-这个插件只读取图层和对象数量，不修改 DWG。AI 会先用测试副本运行，不直接碰原始 `sample` 图纸。
-
-先预演：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_layer_report\main.lsp .agent\tmp\sample-run
-```
-
-确认只匹配测试副本后，再执行：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_layer_report\main.lsp .agent\tmp\sample-run --execute
-```
-
-成功后会生成：
-
-```text
-.agent\tmp\sample-run\S001-test.dwg.layer-report.csv
-```
-
-这份 CSV 可以用 Excel 打开，里面会看到每个图层的颜色、是否锁定、是否冻结、对象数量。
-
-## 第八步：生成块统计报告
-
-这个插件只读取块参照数量，不修改 DWG。
-
-先预演：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_block_report\main.lsp .agent\tmp\sample-run
-```
-
-确认只匹配测试副本后，再执行：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_block_report\main.lsp .agent\tmp\sample-run --execute
-```
-
-成功后会生成：
-
-```text
-.agent\tmp\sample-run\S001-test.dwg.block-report.csv
-```
-
-这份 CSV 可以用 Excel 打开，里面会看到每个普通块的名称、是否外部参照、是否布局块、插入数量。
-
-## 第九步：生成文字标注统计报告
-
-这个插件只读取文字、标注、引线和表格数量，不修改 DWG。
-
-先预演：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_annotation_report\main.lsp .agent\tmp\sample-run
-```
-
-确认只匹配测试副本后，再执行：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli batch-task --script toolbox\plugins\batch_annotation_report\main.lsp .agent\tmp\sample-run --execute
-```
-
-成功后会生成：
-
-```text
-.agent\tmp\sample-run\S001-test.dwg.annotation-report.csv
-```
-
-这份 CSV 可以用 Excel 打开，里面会看到单行文字、多行文字、尺寸标注、引线、多重引线、表格的数量。
-
-## 第十步：生成图纸体检总报告
-
-前面三步会生成三份 CSV。这个命令会把它们合成一份更容易读的 Markdown 总报告，不修改 DWG。
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli summarize-reports .agent\tmp\sample-run
-```
-
-成功后会生成：
-
-```text
-.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md
-```
-
-这份报告会汇总图层数量、对象总数、块参照数量、文字/标注数量，并列出对象最多的图层。
-
-## 查看任务记录
-
-运行：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli task-list
-```
-
-每次 dry-run 或执行都会生成任务记录。以后出错、回滚、交接都靠它。
-
-## 回滚
-
-批量执行成功备份后，才有回滚。
-
-先预演回滚：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli rollback 任务ID --dry-run
-```
-
-确认无误后才执行真实回滚：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli rollback 任务ID
-```
-
-## 什么时候必须找 AI 确认
-
-- 要加 `--execute` 时。
-- 要批量处理整个文件夹时。
-- 要删除、清理、覆盖、保存 DWG 时。
-- 看到 `failed` 或 `error_code` 时。
-- 不知道任务 ID 是什么时。
-
-## 当前图烟测失败时怎么判断
-
-可以先运行只读诊断，不会发送 LISP，也不会修改 DWG：
-
-```cmd
-scripts\current-com-diagnose.cmd
-```
-
-重点看：
-
-- `pywin32.available`
-- `acad_process.running`
-- `attachable`
-- `diagnostics`
-
-如果 `scripts\current-smoke-test.cmd --execute` 返回 `ACAD_COM_UNAVAILABLE`，先看输出里的：
-
-```text
-send_result.acad_process.running
-```
-
-- `false`：AutoCAD 没开，或系统当前看不到 `acad.exe`。
-- `true`：AutoCAD 已经在运行，但 Python 不能附着到 AutoCAD COM。
-
-当 `running: true` 但仍然失败时，优先按下面处理：
-
-1. 关闭 AutoCAD。
-2. 不要用“以管理员身份运行”，用普通方式重新打开 AutoCAD。
-3. 打开一张测试 DWG，等待命令行完全可输入。
-4. 再运行：
-
-```cmd
-scripts\current-smoke-test.cmd --execute
-```
-
-如果仍失败，把输出里的 `task_id` 交给 AI，让 AI 运行：
-
-```cmd
-python -m yang_cad_agent.cli task-error-detail 任务ID
-```
-
-`task_error_detail` 和 `task-error-detail` 都可以用。
-
-当前本机已验证：`pywin32.available = true`，`acad_process.running = true`，但 `attachable = false`。这说明 AutoCAD 进程存在，但当前 Python 还不能附着到 AutoCAD COM；优先按“普通权限重开 AutoCAD + 打开测试 DWG + 等命令行可输入”处理。
-
-新版 `scripts\current-smoke-test.cmd --execute` 会先自动做 COM ready check：
-
-- `blocked`：预检已阻止执行，没有发送 LISP，通常也没有新的失败任务 ID。按 `next_step` 处理。
-- `completed` / `sent_unconfirmed` / `failed`：说明已经进入当前图执行流程，失败时再把 `task_id` 给 AI 排障。
-
-## 一键图纸体检
-
-如果只是想快速看一张测试图纸里有哪些图层、块、文字标注，可以让 AI 运行这个命令。它会一次完成三种统计，并生成一份总报告。
-
-先预演：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli health-check .agent\tmp\sample-run
-```
-
-确认只匹配测试副本后，再执行：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli health-check .agent\tmp\sample-run --execute
-```
-
-成功后会生成：
-
-```text
-.agent\tmp\sample-run\CAD_REPORT_SUMMARY.md
-```
-
-当前测试副本已经验证成功：图层 12，图层对象 93，普通块参照 1，文字/标注对象 24，外参/图片/底图引用 4，图框标题栏候选 0。以后正式处理客户图纸时，仍然先让 AI 复制副本、dry-run、确认备份，再执行。
-## 当前 AutoCAD 图纸 LISP 测试
-
-这个入口用于验证“AutoCAD 已打开的当前图纸”能不能收到 LISP。它不是批量处理，不会通过 MCP 真实执行。
-
-先 dry-run：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli current-lisp --script toolbox\plugins\current_smoke\main.lsp
-```
-
-dry-run 会返回：
-
-- `task_id`：本次任务编号。
-- `wrapper_path`：AI 自动生成的包装 LISP。
-- `completion_marker`：AutoCAD 执行完成后应写入的 `result.json`。
-- `command`：实际会发送给 AutoCAD 的命令。
-
-确认 AutoCAD 已打开并且当前有 DWG 后，再执行：
-
-```cmd
-set PYTHONPATH=src
-C:\Users\YANG\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe -m yang_cad_agent.cli current-lisp --script toolbox\plugins\current_smoke\main.lsp --execute
-```
-
-结果判断：
-
-- `status: completed`：AutoCAD 执行完并写入完成标记。
-- `status: sent_unconfirmed`：命令已发送给 AutoCAD，但 CLI 暂时没看到完成标记。检查 AutoCAD 命令行和 `completion_marker` 路径。
-- `status: failed`：执行失败，复制 `task_id` 让 AI 运行 `task_error_detail` 排障。
-## 2026-06-05 AutoCAD 测试启动入口
-
-AI 可以通过本地脚本启动 AutoCAD 2027，但不会通过 MCP 直接开关 CAD。
-
-先看计划，不启动：
-```cmd
-scripts\open-autocad-test.cmd
-```
-
-确认安全后再启动：
-```cmd
-scripts\open-autocad-test.cmd --execute
-```
-
-这个脚本默认会把 `sample\S001.dwg` 复制到 `.agent\tmp\current-open\S001-current-test.dwg`，然后打开这个测试副本。它不会保存 DWG，也不会关闭 AutoCAD。
-
-AutoCAD 打开后，按顺序运行：
-```cmd
-scripts\current-com-diagnose.cmd
-scripts\current-smoke-test.cmd --execute
-```
-
-只有 `current-com-diagnose` 返回 `attachable: true` 时，第二个命令才会真正发送测试 LISP。关闭 AutoCAD 必须手动确认，因为可能有未保存图纸，AI 不会自动杀掉 CAD 进程。
-
-如果 `current-com-diagnose` 里出现：
-
-- `acad_process_without_top_level_window`
-- `acad_not_in_running_object_table`
-- `acad_process_without_com`
-
-意思是：`acad.exe` 进程虽然还在，但 AutoCAD 没有可用窗口，也没有进入 COM 可控制状态。此时不要继续发送 LISP。先确认没有未保存图纸，再关闭残留 AutoCAD，重新用普通权限打开 AutoCAD 2027 和测试 DWG。
+Token 不应出现在普通日志、复制诊断或“复制 MCP 配置”中。

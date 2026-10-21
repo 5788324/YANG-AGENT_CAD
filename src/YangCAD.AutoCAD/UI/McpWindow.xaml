@@ -1,0 +1,78 @@
+<Window x:Class="YangCAD.AutoCADHost.UI.McpWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="YangCAD MCP" Width="900" Height="720" MinWidth="780" MinHeight="600"
+ WindowStartupLocation="CenterOwner"
+ Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+ <Window.Resources>
+  <ResourceDictionary>
+   <ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="Themes/Obsidian.xaml"/>
+    <ResourceDictionary Source="Themes/SharedStyles.xaml"/>
+   </ResourceDictionary.MergedDictionaries>
+  </ResourceDictionary>
+ </Window.Resources>
+ <Grid Margin="20">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="16"/><RowDefinition Height="*"/><RowDefinition Height="14"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <Grid>
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <StackPanel>
+    <TextBlock Text="YangCAD MCP" Style="{StaticResource TitleText}"/>
+    <TextBlock Text="本机 CAD ↔ AI 核心连接" Style="{StaticResource MutedText}" Margin="0,3,0,0"/>
+   </StackPanel>
+   <Border Grid.Column="1" Style="{StaticResource StatusPill}">
+    <StackPanel Orientation="Horizontal"><Ellipse x:Name="StatusDot" Width="9" Height="9" Fill="{DynamicResource SuccessBrush}" Margin="0,0,8,0"/><TextBlock x:Name="StatusText" Text="CAD 网关就绪" FontWeight="SemiBold"/></StackPanel>
+   </Border>
+  </Grid>
+
+  <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+   <StackPanel>
+    <TextBlock Text="连接与诊断" Style="{StaticResource SectionTitle}"/>
+    <Border Style="{StaticResource Card}" Margin="0,10,0,0">
+     <StackPanel>
+      <Grid>
+       <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+       <StackPanel Orientation="Horizontal"><Ellipse x:Name="GatewayDot" Width="9" Height="9" Fill="{DynamicResource SuccessBrush}" Margin="0,0,8,0"/><TextBlock x:Name="GatewayStateText" Text="CAD 网关正在监听" FontWeight="SemiBold"/></StackPanel>
+       <TextBlock Grid.Column="1" x:Name="ToolSummaryText" Style="{StaticResource MutedText}"/>
+      </Grid>
+      <TextBlock Text="本地网关" Style="{StaticResource LabelText}" Margin="0,14,0,5"/><TextBox x:Name="GatewayEndpointText" Style="{StaticResource InfoBox}"/>
+      <TextBlock Text="复制 MCP 配置会把当前 CAD 进程 PID 绑定信息交给本机 AI；剪贴板不包含 Gateway Token。CAD/Civil 3D 重启后请重新复制。" Style="{StaticResource MutedText}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+      <TextBlock Text="实例发现文件" Style="{StaticResource LabelText}" Margin="0,12,0,5"/><TextBox x:Name="InstancePathText" Style="{StaticResource InfoBox}"/>
+      <TextBlock Text="当前文档会话" Style="{StaticResource LabelText}" Margin="0,12,0,5"/><TextBox x:Name="SessionText" Style="{StaticResource InfoBox}"/>
+      <WrapPanel Margin="0,14,0,0">
+       <Button Content="复制 MCP 配置" Style="{StaticResource PrimaryButton}" Click="CopyMcpConfigClick" Margin="0,0,8,0"/>
+       <Button Content="刷新" Style="{StaticResource SecondaryButton}" Click="RefreshClick" Margin="0,0,8,0"/>
+       <Button Content="复制诊断" Style="{StaticResource SecondaryButton}" Click="CopyDiagnosticsClick" Margin="0,0,8,0"/>
+       <Button Content="自检" Style="{StaticResource SecondaryButton}" Click="SelfCheckClick" Margin="0,0,8,0"/>
+       <Button Content="打开日志" Style="{StaticResource SecondaryButton}" Click="OpenLogsClick"/>
+      </WrapPanel>
+     </StackPanel>
+    </Border>
+
+    <Grid Margin="0,12,0,0">
+     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+     <Border Style="{StaticResource Card}"><StackPanel><TextBlock Text="HOST" Style="{StaticResource LabelText}"/><TextBlock x:Name="HostText" Style="{StaticResource ValueText}" Margin="0,5,0,0"/><TextBlock x:Name="ProcessText" Style="{StaticResource MutedText}" Margin="0,3,0,0"/></StackPanel></Border>
+     <Border Grid.Column="2" Style="{StaticResource Card}"><StackPanel><TextBlock Text="DOCUMENT / TOOLS" Style="{StaticResource LabelText}"/><TextBlock x:Name="DocumentText" Style="{StaticResource ValueText}" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="DocumentIdText" Style="{StaticResource MutedText}"/><TextBlock x:Name="ToolCountText" Style="{StaticResource MutedText}" Margin="0,3,0,0"/><TextBlock x:Name="ExpectedToolCountText" Style="{StaticResource MutedText}" Margin="0,3,0,0"/></StackPanel></Border>
+    </Grid>
+
+    <TextBlock Text="写入与高级能力" Style="{StaticResource SectionTitle}" Margin="0,18,0,0"/>
+    <Border Style="{StaticResource Card}" Margin="0,10,0,0">
+     <StackPanel>
+      <TextBlock Text="默认保持读取优先；只有明确需要 AI 修改图纸时再开启写入。" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+      <CheckBox x:Name="AllowWritesCheck" Content="允许 MCP 修改当前 DWG" Style="{StaticResource ElegantCheckBox}" Click="SettingsChanged"/>
+      <CheckBox x:Name="AllowEraseCheck" Content="允许 MCP 删除实体" Style="{StaticResource ElegantCheckBox}" Click="SettingsChanged"/>
+      <CheckBox x:Name="AllowCommandCheck" Content="允许 cad.command.run" Style="{StaticResource ElegantCheckBox}" Click="SettingsChanged"/>
+      <CheckBox x:Name="AllowExtensionCheck" Content="允许 cad.extension.invoke" Style="{StaticResource ElegantCheckBox}" Click="SettingsChanged"/>
+      <TextBlock Text="Extension 目录：%LOCALAPPDATA%\YangCADAgent\Extensions" Style="{StaticResource MutedText}" Margin="28,3,0,0"/>
+     </StackPanel>
+    </Border>
+   </StackPanel>
+  </ScrollViewer>
+
+  <Grid Grid.Row="4">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <TextBlock Text="PID-bound · Document-bound · Token-free handoff" Style="{StaticResource MutedText}" VerticalAlignment="Center"/>
+   <Button Grid.Column="1" Content="关闭" Style="{StaticResource PrimaryButton}" Click="CloseClick"/>
+  </Grid>
+ </Grid>
+</Window>

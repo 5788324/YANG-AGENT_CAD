@@ -1,0 +1,383 @@
+{
+  "schema_version": "yangcad-rvt-exchange/1.0",
+  "units": "mm",
+  "origin": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "source_insunits": "Millimeters",
+  "entities": [
+    {
+      "Handle": "E001",
+      "DxfType": "LWPOLYLINE",
+      "ExchangeLayer": "#0.25 Continuous White",
+      "OriginalLayer": "E2E",
+      "Category": "Curve",
+      "Traits": {
+        "LineType": "Continuous",
+        "LineWeightMm": 0.25
+      },
+      "Data": {
+        "closed": false,
+        "vertices": [
+          {
+            "point": [
+              0,
+              0,
+              0
+            ],
+            "bulge": 0.5
+          },
+          {
+            "point": [
+              50,
+              0,
+              0
+            ],
+            "bulge": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "Handle": "E002",
+      "DxfType": "LWPOLYLINE",
+      "ExchangeLayer": "#0.25 Continuous White",
+      "OriginalLayer": "E2E",
+      "Category": "Curve",
+      "Traits": {},
+      "Data": {
+        "closed": false,
+        "vertices": [
+          {
+            "point": [
+              0,
+              50,
+              0
+            ],
+            "bulge": 0.0
+          },
+          {
+            "point": [
+              50,
+              50,
+              0
+            ],
+            "bulge": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "Handle": "E003",
+      "DxfType": "LWPOLYLINE",
+      "ExchangeLayer": "#0.25 Continuous White",
+      "OriginalLayer": "E2E",
+      "Category": "Curve",
+      "Traits": {},
+      "Data": {
+        "closed": true,
+        "vertices": [
+          {
+            "point": [
+              0,
+              100,
+              0
+            ],
+            "bulge": 0.0
+          },
+          {
+            "point": [
+              50,
+              100,
+              0
+            ],
+            "bulge": 0.0
+          },
+          {
+            "point": [
+              50,
+              150,
+              0
+            ],
+            "bulge": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "Handle": "E004",
+      "DxfType": "LINE",
+      "ExchangeLayer": "#0.25 Continuous White",
+      "OriginalLayer": "E2E",
+      "Category": "Curve",
+      "Traits": {},
+      "Data": {
+        "start": [
+          100,
+          0,
+          0
+        ],
+        "end": [
+          150,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "Handle": "E005",
+      "DxfType": "ARC",
+      "ExchangeLayer": "#0.25 Continuous White",
+      "OriginalLayer": "E2E",
+      "Category": "Curve",
+      "Traits": {},
+      "Data": {
+        "center": [
+          200,
+          0,
+          0
+        ],
+        "radius": 25,
+        "start_angle_deg": 0,
+        "end_angle_deg": 180
+      }
+    },
+    {
+      "Handle": "E006",
+      "DxfType": "CIRCLE",
+      "ExchangeLayer": "#0.25 Continuous White",
+      "OriginalLayer": "E2E",
+      "Category": "Curve",
+      "Traits": {},
+      "Data": {
+        "center": [
+          275,
+          0,
+          0
+        ],
+        "radius": 20
+      }
+    },
+    {
+      "Handle": "E007",
+      "DxfType": "TEXT",
+      "ExchangeLayer": "RVT-T H3.5 Standard",
+      "OriginalLayer": "E2E",
+      "Category": "Text",
+      "Traits": {
+        "TextStyle": "Standard",
+        "Font": "txt.shx",
+        "Height": 3.5
+      },
+      "Data": {
+        "text": "TEXT E2E",
+        "position": [
+          0,
+          200,
+          0
+        ],
+        "rotation_deg": 0,
+        "width": 0
+      }
+    },
+    {
+      "Handle": "E008",
+      "DxfType": "MTEXT",
+      "ExchangeLayer": "RVT-T H3.5 Standard",
+      "OriginalLayer": "E2E",
+      "Category": "Text",
+      "Traits": {
+        "TextStyle": "Standard",
+        "Font": "Arial",
+        "Height": 3.5
+      },
+      "Data": {
+        "text": "MTEXT E2E",
+        "position": [
+          80,
+          200,
+          0
+        ],
+        "rotation_deg": 0,
+        "width": 60
+      }
+    },
+    {
+      "Handle": "E009",
+      "DxfType": "MULTILEADER",
+      "ExchangeLayer": "RVT-ML H3.5 Standard",
+      "OriginalLayer": "E2E",
+      "Category": "Text",
+      "Traits": {
+        "TextStyle": "Standard",
+        "Font": "Arial",
+        "Height": 3.5
+      },
+      "Data": {
+        "text": "MLeader E2E Text",
+        "position": [
+          180,
+          200,
+          0
+        ],
+        "leader_vertex_order": "arrow_to_text",
+        "leader_lines": [
+          {
+            "points": [
+              [
+                130,
+                180,
+                0
+              ],
+              [
+                160,
+                190,
+                0
+              ],
+              [
+                180,
+                200,
+                0
+              ]
+            ],
+            "vertex_order": "arrow_to_text"
+          }
+        ]
+      }
+    },
+    {
+      "Handle": "E010",
+      "DxfType": "HATCH",
+      "ExchangeLayer": "RVT-H SOLID S1 A0 White",
+      "OriginalLayer": "E2E",
+      "Category": "Fill",
+      "Traits": {
+        "pattern": "SOLID"
+      },
+      "Data": {
+        "pattern": "SOLID",
+        "boundary_loops": [
+          {
+            "kind": "curves",
+            "curves": [
+              {
+                "Type": "LINE",
+                "StartPoint": [
+                  300,
+                  150,
+                  0
+                ],
+                "EndPoint": [
+                  350,
+                  150,
+                  0
+                ]
+              },
+              {
+                "Type": "LINE",
+                "StartPoint": [
+                  350,
+                  150,
+                  0
+                ],
+                "EndPoint": [
+                  350,
+                  200,
+                  0
+                ]
+              },
+              {
+                "Type": "LINE",
+                "StartPoint": [
+                  350,
+                  200,
+                  0
+                ],
+                "EndPoint": [
+                  300,
+                  200,
+                  0
+                ]
+              },
+              {
+                "Type": "LINE",
+                "StartPoint": [
+                  300,
+                  200,
+                  0
+                ],
+                "EndPoint": [
+                  300,
+                  150,
+                  0
+                ]
+              }
+            ],
+            "is_outer": true,
+            "is_hole": false
+          }
+        ]
+      }
+    },
+    {
+      "Handle": "E011",
+      "DxfType": "DIMENSION",
+      "ExchangeLayer": "RVT-D LINEAR H3.5 Standard",
+      "OriginalLayer": "E2E",
+      "Category": "Dimension",
+      "Traits": {
+        "dimension_kind": "linear",
+        "dimension_style": "Standard",
+        "text_height": 3.5
+      },
+      "Data": {
+        "dimension_kind": "linear",
+        "dimension_style": "Standard",
+        "measurement": 100,
+        "display_text": "100",
+        "revit_rebuild_supported": true,
+        "definition_points": [
+          {
+            "role": "DimLinePoint",
+            "point": [
+              100,
+              -20,
+              0
+            ]
+          },
+          {
+            "role": "XLine1Point",
+            "point": [
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "role": "XLine2Point",
+            "point": [
+              100,
+              0,
+              0
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "counts": {
+    "LWPOLYLINE": 3,
+    "LINE": 1,
+    "ARC": 1,
+    "CIRCLE": 1,
+    "TEXT": 1,
+    "MTEXT": 1,
+    "MULTILEADER": 1,
+    "HATCH": 1,
+    "DIMENSION": 1
+  },
+  "unsupported_count": 0,
+  "warnings": []
+}

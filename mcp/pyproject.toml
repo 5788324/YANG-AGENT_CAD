@@ -1,0 +1,13 @@
+[project]
+name = "yangcad-mcp"
+version = "0.9.0"
+description = "YangCAD Agent MCP v2 bridge for AutoCAD / Civil 3D"
+requires-python = ">=3.10"
+dependencies = ["mcp[cli]>=2.0,<3"]
+[project.scripts]
+yangcad-mcp = "yangcad_mcp.server:main"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[tool.hatch.build.targets.wheel]
+packages = ["yangcad_mcp"]

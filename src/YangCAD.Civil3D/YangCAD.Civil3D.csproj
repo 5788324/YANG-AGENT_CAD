@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <CadYear Condition="'$(CadYear)' == ''">2024</CadYear>
+    <AcadRoot Condition="'$(AcadRoot)' == ''">C:\Program Files\Autodesk\AutoCAD $(CadYear)</AcadRoot>
+    <CivilRoot Condition="'$(CivilRoot)' == ''">$(AcadRoot)\C3D</CivilRoot>
+    <TargetFramework Condition="'$(CadYear)' == '2021' Or '$(CadYear)' == '2022' Or '$(CadYear)' == '2023' Or '$(CadYear)' == '2024'">net48</TargetFramework>
+    <TargetFramework Condition="'$(CadYear)' == '2025' Or '$(CadYear)' == '2026'">net8.0-windows</TargetFramework>
+    <TargetFramework Condition="'$(CadYear)' == '2027'">net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AssemblyName>YangCAD.Civil3D</AssemblyName>
+    <RootNamespace>YangCAD.Civil3DHost</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>$(MSBuildThisFileDirectory)..\..\artifacts\bin\$(CadYear)\Civil3D\</OutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\YangCAD.Core\YangCAD.Core.csproj" />
+    <ProjectReference Include="..\YangCAD.AutoCAD\YangCAD.AutoCAD.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="AcCoreMgd"><HintPath>$(AcadRoot)\AcCoreMgd.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="AcDbMgd"><HintPath>$(AcadRoot)\AcDbMgd.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="AcMgd"><HintPath>$(AcadRoot)\AcMgd.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="AeccDbMgd"><HintPath>$(CivilRoot)\AeccDbMgd.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="AeccPressurePipesMgd"><HintPath>$(CivilRoot)\AeccPressurePipesMgd.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="AecBaseMgd"><HintPath Condition="Exists('$(AcadRoot)\AecBaseMgd.dll')">$(AcadRoot)\AecBaseMgd.dll</HintPath><HintPath Condition="!Exists('$(AcadRoot)\AecBaseMgd.dll')">$(CivilRoot)\AecBaseMgd.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

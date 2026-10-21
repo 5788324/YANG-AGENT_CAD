@@ -1,36 +1,23 @@
-# Python
-__pycache__/
-*.py[cod]
+**/bin/
+**/obj/
+artifacts/
+out/
+*.dll
+*.pdb
+*.exe
+*.binlog
+.local/
+sdk/
+lib/Autodesk/
 .venv/
-venv/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# Local agent runtime data
-.agent/tasks/
-.agent/backups/
-.agent/logs/
-.agent/current/
-.agent/reports/
-.agent/scripts/
-.agent/tmp/
-!/.agent/.gitkeep
-tmp-tests/
-ErrorReports/
-
-# CAD/user artifacts
-*.dwg
-*.dwl
-*.dwl2
-*.bak
-*.sv$
-*.pdf
-*.plot.log
-acad.err
-
-# OS/editor
-.DS_Store
-Thumbs.db
+__pycache__/
+*.pyc
+.vs/
 .idea/
 .vscode/
+*.user
+*.suo
+logs/operations/*.jsonl
+logs/conversations/*.local.md
+Thumbs.db
+.DS_Store

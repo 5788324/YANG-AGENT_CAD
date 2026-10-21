@@ -1,51 +1,43 @@
-# AGENTS.md
+# AGENTS.md — YangCAD
 
-这是 Codex、Antigravity、Claude 或其他 AI 继续开发本项目时必须读取的工作规则。
+## 强制读取顺序
 
-## 用户背景
+1. README.md
+2. PROJECT.md
+3. docs/CURRENT_STATE.md
+4. docs/DOCUMENT_AUTHORITY.md
+5. docs/DECISIONS.md
+6. docs/AI_FEATURE_DEVELOPMENT_STANDARD.md
+7. docs/AGENT_RULES.md
+8. docs/COMPATIBILITY.md
+9. docs/TOOLBOX_ARCHITECTURE.md
+10. docs/TOOL_INDEX.md
+11. tasks/CURRENT_TASK.md
+12. docs/HANDOFF.md
+13. WORKLOG.md
 
-用户是代码小白和 CAD 新手。所有开发、判断、命令、测试、错误分析、交接都由 AI 主动完成。不要要求用户理解代码细节；需要用户参与时，只让用户确认高风险动作或提供 AutoCAD/图纸环境信息。
+## 单主线
 
-## 每次开始工作
+- GitHub `main` 是唯一开发线。
+- 不恢复旧 YANG-AGENT_CAD history/archive/backup。
+- 不从旧 SHA/旧文档推断当前状态。
 
-1. 运行 `git status --short --branch`。
-2. 运行 `git fetch` 和 `git pull --rebase`。
-3. 阅读 `handoff/CURRENT_HANDOFF.md`。
-4. 阅读 `docs/PROJECT_STATE.md`。
-5. 查看最近一篇 `logs/worklog/YYYY-MM-DD.md`。
-6. 如果本地有未提交改动，先判断是否属于用户/其他 AI 的工作，禁止随意覆盖。
+## 项目原则
 
-## 每次结束工作
+- 个人工作插件箱，优先 AI 快速开发、迭代、维护、上线。
+- 不直接从 MCP/HTTP background thread 访问 Autodesk API。
+- 写操作保持正确 Document/Transaction/rollback/Undo。
+- Batch 不破坏输入 DWG。
+- 不跨年份复制 Autodesk/YangCAD runtime DLL。
+- 不把 Autodesk DLL、token、runtime logs、bin/obj 提交 Git。
+- GUI Toolbox 普通写工具不强制 dry_run；高破坏工具按需 Preview/确认。
+- TASK-007 动态 Extension 安全机制不扩散到静态 Toolbox。
+- GUI 与 MCP 共享 Service，但 GUI 不绕 MCP。
+- 不为“架构完整”引入无实际收益的平台化层。
+- 每轮保持小范围并更新 CURRENT_STATE/HANDOFF/WORKLOG。
 
-1. 运行必要测试或 `doctor` 自检。
-2. 更新 `docs/PROJECT_STATE.md`。
-3. 更新当天 `logs/worklog/YYYY-MM-DD.md`。
-4. 更新 `handoff/CURRENT_HANDOFF.md`。
-5. 提交 commit。
-6. 推送到 GitHub。
-7. 在最终回复里说明完成内容、测试结果、未完成事项。
+## AI 功能开发规范
 
-## 执行原则
-
-优先顺序：
-
-1. 已有 MCP tool 或插件箱能力。
-2. 生成临时 LISP，在当前图纸执行。
-3. 需要批量时，用 accoreconsole 执行经过校验的 LISP。
-4. 用户确认有用后，把临时脚本沉淀为插件箱插件。
-
-## 安全原则
-
-查询类任务可自动执行。当前图纸轻量修改可以自动执行，但必须记录日志。批量修改、删除、覆盖、保存、清理、替换属性、批量导出必须先 dry-run、备份并让用户确认。
-
-任何 AI 生成的 LISP 首次只能作为临时脚本运行，不能直接进入插件箱。插件入箱必须有 manifest、参数 schema、风险等级、适用轨道和用户确认。
-
-## 禁止事项
-
-- 禁止在没有备份的情况下批量修改 DWG。
-- 禁止自动删除用户图纸或备份。
-- 禁止把客户 DWG、PDF、图纸资料提交到 GitHub。
-- 禁止把 shell 暴露为泛用 MCP 能力给 AI 使用。
-- 禁止在 accoreconsole 里使用交互函数或对话框。
-- 禁止绕过错误码和任务日志直接汇报“完成”。
-
+- 所有 AI 必须遵循 `docs/AI_FEATURE_DEVELOPMENT_STANDARD.md`。
+- 默认每次 1–3 个 Tool；不得自动从 Backlog 继续开发。
+- 正式打包必须同步 CURRENT_STATE / HANDOFF / WORKLOG / CURRENT_TASK 与完整源码 SHA。

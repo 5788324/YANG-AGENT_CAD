@@ -1,0 +1,20 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YangCAD.Core", "src\YangCAD.Core\YangCAD.Core.csproj", "{9E6C1E6B-A1D3-4B51-8B21-78F1530F22A1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YangCAD.AutoCAD", "src\YangCAD.AutoCAD\YangCAD.AutoCAD.csproj", "{8B5EB2C8-9E42-4F93-8C20-9BE73C2445A2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YangCAD.Civil3D", "src\YangCAD.Civil3D\YangCAD.Civil3D.csproj", "{696E2A55-E27A-46A0-9752-294CC76E107F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YangCAD.BatchWorker", "src\YangCAD.BatchWorker\YangCAD.BatchWorker.csproj", "{D913A44F-C7C0-4B67-A4B3-1B7C2E06C1A5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YangCAD.Setup", "src\YangCAD.Setup\YangCAD.Setup.csproj", "{E4BCEAF7-511A-4FC9-A0E7-CB19B7D55ED5}"
+EndProject
+Global
+  GlobalSection(SolutionConfigurationPlatforms) = preSolution
+    Debug|x64 = Debug|x64
+    Release|x64 = Release|x64
+  EndGlobalSection
+EndGlobal
