@@ -29,7 +29,10 @@ namespace YangCAD.AutoCADHost.Services.Cad
             public string OutputFolder { get; set; } = "";
             public string OutputSuffix { get; set; } = "_RVT";
             public bool ScanBlockDefinitions { get; set; } = true;
-            public bool IncludePaperSpace { get; set; } = true;
+            public bool IncludePaperSpace { get; set; } = false;
+            // Separate from NormalizeGeometryOverrides (which only means ByLayer appearance).
+            // "local" preserves entity WCS data and writes a nonzero MAP origin for YangTools.
+            public string CoordinateOriginMode { get; set; } = "local";
             public bool NormalizeGeometryOverrides { get; set; } = true;
         }
 
@@ -45,6 +48,10 @@ namespace YangCAD.AutoCADHost.Services.Cad
             public string units { get; set; } = "mm";
             public object[] origin { get; set; } = new object[] { 0.0, 0.0, 0.0 };
             public string source_insunits { get; set; } = "";
+            public string coordinate_origin_mode { get; set; } = "local";
+            public int model_space_entities { get; set; }
+            public int paper_space_entities { get; set; }
+            public bool mixed_spaces { get; set; }
             public string source_document { get; set; } = "";
             public string output_dwg { get; set; } = "";
             public string map_path { get; set; } = "";
@@ -88,6 +95,15 @@ namespace YangCAD.AutoCADHost.Services.Cad
             public int SkippedAnonymousBlocks;
             public int SkippedXrefBlocks;
             public int DynamicBlockReferences;
+            public int ModelSpaceEntities;
+            public int PaperSpaceEntities;
+            public bool HasExtents;
+            public double MinX = double.PositiveInfinity;
+            public double MinY = double.PositiveInfinity;
+            public double MaxX = double.NegativeInfinity;
+            public double MaxY = double.NegativeInfinity;
+            public object[] Origin = new object[] { 0.0, 0.0, 0.0 };
+            public string OriginMode = "source";
         }
 
         private sealed class LayerDefinition
@@ -214,6 +230,10 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (string.IsNullOrWhiteSpace(request.OutputSuffix)) request.OutputSuffix = "_RVT";
             request.OutputSuffix = SanitizeFilePart(request.OutputSuffix.Trim());
             if (string.IsNullOrWhiteSpace(request.OutputSuffix)) request.OutputSuffix = "_RVT";
+            request.CoordinateOriginMode = (request.CoordinateOriginMode ?? "").Trim().ToLowerInvariant();
+            if (string.IsNullOrEmpty(request.CoordinateOriginMode)) request.CoordinateOriginMode = "local";
+            if (request.CoordinateOriginMode != "local" && request.CoordinateOriginMode != "source")
+                throw new ArgumentException("coordinate_origin_mode 只能为 local 或 source。", nameof(request));
         }
 
         private static Result BuildResult(bool dryRun, string documentName, (string Dwg, string Map, string Report) paths, Analysis analysis, string units, string sourceInsunits)
@@ -223,8 +243,12 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 success = true,
                 dry_run = dryRun,
                 units = units,
-                origin = new object[] { 0.0, 0.0, 0.0 },
+                origin = analysis.Origin.ToArray(),
                 source_insunits = sourceInsunits,
+                coordinate_origin_mode = analysis.OriginMode,
+                model_space_entities = analysis.ModelSpaceEntities,
+                paper_space_entities = analysis.PaperSpaceEntities,
+                mixed_spaces = analysis.ModelSpaceEntities > 0 && analysis.PaperSpaceEntities > 0,
                 source_document = documentName,
                 output_dwg = paths.Dwg,
                 map_path = paths.Map,
@@ -333,6 +357,26 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     }
                 }
             }
+
+            // Local origin is a placement hint for native YangTools reconstruction; entity Data remains WCS.
+            // A single origin cannot reconcile ModelSpace and PaperSpace with unrelated coordinates.
+            analysis.OriginMode = request.CoordinateOriginMode;
+            if (analysis.ModelSpaceEntities > 0 && analysis.PaperSpaceEntities > 0)
+            {
+                analysis.OriginMode = "source";
+                analysis.Warnings.Add("危险：Exchange 同时包含模型空间和布局空间；坐标系不同，已禁用局部原点转换。必须分开输出才能用于 Revit 原生重建。");
+            }
+            else if (request.CoordinateOriginMode == "local")
+            {
+                if (analysis.HasExtents)
+                    analysis.Origin = new object[] { Round(analysis.MinX, 8), Round(analysis.MinY, 8), 0.0 };
+                else if (analysis.ClassifiedEntities > 0)
+                    analysis.Warnings.Add("无法计算当前选择空间的几何范围；保留原始 origin=[0,0,0]。");
+            }
+            if (analysis.HasExtents && (analysis.MaxX - analysis.MinX > 10000 || analysis.MaxY - analysis.MinY > 10000))
+                analysis.Warnings.Add("选中对象的坐标跨度超过 10000 个图纸单位；局部原点只平移不缩放，请在 Revit 端核对范围。");
+            if (!request.IncludePaperSpace)
+                analysis.Warnings.Add("MAP仅包含模型空间；_RVT.dwg为整个源DWG的独立克隆，仍保留原有布局实体，直接导入DWG与按MAP重建的范围不相同。");
 
             if (analysis.UnresolvedByBlock.Count > 0)
                 analysis.Warnings.Add("ByBlock 外观无法在块定义层面完全解析，已使用来源图层作为 fallback；数量=" + analysis.UnresolvedByBlock.Count.ToString(CultureInfo.InvariantCulture));
@@ -591,6 +635,31 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 entity.LayerId = layerId;
                 if (request.NormalizeGeometryOverrides && category == "geometry") NormalizeGeometry(entity);
             }
+
+            // Capture only successfully classified entities. Extents are for a placement origin,
+            // never mutate source geometry or rewrite Data coordinates.
+            if (string.Equals(owner.Name, BlockTableRecord.ModelSpace, StringComparison.OrdinalIgnoreCase))
+                analysis.ModelSpaceEntities++;
+            else
+                analysis.PaperSpaceEntities++;
+            try
+            {
+                var ext = entity.GeometricExtents;
+                double minX = ext.MinPoint.X, minY = ext.MinPoint.Y;
+                double maxX = ext.MaxPoint.X, maxY = ext.MaxPoint.Y;
+                if (!double.IsNaN(minX) && !double.IsNaN(minY) && !double.IsNaN(maxX) && !double.IsNaN(maxY)
+                    && !double.IsInfinity(minX) && !double.IsInfinity(minY)
+                    && !double.IsInfinity(maxX) && !double.IsInfinity(maxY)
+                    && minX <= maxX && minY <= maxY)
+                {
+                    analysis.HasExtents = true;
+                    analysis.MinX = Math.Min(analysis.MinX, minX);
+                    analysis.MinY = Math.Min(analysis.MinY, minY);
+                    analysis.MaxX = Math.Max(analysis.MaxX, maxX);
+                    analysis.MaxY = Math.Max(analysis.MaxY, maxY);
+                }
+            }
+            catch { /* Not every entity provides reliable GeometricExtents. */ }
 
             analysis.Entities.Add(new EntityRecord
             {
@@ -1274,7 +1343,11 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 writer.Write("{");
                 writer.Write("\"schema_version\":"); writer.Write(JsonCodec.Serialize(SchemaVersion));
                 writer.Write(",\"units\":"); writer.Write(JsonCodec.Serialize(units));
-                writer.Write(",\"origin\":"); writer.Write(JsonCodec.Serialize(new object[] { 0.0, 0.0, 0.0 }));
+                writer.Write(",\"origin\":"); writer.Write(JsonCodec.Serialize(analysis.Origin));
+                writer.Write(",\"coordinate_origin_mode\":"); writer.Write(JsonCodec.Serialize(analysis.OriginMode));
+                writer.Write(",\"model_space_entities\":"); writer.Write(analysis.ModelSpaceEntities.ToString(CultureInfo.InvariantCulture));
+                writer.Write(",\"paper_space_entities\":"); writer.Write(analysis.PaperSpaceEntities.ToString(CultureInfo.InvariantCulture));
+                writer.Write(",\"mixed_spaces\":"); writer.Write(analysis.ModelSpaceEntities > 0 && analysis.PaperSpaceEntities > 0 ? "true" : "false");
                 writer.Write(",\"source_insunits\":"); writer.Write(JsonCodec.Serialize(db.Insunits.ToString()));
                 writer.Write(",\"generated_utc\":"); writer.Write(JsonCodec.Serialize(DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture)));
                 writer.Write(",\"source_document\":"); writer.Write(JsonCodec.Serialize(documentName));
@@ -1308,7 +1381,11 @@ namespace YangCAD.AutoCADHost.Services.Cad
             {
                 schema_version = SchemaVersion,
                 units = ExchangeUnits(db.Insunits, analysis),
-                origin = new object[] { 0.0, 0.0, 0.0 },
+                origin = analysis.Origin,
+                coordinate_origin_mode = analysis.OriginMode,
+                model_space_entities = analysis.ModelSpaceEntities,
+                paper_space_entities = analysis.PaperSpaceEntities,
+                mixed_spaces = analysis.ModelSpaceEntities > 0 && analysis.PaperSpaceEntities > 0,
                 source_insunits = db.Insunits.ToString(),
                 generated_utc = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
                 source_document = documentName,
