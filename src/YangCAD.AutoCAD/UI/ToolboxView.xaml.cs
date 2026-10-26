@@ -7,6 +7,8 @@ using YangCAD.AutoCADHost.Toolbox;
 using YangCAD.AutoCADHost.Services.Cad;
 using System.IO;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Windows.Threading;
 using Autodesk.AutoCAD.ApplicationServices.Core;
 
 namespace YangCAD.AutoCADHost.UI
@@ -24,6 +26,21 @@ namespace YangCAD.AutoCADHost.UI
 
         private readonly ToolboxRegistry _registry;
         private ToolboxToolDescriptor? _selected;
+        private DispatcherTimer? _embedStatusTimer;
+        private string _embedStatusFile = "";
+        private string _embedOutputFolder = "";
+        private string _embedLastState = "";
+
+        public sealed class EmbedStatusDto
+        {
+            public string state { get; set; } = "";
+            public int total_files { get; set; }
+            public int passed { get; set; }
+            public int failed { get; set; }
+            public int partial { get; set; }
+            public int skipped { get; set; }
+            public string fatal_error { get; set; } = "";
+        }
 
         public ToolboxView(ToolboxRegistry registry)
         {
@@ -31,6 +48,7 @@ namespace YangCAD.AutoCADHost.UI
             InitializeComponent();
             ThemeManager.Apply(Resources, UserSettings.Load().Theme);
             RefreshTools();
+            Unloaded += (_, __) => StopEmbedStatusMonitor();
         }
 
         public void ApplyTheme(string theme) => ThemeManager.Apply(Resources, theme);
@@ -147,7 +165,10 @@ namespace YangCAD.AutoCADHost.UI
                 var result = _registry.Execute(_selected.Id, values);
                 RuntimeLogger.Info("Toolbox GUI execute completed tool=" + _selected.Id);
                 if (result is ImageEmbedBatchService.Result embed && embed.started)
-                    ShowResult(true, "任务已启动（尚未完成）", $"共 {embed.file_count} 份 DWG。\n输出目录：{embed.output_folder}\n状态文件：{embed.status_path}\n以 status.json 的最终 PASS/PARTIAL/FAIL 判断结果。\n\n" + FormatResult(result));
+                {
+                    ShowResult(true, "任务已启动（尚未完成）", $"共 {embed.file_count} 份 DWG。\n输出目录：{embed.output_folder}\n状态文件：{embed.status_path}\n下方将自动显示进度和最终结果。\n\n" + FormatResult(result));
+                    StartEmbedStatusMonitor(embed);
+                }
                 else
                     ShowResult(true, "执行完成", FormatResult(result));
                 UpdateSelectedState();
@@ -203,13 +224,76 @@ namespace YangCAD.AutoCADHost.UI
                 });
                 RuntimeLogger.Info("Toolbox GUI quick embed worker started job=" + result.job_id);
                 ShowResult(true, label + "任务已启动（等待 Worker 完成）",
-                    $"待处理 DWG：{result.file_count}\n输出：{result.output_folder}\n查看最终结果：{result.status_path}\n\n不会覆盖源 DWG；批量内嵌结果不能只凭 Worker 已启动判断成功。");
+                    $"待处理 DWG：{result.file_count}\n输出：{result.output_folder}\n状态文件：{result.status_path}\n\n不会覆盖源 DWG；下方将自动显示进度和最终结果。");
+                StartEmbedStatusMonitor(result);
             }
             catch (Exception ex)
             {
                 RuntimeLogger.Error("Toolbox GUI quick embed failed", ex);
                 ShowResult(false, label + "启动失败", ex.Message);
             }
+        }
+
+        private void StartEmbedStatusMonitor(ImageEmbedBatchService.Result job)
+        {
+            StopEmbedStatusMonitor();
+            _embedStatusFile = job.status_path;
+            _embedOutputFolder = job.output_folder;
+            _embedLastState = "";
+            OpenEmbedOutputButton.Visibility = Visibility.Visible;
+            _embedStatusTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(2) };
+            _embedStatusTimer.Tick += EmbedStatusTick;
+            _embedStatusTimer.Start();
+        }
+
+        private void StopEmbedStatusMonitor()
+        {
+            if (_embedStatusTimer == null) return;
+            _embedStatusTimer.Stop();
+            _embedStatusTimer.Tick -= EmbedStatusTick;
+            _embedStatusTimer = null;
+        }
+
+        private void EmbedStatusTick(object? sender, EventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(_embedStatusFile) || !File.Exists(_embedStatusFile)) return;
+            try
+            {
+                var job = JsonCodec.Deserialize<EmbedStatusDto>(File.ReadAllText(_embedStatusFile));
+                if (job == null || string.IsNullOrWhiteSpace(job.state)) return;
+                var state = job.state.Trim().ToUpperInvariant();
+                var terminal = state == "PASS" || state == "PARTIAL" || state == "FAIL";
+                var headline = terminal ? $"引用处理完成：{state}" : $"引用处理进行中：{state}";
+                var details = $"总数：{job.total_files}；成功：{job.passed}；部分成功：{job.partial}；失败：{job.failed}；跳过：{job.skipped}\n输出：{_embedOutputFolder}\n状态：{_embedStatusFile}";
+                if (!string.IsNullOrWhiteSpace(job.fatal_error)) details += "\n错误：" + job.fatal_error;
+                if (terminal || !string.Equals(_embedLastState, details, StringComparison.Ordinal))
+                {
+                    ShowResult(state == "PASS" || !terminal, headline, details);
+                    _embedLastState = details;
+                }
+                if (terminal) StopEmbedStatusMonitor();
+            }
+            catch (IOException) { /* Worker may be atomically replacing status.json; retry next tick. */ }
+            catch (System.Exception ex)
+            {
+                StopEmbedStatusMonitor();
+                RuntimeLogger.Error("Image embed status monitor failed.", ex);
+                ShowResult(false, "无法解析任务状态", ex.Message + "\n状态文件：" + _embedStatusFile);
+            }
+        }
+
+        private void OpenEmbedOutputClick(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(_embedOutputFolder) || !Directory.Exists(_embedOutputFolder))
+            {
+                ShowResult(false, "输出目录尚不存在", "请检查 Worker 最终状态，部分失败任务可能没有生成输出副本。");
+                return;
+            }
+            try
+            {
+                Process.Start(new ProcessStartInfo("explorer.exe", "\"" + _embedOutputFolder + "\"") { UseShellExecute = true });
+            }
+            catch (System.Exception ex) { ShowResult(false, "打开输出目录失败", ex.Message); }
         }
 
         private void ShowResult(bool success, string title, string text)

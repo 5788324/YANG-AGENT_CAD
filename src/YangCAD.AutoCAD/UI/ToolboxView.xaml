@@ -70,7 +70,7 @@
      </Border>
      <Border x:Name="ResultBorder" Style="{StaticResource AccentCard}" Visibility="Collapsed" Margin="0,10,0,0">
       <StackPanel>
-       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="ResultTitleText" FontWeight="SemiBold"/><Button Grid.Column="1" x:Name="CopyResultButton" Content="复制结果" Click="CopyResultClick" Style="{StaticResource SecondaryButton}" Padding="10,5"/></Grid>
+       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="ResultTitleText" FontWeight="SemiBold"/><StackPanel Grid.Column="1" Orientation="Horizontal"><Button x:Name="OpenEmbedOutputButton" Content="打开输出目录" Click="OpenEmbedOutputClick" Style="{StaticResource SecondaryButton}" Padding="10,5" Visibility="Collapsed" Margin="0,0,8,0"/><Button x:Name="CopyResultButton" Content="复制结果" Click="CopyResultClick" Style="{StaticResource SecondaryButton}" Padding="10,5"/></StackPanel></Grid>
        <TextBox x:Name="ResultText" TextWrapping="Wrap" Style="{StaticResource ResultTextBox}" Margin="0,8,0,0" MaxHeight="280" VerticalScrollBarVisibility="Auto"/>
       </StackPanel>
      </Border>

@@ -5,7 +5,7 @@ CURRENT 2026-10-26 REFERENCE EMBED V2 + YGSCALE STATIC REVIEW
 - reference coverage: top-level RasterImage→OLE; resolved DWG Xref→internal Block (runtime required); PDF/DGN/DWF remain diagnosed unsupported
 - fixes: relative image paths use input DWG, worker-per-file failure isolation, existing AutoCAD process ownership guard, report residual nested external refs
 - YGSCALE: dynamic blocks explicitly skipped; DIMLFAC failure rolls back object; Leader/MLeader and Undo runtime pending
-- MCP contract unchanged: stdio 68 / AutoCAD 31 / Civil 3D 61
+- MCP contract unchanged: stdio 68 / AutoCAD 31 / Civil 3D 61; tools=68
 - static: all test_*_policy.py PASS; verify_source PASS; verify_release_source PASS
 - compile/runtime: not executed in this Linux environment
 - see: docs/REFERENCE_EMBED_V2_REVIEW_20261026.md and tasks/REFERENCE_EMBED_V2_WINDOWS_SMOKE_20261026.md

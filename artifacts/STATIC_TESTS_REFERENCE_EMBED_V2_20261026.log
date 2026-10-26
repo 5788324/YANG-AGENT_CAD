@@ -115,6 +115,8 @@ PASS: worker launch not advertised as complete
 PASS: source not overwritten
 PASS: relative raster uses ORIGINAL dwg
 PASS: per file exceptions isolated
+PASS: UI polls final Worker state
+PASS: UI opens output directory
 PASS: DWG xref bind enabled
 PASS: com ownership gate
 PASS: existing AutoCAD not quit
@@ -122,7 +124,7 @@ PASS: underlays diagnosed
 PASS: post bind residual references counted
 PASS: dynamic blocks skipped during scale
 PASS: dimension correction cannot silently fail
-quick reference embed static policy: 15/15 PASS
+quick reference embed static policy: 17/17 PASS
 
 
 === test_revit_exchange_v1_policy.py: PASS ===
