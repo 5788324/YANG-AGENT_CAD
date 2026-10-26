@@ -4,6 +4,10 @@ using System.Windows;
 using System.Windows.Controls;
 using YangCAD.AutoCADHost.Infrastructure;
 using YangCAD.AutoCADHost.Toolbox;
+using YangCAD.AutoCADHost.Services.Cad;
+using System.IO;
+using System.Collections.Generic;
+using Autodesk.AutoCAD.ApplicationServices.Core;
 
 namespace YangCAD.AutoCADHost.UI
 {
@@ -69,6 +73,7 @@ namespace YangCAD.AutoCADHost.UI
             DetailCategoryText.Text = _selected.CategoryPath;
             DetailDescriptionText.Text = _selected.Description;
             ParameterPanel.SetParameters(_selected.ParameterShape);
+            ImageQuickActions.Visibility = _selected.Id == "project.image.embed" ? Visibility.Visible : Visibility.Collapsed;
             ResultBorder.Visibility = Visibility.Collapsed;
             UpdateSelectedState();
             ToolListPane.Visibility = Visibility.Collapsed;
@@ -141,7 +146,10 @@ namespace YangCAD.AutoCADHost.UI
                 RuntimeLogger.Info("Toolbox GUI execute begin tool=" + _selected.Id);
                 var result = _registry.Execute(_selected.Id, values);
                 RuntimeLogger.Info("Toolbox GUI execute completed tool=" + _selected.Id);
-                ShowResult(true, "执行完成", FormatResult(result));
+                if (result is ImageEmbedBatchService.Result embed && embed.started)
+                    ShowResult(true, "任务已启动（尚未完成）", $"共 {embed.file_count} 份 DWG。\n输出目录：{embed.output_folder}\n状态文件：{embed.status_path}\n以 status.json 的最终 PASS/PARTIAL/FAIL 判断结果。\n\n" + FormatResult(result));
+                else
+                    ShowResult(true, "执行完成", FormatResult(result));
                 UpdateSelectedState();
             }
             catch (Exception ex)
@@ -149,6 +157,58 @@ namespace YangCAD.AutoCADHost.UI
                 RuntimeLogger.Error("Toolbox tool failed: " + _selected.Id, ex);
                 ShowResult(false, "执行失败", ex.Message);
                 UpdateSelectedState();
+            }
+        }
+
+        private void QuickEmbedCurrentClick(object sender, RoutedEventArgs e)
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc == null || string.IsNullOrWhiteSpace(doc.Name) || !File.Exists(doc.Name))
+            {
+                ShowResult(false, "请先保存图纸", "请先将当前 DWG 保存到磁盘。为避免把未保存更改误作最终结果，请保存后再执行一键内嵌。");
+                return;
+            }
+            if (System.Convert.ToInt32(Application.GetSystemVariable("DBMOD")) != 0)
+            {
+                ShowResult(false, "请先保存更改", "当前图纸有未保存修改。请 Ctrl+S 后再运行，避免输出副本缺少当前更改。");
+                return;
+            }
+            RunImageQuickAction(doc.Name, "当前图纸");
+        }
+
+        private void QuickEmbedFolderClick(object sender, RoutedEventArgs e)
+        {
+            using (var dialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "选择要批量内嵌引用的 DWG 文件夹（默认包含子文件夹）",
+                ShowNewFolderButton = false
+            })
+            {
+                if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+                RunImageQuickAction(dialog.SelectedPath, "文件夹批量");
+            }
+        }
+
+        private void RunImageQuickAction(string inputPath, string label)
+        {
+            try
+            {
+                RuntimeLogger.Info("Toolbox GUI quick embed begin mode=" + label);
+                var result = ImageEmbedBatchService.Start(new ImageEmbedBatchService.Request
+                {
+                    InputPath = inputPath,
+                    IncludeSubfolders = true,
+                    BindDrawingXrefs = true,
+                    RequireAllImages = true
+                });
+                RuntimeLogger.Info("Toolbox GUI quick embed worker started job=" + result.job_id);
+                ShowResult(true, label + "任务已启动（等待 Worker 完成）",
+                    $"待处理 DWG：{result.file_count}\n输出：{result.output_folder}\n查看最终结果：{result.status_path}\n\n不会覆盖源 DWG；批量内嵌结果不能只凭 Worker 已启动判断成功。");
+            }
+            catch (Exception ex)
+            {
+                RuntimeLogger.Error("Toolbox GUI quick embed failed", ex);
+                ShowResult(false, label + "启动失败", ex.Message);
             }
         }
 

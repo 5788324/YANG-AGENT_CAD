@@ -40,7 +40,7 @@ ok("scaled mode uses Matrix3d.Scaling", 'Matrix3d.Scaling(geometryFactor, reques
 ok("scaled text restores model text height", 'dbText.Height = oldHeight' in scaled and 'mText.TextHeight = oldHeight' in scaled)
 ok("standard text scales annotation height", 'dbText.Height *= annotationFactor' in standard and 'mText.TextHeight *= annotationFactor' in standard)
 ok("dimension keeps standard Dimlfac", 'Standard 1:1 mode must keep Dimlfac unchanged' in standard)
-ok("scaled dimension adjusts Dimlfac by inverse geometry factor", 'dimlfac.Value / geometryFactor' in scaled)
+ok("scaled dimension adjusts Dimlfac by inverse geometry factor", 'oldDimlfac / geometryFactor' in scaled and '无法设置对象级 DIMLFAC' in scaled)
 ok("dimension visual properties are object-level snapshots", all(x in SERVICE for x in ['"Dimtxt"','"Dimasz"','"Dimgap"','"Dimexe"','"Dimexo"']))
 ok("service does not mutate global style tables", all(x not in SERVICE for x in ['DimStyleTableRecord','TextStyleTableRecord','MLeaderStyleTableRecord']))
 ok("hatch paper scale handled", 'PatternScale' in SERVICE and 'PreserveHatchPaperScale' in SERVICE)

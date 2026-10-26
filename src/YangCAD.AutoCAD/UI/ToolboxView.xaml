@@ -55,7 +55,12 @@
        <TextBlock x:Name="DetailDescriptionText" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,10,0,0"/>
        <TextBlock x:Name="AvailabilityText" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,8,0,0"/>
        <Separator Margin="0,14,0,14"/>
-       <TextBlock Text="参数" Style="{StaticResource SectionTitle}" Margin="0,0,0,10"/>
+       <StackPanel x:Name="ImageQuickActions" Visibility="Collapsed" Margin="0,0,0,12">
+        <TextBlock Text="快速操作 · 原文件不覆盖，输出到 *_Embedded" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+        <Button Content="当前图纸一键内嵌" Click="QuickEmbedCurrentClick" Style="{StaticResource PrimaryButton}" Margin="0,0,0,8"/>
+        <Button Content="选择文件夹 · 批量内嵌" Click="QuickEmbedFolderClick" Style="{StaticResource SecondaryButton}"/>
+       </StackPanel>
+       <TextBlock Text="高级参数（也可直接填写并执行）" Style="{StaticResource SectionTitle}" Margin="0,0,0,10"/>
        <local:ToolboxParameterPanel x:Name="ParameterPanel"/>
        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
         <Button x:Name="PreviewButton" Content="预览" Click="PreviewSelectedTool" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Visibility="Collapsed"/>
@@ -73,6 +78,6 @@
    </ScrollViewer>
   </Grid>
 
-  <Border Grid.Row="3" Style="{StaticResource AccentCard}" Margin="0,12,0,0"><TextBlock Text="Revit 图纸预处理已可用；批量图片内嵌仍需 AutoCAD 2024 Windows Smoke 完成最终 OLE 验收。" Style="{StaticResource MutedText}" TextWrapping="Wrap"/></Border>
+  <Border Grid.Row="3" Style="{StaticResource AccentCard}" Margin="0,12,0,0"><TextBlock Text="引用内嵌：当前图纸或文件夹一键启动，结果需以 Worker 最终状态和重开 DWG 为准；比例转换的引线/动态块仍待实机补验。" Style="{StaticResource MutedText}" TextWrapping="Wrap"/></Border>
  </Grid>
 </UserControl>
