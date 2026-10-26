@@ -56,12 +56,13 @@ namespace YangCAD.AutoCADHost.Mcp.Tools
 
             var request = new ImageEmbedBatchService.Request
             {
-                InputPath = (ToolJson.String(context.Args, "input_path") ?? "").Trim(),
+                InputPath = (ToolJson.String(context.Args, "input_path") ?? context.Document.Name ?? "").Trim(),
                 OutputFolder = (ToolJson.String(context.Args, "output_folder") ?? "").Trim(),
                 IncludeSubfolders = ToolJson.Bool(context.Args, "include_subfolders") ?? true,
                 ShowWorker = ToolJson.Bool(context.Args, "show_worker") ?? false,
                 RequireAllImages = ToolJson.Bool(context.Args, "require_all_images") ?? true,
-                CommandTimeoutSeconds = timeout
+                CommandTimeoutSeconds = timeout,
+                BindDrawingXrefs = ToolJson.Bool(context.Args, "bind_dwg_xrefs") ?? true
             };
 
             return context.DryRun ? ImageEmbedBatchService.Preview(request) : ImageEmbedBatchService.Start(request);

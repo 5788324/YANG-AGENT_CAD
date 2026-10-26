@@ -101,9 +101,9 @@ namespace YangCAD.AutoCADHost.Toolbox
             registry.Register(new ToolboxToolDescriptor
             {
                 Id = "project.image.embed",
-                Name = "批量图片内嵌",
+                Name = "引用内嵌（当前图纸 / 批量）",
                 CategoryPath = "批处理",
-                Description = "将 DWG 顶层外链 RasterImage 批量转换为内嵌 OLE，输出独立副本。输入 DWG 永不覆盖，逐文件写任务状态；当前版本仍需 AutoCAD 2024 Windows Smoke 最终确认 OLE 行为。",
+                Description = "当前图纸一键生成内嵌副本；或选择文件夹批量处理。图片转换为 OLE，可选把 DWG 外部参照绑定为内部块。PDF/DGN/DWF Underlay 无法无损内嵌，会在结果中列为未处理。源 DWG 不覆盖。",
                 DeclaredStatus = ToolboxDeclaredStatus.Experimental,
                 IsWrite = true,
                 SupportsDryRun = true,
@@ -112,16 +112,17 @@ namespace YangCAD.AutoCADHost.Toolbox
                 SearchKeywords = new[] { "image", "raster", "ole", "embed", "图片", "内嵌", "批量", "外链", "自包含" },
                 ParameterShape = new[]
                 {
-                    Shape("input_path", "DWG 或文件夹", ToolboxParameterKind.FileOrFolder, true, "", description: "选择单个 DWG 或文件夹。文件夹模式扫描 *.dwg；不修改输入文件。"),
+                    Shape("input_path", "DWG 或文件夹（快捷按钮可不填）", ToolboxParameterKind.FileOrFolder, false, "", description: "可选择单个 DWG 或文件夹。也可使用上方快捷按钮，一键处理当前已保存 DWG 或选定文件夹。"),
                     Shape("output_folder", "输出目录", ToolboxParameterKind.Folder, false, "", description: "留空时生成输入目录同级的 *_Embedded 输出目录。可输入尚未创建的新目录；已有输出文件永不覆盖。"),
                     Shape("include_subfolders", "包含子文件夹", ToolboxParameterKind.Bool, false, true, description: "文件夹模式是否递归扫描子目录；输出会保留相对目录结构。"),
+                    Shape("bind_dwg_xrefs", "同时绑定 DWG 外部参照", ToolboxParameterKind.Bool, false, true, description: "把已加载的 DWG Xref 绑定为内部块（保留前缀以防样式同名冲突）；丢失或无法绑定的引用报告失败。"),
                     Shape("show_worker", "显示 Worker AutoCAD", ToolboxParameterKind.Bool, false, false, description: "调试时可显示独立 AutoCAD 自动化进程；大量处理默认隐藏。"),
                     Shape("require_all_images", "单图必须全部成功", ToolboxParameterKind.Bool, false, true, description: "开启后，只要某张图片无法安全转换，该 DWG 就标记 FAIL 且不留下半成品。"),
                     Shape("command_timeout_seconds", "单次命令超时(秒)", ToolboxParameterKind.Number, false, 90d, min: 30, max: 600, description: "PASTECLIP 等 AutoCAD 命令等待上限。")
                 }
-            }, new DelegateToolboxRuntimeAdapter("project.image.embed", _ => true, (_, values) =>
-                ImageEmbedBatchService.Start(BuildImageEmbedRequest(values)),
-                (_, values) => ImageEmbedBatchService.Preview(BuildImageEmbedRequest(values))));
+            }, new DelegateToolboxRuntimeAdapter("project.image.embed", _ => true, (doc, values) =>
+                ImageEmbedBatchService.Start(BuildImageEmbedRequest(values, doc?.Name)),
+                (doc, values) => ImageEmbedBatchService.Preview(BuildImageEmbedRequest(values, doc?.Name))));
 
             return registry;
         }
@@ -158,7 +159,7 @@ namespace YangCAD.AutoCADHost.Toolbox
             };
         }
 
-        private static ImageEmbedBatchService.Request BuildImageEmbedRequest(IReadOnlyDictionary<string, object?> values)
+        private static ImageEmbedBatchService.Request BuildImageEmbedRequest(IReadOnlyDictionary<string, object?> values, string? currentDrawingPath)
         {
             string TextValue(string key, string fallback)
                 => values.TryGetValue(key, out var raw) && raw != null ? (Convert.ToString(raw, CultureInfo.CurrentCulture) ?? fallback) : fallback;
@@ -169,12 +170,13 @@ namespace YangCAD.AutoCADHost.Toolbox
 
             return new ImageEmbedBatchService.Request
             {
-                InputPath = TextValue("input_path", "").Trim(),
+                InputPath = string.IsNullOrWhiteSpace(TextValue("input_path", "")) ? (currentDrawingPath ?? "") : TextValue("input_path", "").Trim(),
                 OutputFolder = TextValue("output_folder", "").Trim(),
                 IncludeSubfolders = BoolValue("include_subfolders", true),
                 ShowWorker = BoolValue("show_worker", false),
                 RequireAllImages = BoolValue("require_all_images", true),
-                CommandTimeoutSeconds = IntValue("command_timeout_seconds", 90)
+                CommandTimeoutSeconds = IntValue("command_timeout_seconds", 90),
+                BindDrawingXrefs = BoolValue("bind_dwg_xrefs", true)
             };
         }
     }

@@ -5,6 +5,16 @@ param(
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+# AutoCAD COM may return an existing session instead of a new process.
+# Never operate on/quit an AutoCAD process that was already running when the job began.
+Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class YangCadWindowOwner {
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+}
+'@
 
 function Write-Status([string]$Path, $Value) {
     $json = $Value | ConvertTo-Json -Depth 12
@@ -277,7 +287,7 @@ function Process-Drawing($Acad, $Item, $Job) {
                 try {
                     if ([string]$entity.ObjectName -eq 'AcDbRasterImage') {
                         try {
-                            [void]$rasters.Add((Snapshot-Raster $entity $layoutName $workPath))
+                            [void]$rasters.Add((Snapshot-Raster $entity $layoutName $input))
                         }
                         catch {
                             $handle = $null
@@ -296,6 +306,22 @@ function Process-Drawing($Acad, $Item, $Job) {
             }
         }
 
+        # Underlays have no native lossless Bind equivalent: report, never detach/drop.
+        $underlayReferences = New-Object System.Collections.Generic.List[object]
+        for ($li = 0; $li -lt $doc.Layouts.Count; $li++) {
+            $layoutScan = $doc.Layouts.Item($li)
+            foreach ($entity in @($layoutScan.Block)) {
+                try {
+                    $typeName = [string]$entity.ObjectName
+                    if ($typeName -match 'PdfReference|DgnReference|DwfReference|Underlay') {
+                        [void]$underlayReferences.Add([ordered]@{
+                            kind = $typeName; handle = [string]$entity.Handle;
+                            layout = [string]$layoutScan.Name; reason = 'underlay_cannot_bind_losslessly'
+                        })
+                    }
+                } catch { }
+            }
+        }
         $nestedRasterCount = 0
         $xrefBlockCount = 0
         foreach ($block in @($doc.Blocks)) {
@@ -309,13 +335,17 @@ function Process-Drawing($Acad, $Item, $Job) {
             catch { }
         }
 
-        if ($rasters.Count -eq 0 -and $snapshotFailures.Count -eq 0 -and $nestedRasterCount -eq 0) {
+        if ($rasters.Count -eq 0 -and $snapshotFailures.Count -eq 0 -and
+            ((-not [bool]$Job.bind_dwg_xrefs) -or $xrefBlockCount -eq 0)) {
             $doc.Close($false)
             $doc = $null
             Remove-Item -LiteralPath $workPath -Force -ErrorAction SilentlyContinue
+            $emptyStatus = if ($nestedRasterCount -gt 0 -or $underlayReferences.Count -gt 0) { 'PARTIAL' } else { 'SKIPPED' }
             return [ordered]@{
-                status='SKIPPED'; reason='no_top_level_raster_images'; input_path=$input; output_path=$output;
-                source_sha_before=$sourceBefore; source_sha_after=(Get-Sha256 $input); nested_raster_count=0; xref_block_count=$xrefBlockCount
+                status=$emptyStatus;
+                reason='no_convertible_references'; input_path=$input; output_path=$output;
+                source_sha_before=$sourceBefore; source_sha_after=(Get-Sha256 $input); nested_raster_count=$nestedRasterCount;
+                xref_block_count=$xrefBlockCount; unsupported_references=$underlayReferences.ToArray()
             }
         }
 
@@ -325,11 +355,59 @@ function Process-Drawing($Acad, $Item, $Job) {
             [void]$results.Add((Convert-Raster $Acad $doc $null $rasterInfo ([int]$Job.command_timeout_seconds)))
         }
         $failed = @($results | Where-Object { -not $_.ok })
+        $boundXrefs = New-Object System.Collections.Generic.List[string]
+        $failedXrefs = New-Object System.Collections.Generic.List[object]
+        if ([bool]$Job.bind_dwg_xrefs) {
+            # Snapshot names before Bind() mutates the Blocks collection.
+            $xrefNames = New-Object System.Collections.Generic.List[string]
+            foreach ($candidateBlock in @($doc.Blocks)) {
+                try { if ([bool]$candidateBlock.IsXRef) { [void]$xrefNames.Add([string]$candidateBlock.Name) } } catch { }
+            }
+            foreach ($xrefName in $xrefNames) {
+                try {
+                    $xrefBlock = $doc.Blocks.Item($xrefName)
+                    if (-not [bool]$xrefBlock.IsXRef) { continue }
+                    # Temporary output DWG is in a different folder: repair resolvable relative
+                    # Xref paths against the original DWG before binding the copied database.
+                    try {
+                        $savedXrefPath = [string]$xrefBlock.Path
+                        if ($savedXrefPath -and -not [System.IO.Path]::IsPathRooted($savedXrefPath)) {
+                            $resolvedXrefPath = Resolve-ImagePath $savedXrefPath $input
+                            if (Test-Path -LiteralPath $resolvedXrefPath) {
+                                $xrefBlock.Path = $resolvedXrefPath
+                            }
+                        }
+                    } catch { }
+                    # COM Bind(false) retains name prefixes to avoid style/layer collisions.
+                    [void]$xrefBlock.Bind($false)
+                    if ([bool]$doc.Blocks.Item($xrefName).IsXRef) {
+                        throw "Bind() returned without error but the block remains an external reference."
+                    }
+                    [void]$boundXrefs.Add($xrefName)
+                }
+                catch {
+                    [void]$failedXrefs.Add([ordered]@{ name=$xrefName; reason='xref_bind_failed'; error=$_.Exception.Message })
+                }
+            }
+        }
         if ([bool]$Job.require_all_images -and ($failed.Count -gt 0 -or $nestedRasterCount -gt 0)) {
             $failJson = $failed | ConvertTo-Json -Compress -Depth 4
             throw "Image embedding incomplete: $($failed.Count) top-level image(s) failed ($failJson) and $nestedRasterCount nested block image(s) are unsupported; source raster(s) are preserved in the discarded working copy."
         }
 
+        # Bind can introduce nested raster/underlay references from an Xref.
+        # Count them after binding; never claim the output is fully self-contained if they remain.
+        $remainingXrefCount = 0
+        $remainingNestedRasterCount = 0
+        foreach ($checkBlock in @($doc.Blocks)) {
+            try {
+                if ([bool]$checkBlock.IsXRef) { $remainingXrefCount++; continue }
+                if ([bool]$checkBlock.IsLayout) { continue }
+                foreach ($entity in @($checkBlock)) {
+                    try { if ([string]$entity.ObjectName -eq 'AcDbRasterImage') { $remainingNestedRasterCount++ } } catch { }
+                }
+            } catch { }
+        }
         $doc.Save()
         $doc.Close($false)
         $doc = $null
@@ -360,7 +438,9 @@ function Process-Drawing($Acad, $Item, $Job) {
                 if ($res.ok) { $embeddedCount++ } else { $failedCount++ }
             } catch { $failedCount++ }
         }
-        $statusStr = if ($failedCount -eq 0 -and $nestedRasterCount -eq 0) { 'PASS' } else { 'PARTIAL' }
+        $statusStr = if ($failedCount -eq 0 -and $nestedRasterCount -eq 0 -and
+            $failedXrefs.Count -eq 0 -and $underlayReferences.Count -eq 0 -and
+            $remainingXrefCount -eq 0 -and $remainingNestedRasterCount -eq 0) { 'PASS' } else { 'PARTIAL' }
         return [pscustomobject]@{
             status = $statusStr
             input_path = [string]$input
@@ -372,6 +452,12 @@ function Process-Drawing($Acad, $Item, $Job) {
             failed_count = [int]$failedCount
             nested_raster_count = [int]$nestedRasterCount
             xref_block_count = [int]$xrefBlockCount
+            bound_xref_count = [int]$boundXrefs.Count
+            bound_xrefs = $boundXrefs.ToArray()
+            failed_xrefs = $failedXrefs.ToArray()
+            remaining_xref_count = [int]$remainingXrefCount
+            remaining_nested_raster_count = [int]$remainingNestedRasterCount
+            unsupported_references = $underlayReferences.ToArray()
             image_results = @($results.ToArray())
         }
     }
@@ -418,15 +504,35 @@ $status = [ordered]@{
 Write-Status $statusPath $status
 
 $acad = $null
+$workerOwnsAutoCad = $false
+$existingAcadPids = New-Object System.Collections.Generic.HashSet[int]
+foreach ($proc in (Get-Process -Name acad -ErrorAction SilentlyContinue)) { [void]$existingAcadPids.Add([int]$proc.Id) }
 try {
     $acad = New-Object -ComObject ([string]$job.autocad_progid)
+    $acadHwnd = [IntPtr]([long]$acad.HWND)
+    [uint32]$ownerPid = 0
+    [void][YangCadWindowOwner]::GetWindowThreadProcessId($acadHwnd, [ref]$ownerPid)
+    if ($ownerPid -eq 0 -or $existingAcadPids.Contains([int]$ownerPid)) {
+        throw "AutoCAD COM returned an existing or unidentifiable host; refusing to modify/quit a user session. PID=$ownerPid"
+    }
+    $workerOwnsAutoCad = $true
+    $status.worker_autocad_pid = [int]$ownerPid
     $acad.Visible = [bool]$job.show_worker
     Wait-Quiescent $acad ([int]$job.command_timeout_seconds)
     $status.state = 'RUNNING'
     Write-Status $statusPath $status
 
     foreach ($item in @($job.items)) {
-        $result = Process-Drawing $acad $item $job
+        try {
+            $result = Process-Drawing $acad $item $job
+        }
+        catch {
+            $result = [ordered]@{
+                status='FAIL'; input_path=[string]$item.input_path;
+                output_path=[string]$item.output_path; reason='per_file_exception';
+                error=$_.Exception.Message
+            }
+        }
         $status.items += $result
         switch ([string]$result.status) {
             'PASS' { $status.passed++ }
@@ -443,7 +549,7 @@ catch {
     $status.fatal_error = $_.Exception.Message
 }
 finally {
-    if ($acad) { try { $acad.Quit() } catch { } }
+    if ($acad -and $workerOwnsAutoCad) { try { $acad.Quit() } catch { } }
     $status.completed_at = [DateTime]::UtcNow.ToString('o')
     Write-Status $statusPath $status
     try { [System.IO.File]::AppendAllText($logPath, (($status | ConvertTo-Json -Depth 12) + [Environment]::NewLine), (New-Object System.Text.UTF8Encoding($false))) } catch { }

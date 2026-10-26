@@ -287,6 +287,9 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (entity is BlockReference block)
             {
                 if (IsXref(tr, block)) return "xref";
+                // Dynamic block visibility/action state can change under a geometry transform;
+                // until an AutoCAD runtime regression exists, do not mutate it.
+                if (block.IsDynamicBlock) return "dynamic_block_not_verified";
                 // In 1:1 drawings a BlockReference may be a real-size component OR an annotation symbol.
                 // Scaling the whole block would be unsafe, while scaling only nested geometry would mutate the
                 // shared definition. V1 therefore leaves standard-mode blocks untouched and reports them.
@@ -405,12 +408,13 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (entity is Dimension dimension)
             {
                 var visual = SnapshotDoubleProperties(dimension, DimensionPaperProperties);
-                var dimlfac = TryGetDoubleProperty(dimension, "Dimlfac", out var oldDimlfac) ? oldDimlfac : (double?)null;
+                if (!TryGetDoubleProperty(dimension, "Dimlfac", out var oldDimlfac))
+                    throw new InvalidOperationException("无法读取对象级 DIMLFAC；已回滚该标注，防止尺寸读数失真。");
                 entity.TransformBy(transform);
                 if (request.PreserveDimensionPaperSize)
                     RestoreDoubleProperties(dimension, visual, result);
-                if (dimlfac.HasValue)
-                    TrySetDoubleProperty(dimension, "Dimlfac", dimlfac.Value / geometryFactor, result);
+                if (!TrySetDoubleProperty(dimension, "Dimlfac", oldDimlfac / geometryFactor, result))
+                    throw new InvalidOperationException("无法设置对象级 DIMLFAC；已回滚该标注，防止尺寸读数失真。");
                 RestoreLinetype(entity, oldLinetypeScale, request, result);
                 return;
             }
@@ -418,6 +422,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (entity is MLeader mLeader)
             {
                 var visual = SnapshotDoubleProperties(mLeader, MLeaderPaperProperties);
+                if (request.PreserveLeaderPaperSize && visual.Count == 0)
+                    throw new InvalidOperationException("当前 MLeader 无可补偿的纸面尺寸属性；安全跳过而非误报成功。");
                 entity.TransformBy(transform);
                 if (request.PreserveLeaderPaperSize)
                     RestoreDoubleProperties(mLeader, visual, result);
@@ -428,6 +434,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (entity is Leader leader)
             {
                 var visual = SnapshotDoubleProperties(leader, LeaderPaperProperties);
+                if (request.PreserveLeaderPaperSize && visual.Count == 0)
+                    throw new InvalidOperationException("当前 Leader 无可补偿的纸面尺寸属性；安全跳过而非误报成功。");
                 entity.TransformBy(transform);
                 if (request.PreserveLeaderPaperSize)
                     RestoreDoubleProperties(leader, visual, result);
@@ -657,6 +665,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 case "civil3d_object": return "Civil 3D 专业对象禁止直接比例缩放。";
                 case "aec_object": return "AEC 智能对象第一版不处理。";
                 case "xref": return "Xref 第一版不处理，不修改外部参照定义。";
+                case "dynamic_block_not_verified": return "动态块比例缩放未经实机验证，当前安全跳过以保护块参数和可见性状态。";
                 case "standard_mode_block_ambiguous": return "1:1 模式无法安全判断块是实尺寸几何还是注释符号，第一版保持普通块不变。";
                 default: return "当前对象类型第一版不支持。";
             }

@@ -17,6 +17,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             public bool IncludeSubfolders { get; set; }
             public bool ShowWorker { get; set; }
             public bool RequireAllImages { get; set; } = true;
+            public bool BindDrawingXrefs { get; set; } = true;
             public int CommandTimeoutSeconds { get; set; } = 90;
         }
 
@@ -30,6 +31,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             public int file_count { get; set; }
             public bool include_subfolders { get; set; }
             public bool require_all_images { get; set; }
+            public bool bind_dwg_xrefs { get; set; }
             public bool overwrite { get; set; }
             public string worker_mode { get; set; } = "independent_autocad_com_process";
             public string job_id { get; set; } = "";
@@ -64,16 +66,18 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 file_count = plan.Items.Count,
                 include_subfolders = request.IncludeSubfolders,
                 require_all_images = request.RequireAllImages,
+                bind_dwg_xrefs = request.BindDrawingXrefs,
                 overwrite = false,
                 warnings = new[]
                 {
-                    "V1 处理 ModelSpace / PaperSpace 顶层 RasterImage；块定义内图片只报告不转换。",
+                    "将 ModelSpace / PaperSpace 的普通 RasterImage 内嵌为 OLE；普通块内图片可能需要额外处理。",
                     "V1 对 clipped / brightness-contrast-fade / raster transparency 图片拒绝转换，避免视觉失真。",
-                    "OLE 嵌入依赖 Windows Clipboard + AutoCAD PASTECLIP；批处理期间不要使用系统剪贴板。"
+                    "DWG 外部参照可以绑定为内部块；PDF/DGN/DWF Underlay 不能无损绑定，会单独报告。",
+                    "OLE 内嵌依赖 Windows Clipboard + AutoCAD PASTECLIP；执行时会暂时占用并清除系统剪贴板。"
                 },
                 notes = new[]
                 {
-                    "输入 DWG 不会被修改；输出文件已存在时会跳过，不覆盖。"
+                    "输入 DWG 不会被修改；输出在 *_Embedded 独立目录，已有输出文件跳过。Worker 异步运行，启动成功不等于内嵌成功。"
                 },
                 sample_outputs = plan.Items.Take(10).Select(x => x.output_path).ToArray(),
                 message = "dry_run 仅生成计划，不创建输出目录、不启动 AutoCAD worker。"
@@ -105,6 +109,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 autocad_progid = CurrentAutoCadProgId(),
                 show_worker = request.ShowWorker,
                 require_all_images = request.RequireAllImages,
+                bind_dwg_xrefs = request.BindDrawingXrefs,
                 command_timeout_seconds = Math.Max(30, Math.Min(600, request.CommandTimeoutSeconds)),
                 status_path = statusPath,
                 log_path = logPath,
@@ -133,13 +138,14 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 file_count = plan.Items.Count,
                 include_subfolders = request.IncludeSubfolders,
                 require_all_images = request.RequireAllImages,
+                bind_dwg_xrefs = request.BindDrawingXrefs,
                 overwrite = false,
                 job_id = jobId,
                 worker_pid = process.Id,
                 worker = worker,
                 job_path = jobPath,
                 status_path = statusPath,
-                message = "批量任务已启动。输入 DWG 保持只读；完成/失败结果持续写入 status.json。"
+                message = "任务已启动，并非执行完成。请查看 status.json 的最终 state、items 和失败原因；原 DWG 保持不变。"
             };
         }
 

@@ -115,3 +115,6 @@ SOP：`tasks/FEATURE_PROJECT_IMAGE_EMBED_001_WINDOWS_SMOKE.md`
 ## Next
 
 使用 2026-09-08 clean targeted-retest candidate，只补 Leader/MLeader + 真 Ctrl+Z、真实 GUI↔MCP、Image Model+PaperSpace+移源重开、MCP self-heal raw evidence；YangTools/Revit 若无真实 Revit 证据则保持 NOT_TESTED。
+
+
+2026-10-26: Reference Embed V2 static candidate; see docs/REFERENCE_EMBED_V2_REVIEW_20261026.md. Windows runtime still required.

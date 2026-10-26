@@ -1,30 +1,11 @@
-CURRENT 2026-09-08 CLEAN TARGETED-RETEST CANDIDATE AFTER GEMINI EVIDENCE AUDIT
-- source base: YangCAD_0.9_SCALE_CONVERTER_MCP_ALIGN_STATIC_20260907.zip
-- Gemini EVIDENCE COMPLETE: REJECTED after independent raw-evidence review
-- Gemini post-fix ZIP: NOT BASELINE / NOT ACCEPTED
-- current status: PARTIAL RUNTIME EVIDENCE / CLEAN FIX STATIC PASS / TARGETED WINDOWS RETEST REQUIRED / FINAL NO-GO
-- contract: stdio 68 / AutoCAD live 31 / Civil 3D live 61
-- Exchange schema: yangcad-rvt-exchange/1.0 (unchanged)
-- visible Ribbon: MCP / 工具箱 / 比例转换 / 控制中心
-- visible Toolbox: project.revit.prepare + project.image.embed
-- YGSCALE: standard_1to1 + scaled_drawing
-- reviewed Windows fixes: C# namespace qualification + ImageEmbed PS5.1/COM reliability
-- rejected Windows changes: Deploy-Dev mixed copy, silent layout fallback, swallowed OLE normalization/delete errors
-- Toolbox GUI now writes explicit runtime provenance begin/completed events
-- verify_source: cs=67 xaml=9 python=21 themes=3 tools=68 xml=15 errors=0
-- Scale Converter policy: 36/36 PASS
-- MCP product coverage: 25/25 PASS
-- RVT Exchange policy: 56/56 PASS
-- MCP config/self-heal: 28/28 PASS
-- Image Embed: 31/31 PASS
-- Civil API: 8/8 PASS
-- Extension: 12/12 PASS
-- Quick Install: 10/10 PASS
-- Toolbox Foundation: 16/16 PASS
-- Toolbox Interaction: 13/13 PASS
-- UI Surface: 13/13 PASS
-- Theme UI: 13/13 PASS
-- all 14 tools/test_*_policy.py suites: PASS
-- Python compileall: PASS
-- runtime accepted so far: AutoCAD 2024 loaded; 31 live tools; partial YGSCALE object evidence; CAD Exchange MAP 11/11; one ModelSpace image embed PASS
-- runtime still required: YGSCALE Leader/MLeader + true one Ctrl+Z; true GUI-vs-MCP provenance; Image Model+PaperSpace + remove-source/reopen visibility; raw MCP self-heal provenance; Revit product E2E only if actually claimed
+CURRENT 2026-10-26 REFERENCE EMBED V2 + YGSCALE STATIC REVIEW
+- base: 2026-09-08 targeted-retest clean / GitHub main 396a79408bfb38d374871fb030b54012748be8b6
+- state: IMPLEMENTED / STATIC PASS / WINDOWS COM + AutoCAD 2024 RUNTIME REQUIRED / NOT RELEASE GO
+- GUI: current saved DWG quick start; select folder batch; still safe output-copy, no in-place overwrite
+- reference coverage: top-level RasterImage→OLE; resolved DWG Xref→internal Block (runtime required); PDF/DGN/DWF remain diagnosed unsupported
+- fixes: relative image paths use input DWG, worker-per-file failure isolation, existing AutoCAD process ownership guard, report residual nested external refs
+- YGSCALE: dynamic blocks explicitly skipped; DIMLFAC failure rolls back object; Leader/MLeader and Undo runtime pending
+- MCP contract unchanged: stdio 68 / AutoCAD 31 / Civil 3D 61
+- static: all test_*_policy.py PASS; verify_source PASS; verify_release_source PASS
+- compile/runtime: not executed in this Linux environment
+- see: docs/REFERENCE_EMBED_V2_REVIEW_20261026.md and tasks/REFERENCE_EMBED_V2_WINDOWS_SMOKE_20261026.md
