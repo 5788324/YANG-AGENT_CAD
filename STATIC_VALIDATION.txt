@@ -10,4 +10,6 @@ CURRENT 2026-10-26 REVIT PREP SIMPLE UI + NATIVE LEADER REPAIR STATIC REVIEW
 - compile/runtime: not executed in this Linux environment
 - see: docs/REFERENCE_EMBED_V2_REVIEW_20261026.md and tasks/REFERENCE_EMBED_V2_WINDOWS_SMOKE_20261026.md
 
-- Revit Prep UI: one-click, advanced collapsed; new YGLEADERFIX + cad.leader.rebuild static 27/27; Windows runtime NOT_TESTED
+- Revit Prep UI: one-click, advanced collapsed; new YGLEADERFIX + cad.leader.rebuild static 31/31; Windows runtime NOT_TESTED
+
+- 2026-10-27 hardening: reject 2D self-intersecting/overlapping and off-plane leader chains; escape DBText formatting chars for MText; preserve MText attachment; 31/31 static; AutoCAD runtime still NOT_TESTED.

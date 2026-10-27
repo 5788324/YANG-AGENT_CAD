@@ -53,10 +53,15 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var source = handles.Select(h => OpenEntity(db, tr, h)).ToArray();
             if (source.Any(e => e.OwnerId != source[0].OwnerId))
                 throw new InvalidOperationException("引线线段必须位于同一个模型空间或布局空间。");
+            var ownerRecord = (BlockTableRecord)tr.GetObject(source[0].OwnerId, OpenMode.ForRead);
+            if (!ownerRecord.IsLayout)
+                throw new InvalidOperationException("不能直接修改块定义/Xref 内部图元；请在模型或布局空间选择普通实体。");
             if (source.OfType<MLeader>().Any() && source.Length != 1)
                 throw new InvalidOperationException("已有 MLeader 只能单独关联文字。");
             if (source.OfType<Leader>().Any() && source.Length != 1)
                 throw new InvalidOperationException("旧式 Leader 只能单独转换，不能与炸开的线段混选。");
+            if (source.OfType<Leader>().Any(leader => !leader.Annotation.IsNull))
+                throw new InvalidOperationException("旧 Leader 已有关联注释。为避免留下孤立文字，本版本不覆盖其现有注释。");
             if (source.Any(e => e.IsErased)) throw new InvalidOperationException("选择集中有已删除实体。");
 
             var text = string.IsNullOrWhiteSpace(request.TextHandle)
@@ -65,6 +70,9 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 throw new ArgumentException("关联文字必须是 TEXT 或 MTEXT。多个独立 TEXT 请先合并成 MTEXT。");
             if (text != null && text.OwnerId != source[0].OwnerId)
                 throw new InvalidOperationException("引线与文字必须位于同一个空间。");
+            if (text is DBText dbText && string.IsNullOrWhiteSpace(dbText.TextString) ||
+                text is MText mText && string.IsNullOrWhiteSpace(mText.Contents))
+                throw new InvalidOperationException("关联文字内容为空，请选取有文字内容的 TEXT/MTEXT。");
             if (text != null && source.Any(s => s.ObjectId == text.ObjectId))
                 throw new ArgumentException("文字和引线必须是不同实体。");
 
@@ -81,6 +89,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             {
                 var textLocation = text == null ? (Point3d?)null : TextPosition(text);
                 chain = OrientArrowToTail(chain, textLocation, request.ArrowPoint);
+                ValidateDetailLineChain(chain);
             }
 
             var result = new Result
@@ -188,11 +197,14 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 result.TextStyleId = original.TextStyleId;
                 result.Rotation = original.Rotation;
                 result.Width = original.Width;
+                result.Attachment = original.Attachment;
             }
             else
             {
                 var originalText = (DBText)source;
-                result.Contents = originalText.TextString;
+                // DBText is literal text; MText interprets \, { and } as formatting commands.
+                // Escaping prevents labels such as "A\B" and "{C}" from silently changing.
+                result.Contents = EscapeDbTextForMText(originalText.TextString);
                 result.Location = TextPosition(originalText);
                 result.TextHeight = originalText.Height;
                 result.TextStyleId = originalText.TextStyleId;
@@ -249,6 +261,52 @@ namespace YangCAD.AutoCADHost.Services.Cad
             }
             if (path.Count > 65) throw new InvalidOperationException("引线顶点太多，请简化。");
             return path.ToArray();
+        }
+
+        private static string EscapeDbTextForMText(string raw)
+        {
+            return (raw ?? "").Replace("\\", "\\\\").Replace("{", "\\{").Replace("}", "\\}");
+        }
+
+        private static void ValidateDetailLineChain(Point3d[] points)
+        {
+            // V1 is a 2D detail-line repair tool. Do not silently flatten a 3D path.
+            var z = points[0].Z;
+            foreach (var point in points)
+                if (double.IsNaN(point.X) || double.IsNaN(point.Y) || double.IsNaN(point.Z) ||
+                    double.IsInfinity(point.X) || double.IsInfinity(point.Y) || double.IsInfinity(point.Z) ||
+                    Math.Abs(point.Z - z) > Tolerance)
+                    throw new InvalidOperationException("引线包含无效坐标或非同一平面的三维线段，请改用二维引线。");
+
+            for (int i = 0; i < points.Length - 1; i++)
+            {
+                if (points[i].DistanceTo(points[i + 1]) < Tolerance)
+                    throw new InvalidOperationException("引线存在零长度线段。");
+                for (int j = i + 2; j < points.Length - 1; j++)
+                    if (SegmentsIntersect2d(points[i], points[i + 1], points[j], points[j + 1]))
+                        throw new InvalidOperationException("引线存在自交、回头重叠或闭合，不可安全恢复为单条引线。");
+            }
+        }
+
+        private static bool SegmentsIntersect2d(Point3d a, Point3d b, Point3d c, Point3d d)
+        {
+            double rx = b.X - a.X, ry = b.Y - a.Y;
+            double sx = d.X - c.X, sy = d.Y - c.Y;
+            double qx = c.X - a.X, qy = c.Y - a.Y;
+            double cross = rx * sy - ry * sx;
+            double qCrossR = qx * ry - qy * rx;
+            if (Math.Abs(cross) < Tolerance)
+            {
+                if (Math.Abs(qCrossR) >= Tolerance) return false;
+                // Collinear non-neighbour segments: any overlap (including repeated endpoints) is unsafe.
+                return Math.Max(Math.Min(a.X, b.X), Math.Min(c.X, d.X)) <=
+                           Math.Min(Math.Max(a.X, b.X), Math.Max(c.X, d.X)) + Tolerance &&
+                       Math.Max(Math.Min(a.Y, b.Y), Math.Min(c.Y, d.Y)) <=
+                           Math.Min(Math.Max(a.Y, b.Y), Math.Max(c.Y, d.Y)) + Tolerance;
+            }
+            double t = (qx * sy - qy * sx) / cross;
+            double u = qCrossR / cross;
+            return t >= -Tolerance && t <= 1 + Tolerance && u >= -Tolerance && u <= 1 + Tolerance;
         }
 
         private static Point3d[] OrientArrowToTail(Point3d[] points, Point3d? text, Point3d? arrow)

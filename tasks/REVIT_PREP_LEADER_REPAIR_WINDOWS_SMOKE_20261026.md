@@ -4,7 +4,7 @@
 
 ## 输入
 
-当前 `feature/revit-prep-leader-repair-20261026` 候选源码。先核对源码 ZIP SHA / Git commit，并确保 Build=Deploy=Loaded SHA。
+当前 `feature/revit-prep-leader-repair-20261027` 候选源码。先核对源码 ZIP SHA / Git commit，并确保 Build=Deploy=Loaded SHA。
 
 ## 优先任务
 
@@ -12,6 +12,8 @@
 2. `YGLEADERFIX`：用实际 `LINE×2 / Polyline / Leader / None MLeader` + `TEXT/MTEXT` 的受控 DWG 分别执行。输出 before/after 属性 JSON，包括 Handle、DxfName、Layer、TextHeight、Text/MTEXT content、MLeader vertices / arrowhead / MTEXT location。
 3. **真实一次 Ctrl+Z**，给出 CAD 命令历史和 before/after/after-undo readback；不能只写 `undo_semantics` 字符串。
 4. 失败场景：断裂、分叉、闭合、非零 Bulge、MLeader 已带文字、不同布局、没有文字也没有指定箭头，必须不损坏原数据。
+   新增：二维线段自交、回头重叠、非共面 3D 引线必须安全拒绝；原 DWG 对象、Handle 和内容不变。
+   新增：DBText `A\B`、`{C}` 之类字面字符串在 MLeader MText 中不得被当成格式代码；原生 MTEXT 的既有格式、Attachment 属性及文字位置做前后 readback。
 5. MLeader 与独立文字关联后，再执行 `project.revit.prepare`，检查 RVT_MAP 中实体包含 `MULTILEADER`、`leader_lines[].points` 和 `text`。可选启动 Revit 实测 YangTools 3.1.36，否则标 `NOT_TESTED`。
 6. MCP `cad.leader.rebuild` dry-run 和 real：验证 PID/Document binding、写权限与删除权限；统计预期 `69/32/62`，Civil 3D 无宿主就 `NOT_TESTED`。
 

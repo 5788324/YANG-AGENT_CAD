@@ -981,3 +981,9 @@ Windows 2024 首轮 Quick Install 报告证明：User-scope 四按钮安装、AP
 - Fail-closed：闭合/弧段/分叉/断裂/不同空间/不支持实体/现有带内容 MLeader 不执行；新对象创建完成前不擦除旧对象。
 - MCP 真实执行若会删旧实体，必须开启 AllowErase；默认 dry-run。
 - 增量工具合同：69 stdio / AutoCAD 32 / Civil 3D 62；静态门禁通过，Windows AutoCAD 2024 构建及 GUI/撤销尚未验证；不声明 Runtime GO。
+
+## 2026-10-27 — Revit 一键预处理 / 引线重建后续静态加固
+- 已将 2026-10-26 静态候选推送至独立开发分支，不覆盖 main。
+- 独立复查 `LeaderRepairService`，新增非邻接线段自交/重叠、3D 非共面坐标保护；校正 DBText→MText 格式字符转义与 MText Attachment。
+- 新增对应静态门禁。**重要：Autodesk 2024 环境尚未编译或实机验证，仍是候选。**
+- 保留 Gemini 专项：选线+关联中文 TEXT/MTEXT、仅重建 Leader、MLeader 文字与箭头位置、一次 Ctrl+Z、Revit Export Map 输出与 YangTools Reader。
