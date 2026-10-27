@@ -29,7 +29,7 @@ for y,s in {2021:'R24.0',2022:'R24.1',2023:'R24.2',2024:'R24.3',2025:'R25.0',202
     if f'{y}="{s}"' not in pb: errors.append(f'missing series mapping {y}->{s}')
 
 vs=text('STATIC_VALIDATION.txt') if (ROOT/'STATIC_VALIDATION.txt').exists() else ''
-if 'tools=68' not in vs: errors.append('current product contract tools=68 missing')
+if 'tools=69' not in vs: errors.append('current product contract tools=69 missing')
 
 for rel in ['src/YangCAD.AutoCAD/YangCAD.AutoCAD.csproj','src/YangCAD.Civil3D/YangCAD.Civil3D.csproj','src/YangCAD.BatchWorker/YangCAD.BatchWorker.csproj']:
     s=text(rel)

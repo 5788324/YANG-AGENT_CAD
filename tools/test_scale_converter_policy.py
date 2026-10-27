@@ -66,7 +66,7 @@ for node in tree.body:
             if isinstance(dec,ast.Call) and isinstance(dec.func,ast.Attribute) and dec.func.attr=='tool':
                 for kw in dec.keywords:
                     if kw.arg=='name' and isinstance(kw.value,ast.Constant): public.append(kw.value.value)
-ok("stdio contract is 68 unique", len(public)==68 and len(set(public))==68)
+ok("stdio contract is 69 unique", len(public)==69 and len(set(public))==69)
 
 failed=[n for n,v in checks if not v]
 for n,v in checks: print(("PASS" if v else "FAIL")+": "+n)

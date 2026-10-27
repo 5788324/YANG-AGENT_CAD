@@ -14,6 +14,7 @@ WRITE_TOOLS = {
     "project.revit.prepare",
     "project.image.embed",
     "cad.scale.convert",
+    "cad.leader.rebuild",
     "cad.entity.update",
     "cad.entity.transform",
     "cad.entity.erase",

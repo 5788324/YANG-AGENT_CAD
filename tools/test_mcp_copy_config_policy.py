@@ -25,7 +25,7 @@ checks: list[tuple[str, bool]] = [
     ("dedicated MCP window exposes copy/config/permissions", 'Content="复制 MCP 配置"' in XAML and 'Click="CopyMcpConfigClick"' in XAML and '允许 MCP 修改当前 DWG' in XAML),
     ("copy handler uses dedicated builder", "CopyMcpConfigClick" in CODE and "McpClientConfigBuilder.BuildCopyText()" in CODE),
     ("gateway status uses real running state", "public bool IsRunning" in GATEWAY and "gateway.IsRunning" in CODE and "CAD 网关就绪" in XAML),
-    ("self-check uses host-specific 31/61 expectation", "isCivil ? 61 : 31" in CODE and "AutoCAD 期望 31 Tools" in CODE and "Civil 3D 期望 61 Tools" in CODE),
+    ("self-check uses host-specific 31/61 expectation", "isCivil ? 62 : 32" in CODE and "AutoCAD 期望 32 Tools" in CODE and "Civil 3D 期望 62 Tools" in CODE),
     ("self-check verifies critical tools", all(x in CODE for x in ['"cad.status"','"cad.entity.get"','"cad.entity.update"','"project.revit.prepare"','"project.image.embed"','"cad.scale.convert"','"civil.status"','"civil.surface.list"','"civil.pipe.get"'])),
     ("config contains standard mcpServers shape", '"mcpServers"' in BUILDER and '"yangcad"' in BUILDER),
     ("config launches powershell bridge", '"powershell.exe"' in BUILDER and '"Start-YangCAD-Mcp.ps1"' in BUILDER),

@@ -38,7 +38,7 @@ ok("scale converter PID/document write binding exists", '"cad.scale.convert"' in
 ok("scale converter coverage matrix row exists", '`cad.scale.convert`' in COVERAGE and 'ScaleConversionService' in COVERAGE)
 ok("scale converter structured result contract exists", all(x in SCALE for x in ['public sealed class Result','public double geometry_factor','public double annotation_factor','public int processed','public int skipped','public int failed','public string undo_semantics']))
 
-# Decorator count is current additive contract: 68 unique stdio tools.
+# Decorator count is current additive contract: 69 unique stdio tools.
 tree=ast.parse(SERVER)
 names=[]
 for node in tree.body:
@@ -47,9 +47,9 @@ for node in tree.body:
             if isinstance(dec,ast.Call) and isinstance(dec.func,ast.Attribute) and dec.func.attr=="tool":
                 for kw in dec.keywords:
                     if kw.arg=="name" and isinstance(kw.value,ast.Constant): names.append(kw.value.value)
-ok("stdio tool contract is 68 unique", len(names)==68 and len(set(names))==68)
-ok("coverage matrix declares 68/31/61", all(x in COVERAGE for x in ["**68**","**31**","**61**"]))
-ok("coverage matrix has one row for every public MCP tool", all(f"`{name}`" in COVERAGE for name in names) and COVERAGE.count("| PASS |") >= 68)
+ok("stdio tool contract is 69 unique", len(names)==69 and len(set(names))==69)
+ok("coverage matrix declares 69/32/62", all(x in COVERAGE for x in ["**69**","**32**","**62**"]))
+ok("coverage matrix has one row for every public MCP tool", all(f"`{name}`" in COVERAGE for name in names) and COVERAGE.count("| PASS |") >= 69)
 
 failed=[n for n,v in checks if not v]
 for n,v in checks: print(("PASS" if v else "FAIL")+": "+n)

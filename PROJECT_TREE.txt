@@ -9,6 +9,7 @@ STATIC_VALIDATION.txt
 WORKLOG.md
 YangCADAgent.sln
 artifacts/STATIC_TESTS_REFERENCE_EMBED_V2_20261026.log
+artifacts/STATIC_TESTS_REVIT_PREP_LEADER_REPAIR_V1_20261026.log
 artifacts/STATIC_TESTS_SCALE_MCP_ALIGN_20260907.log
 artifacts/STATIC_TESTS_TARGETED_RETEST_CANDIDATE_20260908.log
 bundle/PackageContents.template.xml
@@ -42,6 +43,7 @@ docs/PRESTART_AUDIT_20260828.md
 docs/REFERENCE_EMBED_V2_REVIEW_20261026.md
 docs/RELEASE002_PHASE_B1_CIVIL_RUNTIME_RESULT_20260828.md
 docs/RELEASE_CHECKLIST.md
+docs/REVIT_PREP_SIMPLE_UI_LEADER_REPAIR_V1_20261026.md
 docs/ROUND1_WINDOWS_EVIDENCE.md
 docs/ROUND2_IMPLEMENTATION_NOTES.md
 docs/ROUND2_STATIC_REVIEW.md
@@ -74,6 +76,7 @@ mcp/yangcad_mcp/extensions.py
 mcp/yangcad_mcp/gateway.py
 mcp/yangcad_mcp/server.py
 src/YangCAD.AutoCAD/Commands/ControlCenterCommands.cs
+src/YangCAD.AutoCAD/Commands/LeaderRepairCommands.cs
 src/YangCAD.AutoCAD/Commands/ScaleConvertCommands.cs
 src/YangCAD.AutoCAD/Commands/ToolboxCommands.cs
 src/YangCAD.AutoCAD/ExtensionApplication.cs
@@ -98,6 +101,7 @@ src/YangCAD.AutoCAD/Mcp/LocalGateway.cs
 src/YangCAD.AutoCAD/Mcp/McpClientConfigBuilder.cs
 src/YangCAD.AutoCAD/Mcp/ToolRegistry.cs
 src/YangCAD.AutoCAD/Mcp/Tools/CadCreateTools.cs
+src/YangCAD.AutoCAD/Mcp/Tools/CadLeaderTools.cs
 src/YangCAD.AutoCAD/Mcp/Tools/CadProductionTools.cs
 src/YangCAD.AutoCAD/Mcp/Tools/CadReadTools.cs
 src/YangCAD.AutoCAD/Mcp/Tools/CadScaleTools.cs
@@ -109,6 +113,7 @@ src/YangCAD.AutoCAD/Services/Cad/DrawingAuditService.cs
 src/YangCAD.AutoCAD/Services/Cad/ImageEmbedBatchService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerAuditService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerCleanupService.cs
+src/YangCAD.AutoCAD/Services/Cad/LeaderRepairService.cs
 src/YangCAD.AutoCAD/Services/Cad/PolylineCleanupService.cs
 src/YangCAD.AutoCAD/Services/Cad/PolylineInspectionService.cs
 src/YangCAD.AutoCAD/Services/Cad/RevitExchangeService.cs
@@ -169,6 +174,7 @@ tasks/FEATURE_PROJECT_IMAGE_EMBED_001_WINDOWS_SMOKE.md
 tasks/NEXT_TASKS.md
 tasks/REFERENCE_EMBED_V2_WINDOWS_SMOKE_20261026.md
 tasks/REPOSITORY_SINGLE_MAIN_RESET.md
+tasks/REVIT_PREP_LEADER_REPAIR_WINDOWS_SMOKE_20261026.md
 tasks/SCALE_CONVERTER_V1_WINDOWS_SMOKE_20260907.md
 tasks/TARGETED_RETEST_AFTER_GEMINI_AUDIT_20260908.md
 tasks/TOOLBOX_001_ROUND_00_FOUNDATION.md
@@ -195,6 +201,7 @@ tools/fixtures/RVT_EXCHANGE_V1_YANGTOOLS_FIXTURE.json
 tools/test_civil_api_compat_policy.py
 tools/test_extension_policy.py
 tools/test_image_embed_batch_policy.py
+tools/test_leader_rebuild_policy.py
 tools/test_mcp_copy_config_policy.py
 tools/test_mcp_product_coverage_policy.py
 tools/test_quick_install_policy.py

@@ -170,6 +170,24 @@ def cad_scale_convert(
     })
 
 
+@mcp.tool(name="cad.leader.rebuild")
+def cad_leader_rebuild(
+    source_handles: list[str],
+    text_handle: str | None = None,
+    arrow_point: list[float] | None = None,
+    keep_originals: bool = False,
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    """重建一条旧 Leader/炸开的连续线段为原生 MLeader，并可显式关联 TEXT/MTEXT。默认只预览。"""
+    return call("cad.leader.rebuild", {
+        "source_handles": source_handles,
+        "text_handle": text_handle or "",
+        "arrow_point": arrow_point,
+        "keep_originals": keep_originals,
+        "dry_run": dry_run,
+    })
+
+
 # TASK-003 CAD productivity ---------------------------------------------------
 @mcp.tool(name="cad.line.create")
 def cad_line_create(start: list[float], end: list[float], layer: str | None = None, color_index: int | None = None, dry_run: bool = True) -> dict[str, Any]:

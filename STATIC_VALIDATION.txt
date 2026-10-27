@@ -1,11 +1,13 @@
-CURRENT 2026-10-26 REFERENCE EMBED V2 + YGSCALE STATIC REVIEW
+CURRENT 2026-10-26 REVIT PREP SIMPLE UI + NATIVE LEADER REPAIR STATIC REVIEW
 - base: 2026-09-08 targeted-retest clean / GitHub main 396a79408bfb38d374871fb030b54012748be8b6
 - state: IMPLEMENTED / STATIC PASS / WINDOWS COM + AutoCAD 2024 RUNTIME REQUIRED / NOT RELEASE GO
 - GUI: current saved DWG quick start; select folder batch; still safe output-copy, no in-place overwrite
 - reference coverage: top-level RasterImage→OLE; resolved DWG Xref→internal Block (runtime required); PDF/DGN/DWF remain diagnosed unsupported
 - fixes: relative image paths use input DWG, worker-per-file failure isolation, existing AutoCAD process ownership guard, report residual nested external refs
 - YGSCALE: dynamic blocks explicitly skipped; DIMLFAC failure rolls back object; Leader/MLeader and Undo runtime pending
-- MCP contract unchanged: stdio 68 / AutoCAD 31 / Civil 3D 61; tools=68
+- MCP contract additive: stdio 69 / AutoCAD 32 / Civil 3D 62; tools=69
 - static: all test_*_policy.py PASS; verify_source PASS; verify_release_source PASS
 - compile/runtime: not executed in this Linux environment
 - see: docs/REFERENCE_EMBED_V2_REVIEW_20261026.md and tasks/REFERENCE_EMBED_V2_WINDOWS_SMOKE_20261026.md
+
+- Revit Prep UI: one-click, advanced collapsed; new YGLEADERFIX + cad.leader.rebuild static 27/27; Windows runtime NOT_TESTED

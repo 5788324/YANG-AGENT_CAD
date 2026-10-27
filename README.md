@@ -112,3 +112,9 @@ Shared Styles 已补齐深色导航 ListBox/ListBoxItem、ComboBoxItem、Separat
 所有 AI 开发继续遵循：`docs/AI_FEATURE_DEVELOPMENT_STANDARD.md`
 
 项目在本轮 Windows 收口通过后回到 **ON-DEMAND DEVELOPMENT**：真实工作中出现需求时，一次增加 1–3 个功能，不为填满分类而批量堆工具。
+
+### Revit 预处理与引线修复（待 Windows 实机验收）
+
+工具箱 → Revit 图纸预处理：一键生成 RVT DWG/MAP/REPORT；高级参数默认折叠。
+
+`YGLEADERFIX`：选择旧式 Leader / 炸开的连续 Line/开放 Polyline → 指定独立 TEXT/MTEXT（可选）→ 合成为原生 MLeader。`cad.leader.rebuild` 提供 MCP dry-run/real，共用 LeaderRepairService。参见 `docs/REVIT_PREP_SIMPLE_UI_LEADER_REPAIR_V1_20261026.md`。
