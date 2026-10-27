@@ -92,6 +92,7 @@ namespace YangCAD.AutoCADHost.UI
             DetailDescriptionText.Text = _selected.Description;
             ParameterPanel.SetParameters(_selected.ParameterShape);
             ImageQuickActions.Visibility = _selected.Id == "project.image.embed" ? Visibility.Visible : Visibility.Collapsed;
+            RevitQuickActions.Visibility = _selected.Id == "project.revit.prepare" ? Visibility.Visible : Visibility.Collapsed;
             ResultBorder.Visibility = Visibility.Collapsed;
             UpdateSelectedState();
             ToolListPane.Visibility = Visibility.Collapsed;
@@ -103,9 +104,8 @@ namespace YangCAD.AutoCADHost.UI
             if (_selected == null) return;
             var canExecute = _registry.CanExecute(_selected.Id);
             DetailStatusText.Text = canExecute ? _selected.StatusText : "当前不可用";
-            AvailabilityText.Text = canExecute
-                ? "当前宿主与文档条件满足，可以执行。"
-                : "当前宿主/文档条件不满足；执行按钮已禁用。";
+            AvailabilityText.Text = canExecute ? "" : "请先打开一张 CAD 图纸。";
+            AvailabilityText.Visibility = canExecute ? Visibility.Collapsed : Visibility.Visible;
             ExecuteButton.IsEnabled = canExecute;
             PreviewButton.Visibility = _selected.SupportsDryRun ? Visibility.Visible : Visibility.Collapsed;
             PreviewButton.IsEnabled = canExecute;
@@ -179,6 +179,49 @@ namespace YangCAD.AutoCADHost.UI
                 ShowResult(false, "执行失败", ex.Message);
                 UpdateSelectedState();
             }
+        }
+
+        private void QuickRevitPrepareClick(object sender, RoutedEventArgs e)
+        {
+            if (!_registry.CanExecute("project.revit.prepare"))
+            {
+                ShowResult(false, "请先打开图纸", "当前没有可用的 DWG。");
+                return;
+            }
+            try
+            {
+                RuntimeLogger.Info("Toolbox GUI execute begin tool=project.revit.prepare shortcut=one_click");
+                var result = _registry.Execute("project.revit.prepare",
+                    new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase));
+                RuntimeLogger.Info("Toolbox GUI execute completed tool=project.revit.prepare shortcut=one_click");
+                if (result is RevitExchangeService.Result exchange)
+                {
+                    ShowResult(true, "已生成 Revit 图纸副本",
+                        $"DWG：{exchange.output_dwg}\n已整理：{exchange.classified_entities} 个对象；未转换：{exchange.unsupported_count} 个。\n" +
+                        "原图未修改。详细 MAP/REPORT 与 DWG 位于同一输出目录。" +
+                        (exchange.warnings.Length > 0 ? "\n注意：" + string.Join("；", exchange.warnings.Take(4)) : ""));
+                }
+                else ShowResult(true, "预处理完成", FormatResult(result));
+            }
+            catch (System.Exception ex)
+            {
+                RuntimeLogger.Error("Toolbox GUI one-click Revit preparation failed", ex);
+                ShowResult(false, "预处理失败，原图未修改", ex.Message);
+            }
+        }
+
+        private void QuickLeaderRepairClick(object sender, RoutedEventArgs e)
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc == null)
+            {
+                ShowResult(false, "请先打开图纸", "需要在 CAD 绘图区选择要修复的引线。");
+                return;
+            }
+            // Send a native modal command to the CAD editor. Selection must not run inside a WPF callback.
+            // This reports only that the command was queued, NOT that the repair succeeded.
+            doc.SendStringToExecute("_.YGLEADERFIX ", true, false, false);
+            ShowResult(true, "请在绘图区选择引线", "1. 选择旧引线或炸开的连续线段，回车。\n2. 选择旁边的文字；没有文字直接回车。\n3. 无文字时拾取箭头端点。\n原生 MLeader 创建成功后才会替换原对象。");
         }
 
         private void QuickEmbedCurrentClick(object sender, RoutedEventArgs e)

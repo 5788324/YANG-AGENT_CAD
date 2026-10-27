@@ -70,7 +70,7 @@ namespace YangCAD.AutoCADHost.Toolbox
                 Id = "project.revit.prepare",
                 Name = "Revit 图纸预处理",
                 CategoryPath = "Revit",
-                Description = "将当前 DWG 克隆为 Revit 交换副本，按 RVT Exchange v1 规则分类常用几何、文字、引线、标注与填充；匿名块、动态块状态和 Xref 等安全边界会在报告中明确提示。原图不修改。",
+                Description = "一键整理当前 CAD 图纸，生成可供 Revit 使用的图纸副本。原图不变。",
                 DeclaredStatus = ToolboxDeclaredStatus.Available,
                 IsWrite = true,
                 SupportsDryRun = true,

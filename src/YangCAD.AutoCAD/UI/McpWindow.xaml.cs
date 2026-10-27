@@ -48,14 +48,14 @@ namespace YangCAD.AutoCADHost.UI
             var gateway = RuntimeHost.Gateway;
             var running = gateway != null && gateway.IsRunning;
             var isCivil = IsCivilHost();
-            var expected = isCivil ? 61 : 31;
+            var expected = isCivil ? 62 : 32;
 
             HostText.Text = CadHostInfo.Product;
             ProcessText.Text = snapshot.ProcessId > 0 ? $"PID {snapshot.ProcessId} · {CadHostInfo.Version}" : CadHostInfo.Version;
             DocumentText.Text = snapshot.Document ?? "-";
             DocumentIdText.Text = Short(snapshot.DocumentId, 12);
             ToolCountText.Text = $"{tools.Length} live tools";
-            ExpectedToolCountText.Text = isCivil ? "Civil 3D 期望 61 Tools" : "AutoCAD 期望 31 Tools";
+            ExpectedToolCountText.Text = isCivil ? "Civil 3D 期望 62 Tools" : "AutoCAD 期望 32 Tools";
             ToolSummaryText.Text = $"{tools.Length} Tools";
             GatewayEndpointText.Text = running ? $"http://127.0.0.1:{gateway.Port}/rpc" : "未就绪";
             InstancePathText.Text = InstanceRegistry.CurrentPath;
@@ -136,7 +136,7 @@ namespace YangCAD.AutoCADHost.UI
             var descriptors = RuntimeHost.Tools.Describe();
             var names = new HashSet<string>(descriptors.Select(x => x.Name), StringComparer.OrdinalIgnoreCase);
             var isCivil = IsCivilHost();
-            var expected = isCivil ? 61 : 31;
+            var expected = isCivil ? 62 : 32;
             var required = new List<string> { "cad.status", "cad.entity.get", "cad.entity.update", "cad.drawing.audit", "project.revit.prepare", "project.image.embed", "cad.scale.convert" };
             if (isCivil) required.AddRange(new[] { "civil.status", "civil.surface.list", "civil.pipe.get", "civil.corridor.list" });
             var missing = required.Where(x => !names.Contains(x)).ToArray();

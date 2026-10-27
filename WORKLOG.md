@@ -972,3 +972,18 @@ Windows 2024 首轮 Quick Install 报告证明：User-scope 四按钮安装、AP
 - Toolbox GUI 新增明确 runtime provenance 日志，防止 RPC 再冒充 GUI。
 - Image Embed 静态门禁提升为 31/31；MCP Product Coverage 25/25。
 - 下一步只跑 targeted retest，不重复已经可信的全部项目。
+
+## 2026-10-26 — Revit 图纸预处理简化 + 原生引线修复 V1
+- 从 `feature/reference-embed-v2-20261026` 静态候选继承；不改 Exchange `yangcad-rvt-exchange/1.0`。
+- 工具箱 Revit 详情页：一键预处理；隐藏技术详情；参数默认收起。
+- 新增 `YGLEADERFIX`、`LeaderRepairService` 和产品 MCP `cad.leader.rebuild`；明确选择已有引线/炸开连续线段及可选独立文字后，构造原生 MLeader。
+- 修复支持：旧 Leader、单条开放直线 Polyline、连通多条 Line、无内容 MLeader + Text/MText；不自动按距离配文字；无文字需明确箭头端点。
+- Fail-closed：闭合/弧段/分叉/断裂/不同空间/不支持实体/现有带内容 MLeader 不执行；新对象创建完成前不擦除旧对象。
+- MCP 真实执行若会删旧实体，必须开启 AllowErase；默认 dry-run。
+- 增量工具合同：69 stdio / AutoCAD 32 / Civil 3D 62；静态门禁通过，Windows AutoCAD 2024 构建及 GUI/撤销尚未验证；不声明 Runtime GO。
+
+## 2026-10-27 — Revit 一键预处理 / 引线重建后续静态加固
+- 已将 2026-10-26 静态候选推送至独立开发分支，不覆盖 main。
+- 独立复查 `LeaderRepairService`，新增非邻接线段自交/重叠、3D 非共面坐标保护；校正 DBText→MText 格式字符转义与 MText Attachment。
+- 新增对应静态门禁。**重要：Autodesk 2024 环境尚未编译或实机验证，仍是候选。**
+- 保留 Gemini 专项：选线+关联中文 TEXT/MTEXT、仅重建 Leader、MLeader 文字与箭头位置、一次 Ctrl+Z、Revit Export Map 输出与 YangTools Reader。

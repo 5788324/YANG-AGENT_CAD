@@ -53,7 +53,7 @@ if themes != ["Mist", "Obsidian", "Porcelain"]:
     errors.append(f"theme set mismatch: {themes}")
 
 gateway_tools = [
-    "project.revit.prepare", "project.image.embed", "cad.scale.convert",
+    "project.revit.prepare", "project.image.embed", "cad.scale.convert", "cad.leader.rebuild",
     "cad.status", "cad.document.info", "cad.selection.read", "cad.entity.get", "cad.entity.query",
     "cad.entity.update", "cad.entity.transform", "cad.entity.erase", "cad.layer.list", "cad.layer.ensure",
     "cad.line.create", "cad.polyline.create", "cad.text.create", "cad.block.list", "cad.block.insert",
@@ -90,7 +90,7 @@ try:
     if len(exposed) != len(set(exposed)):
         errors.append("duplicate MCP exposed tool name")
     if set(exposed) != set(tools):
-        errors.append(f"MCP exposed tool set differs from 68-tool product contract: {sorted(set(exposed)^set(tools))}")
+        errors.append(f"MCP exposed tool set differs from 69-tool product contract: {sorted(set(exposed)^set(tools))}")
 except Exception as exc:
     errors.append("MCP decorator parse failed: " + str(exc))
 
@@ -196,7 +196,7 @@ for tool_name, service_name in [("project.revit.prepare", "RevitExchangeService"
     if service_name not in project_tools:
         errors.append("product MCP adapter not routed to shared service: " + service_name)
 coverage_path = ROOT / "docs/MCP_COVERAGE_MATRIX.md"
-if not coverage_path.exists() or "68" not in coverage_path.read_text(encoding="utf-8-sig"):
+if not coverage_path.exists() or "69" not in coverage_path.read_text(encoding="utf-8-sig"):
     errors.append("MCP coverage matrix missing/obsolete")
 
 # Generic layer invariants.
@@ -394,8 +394,8 @@ if 'tolerance * scale * scale' in production_tools:
 if "new CadPolylineCleanTool()" not in runtime_host or "new CadLayerCleanupTool()" not in runtime_host:
     errors.append("TASK-006A tools missing optional AutoCAD registration")
 mcp_window_code = (ROOT / "src/YangCAD.AutoCAD/UI/McpWindow.xaml.cs").read_text(encoding="utf-8")
-if "isCivil ? 61 : 31" not in mcp_window_code or "AutoCAD 期望 31 Tools" not in mcp_window_code or "Civil 3D 期望 61 Tools" not in mcp_window_code:
-    errors.append("MCP window tool-count self-check must be 31/61 after scale converter MCP addition")
+if "isCivil ? 62 : 32" not in mcp_window_code or "AutoCAD 期望 32 Tools" not in mcp_window_code or "Civil 3D 期望 62 Tools" not in mcp_window_code:
+    errors.append("MCP window tool-count self-check must be 32/62 after leader repair MCP addition")
 
 # TASK-006B Civil Production Read / Assist invariants.
 civil_prod = (ROOT / "src/YangCAD.Civil3D/Tools/CivilProductionReadAssistTools.cs").read_text(encoding="utf-8")

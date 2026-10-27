@@ -80,6 +80,7 @@ namespace YangCAD.AutoCADHost
                 RegisterOptional("project.revit.prepare", () => new ProjectRevitPrepareTool());
                 RegisterOptional("project.image.embed", () => new ProjectImageEmbedTool());
                 RegisterOptional("cad.scale.convert", () => new CadScaleConvertTool());
+                RegisterOptional("cad.leader.rebuild", () => new CadLeaderRebuildTool());
 
                 RuntimeLogger.Info("RuntimeHost registering TASK-006A Production Hygiene tools.");
                 RegisterOptional("cad.polyline.inspect", () => new CadPolylineInspectTool());

@@ -118,3 +118,8 @@ SOP：`tasks/FEATURE_PROJECT_IMAGE_EMBED_001_WINDOWS_SMOKE.md`
 
 
 2026-10-26: Reference Embed V2 static candidate; see docs/REFERENCE_EMBED_V2_REVIEW_20261026.md. Windows runtime still required.
+
+## 2026-10-26 Revit Prep + 引线修复 V1 (candidate)
+- 简化 Revit 图纸预处理；一键输出，技术参数折叠；保留原 Exchange 1.0。
+- 新增 YGLEADERFIX 和 cad.leader.rebuild；仅单条链路、用户显式配对文字，失败不擦除。
+- 状态 STATIC ONLY / AUTOCAD 2024 RUNTIME NOT TESTED。详见 docs/REVIT_PREP_SIMPLE_UI_LEADER_REPAIR_V1_20261026.md。
