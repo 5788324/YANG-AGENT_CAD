@@ -16,13 +16,14 @@
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="16"/><RowDefinition Height="*"/><RowDefinition Height="14"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <StackPanel>
    <TextBlock Text="YangCAD" Style="{StaticResource TitleText}"/>
-   <TextBlock Text="控制中心 · 系统设置 / 关于" Style="{StaticResource MutedText}" Margin="0,3,0,0"/>
+   <TextBlock Text="控制中心 · 系统设置 / 快捷键 / 关于" Style="{StaticResource MutedText}" Margin="0,3,0,0"/>
   </StackPanel>
 
   <Grid Grid.Row="2">
    <Grid.ColumnDefinitions><ColumnDefinition Width="175"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
    <ListBox x:Name="NavList" Style="{StaticResource NavigationList}" SelectionChanged="NavigationChanged" SelectedIndex="0">
     <ListBoxItem Tag="Settings">系统设置</ListBoxItem>
+    <ListBoxItem Tag="Shortcuts">快捷键</ListBoxItem>
     <ListBoxItem Tag="About">关于</ListBoxItem>
    </ListBox>
    <Grid Grid.Column="2">
@@ -38,6 +39,20 @@
          <ListBoxItem Tag="Porcelain">月瓷 · Porcelain</ListBoxItem>
          <ListBoxItem Tag="Mist">雾蓝 · Mist</ListBoxItem>
         </ListBox>
+       </StackPanel>
+      </Border>
+     </StackPanel>
+    </ScrollViewer>
+
+    <ScrollViewer x:Name="ShortcutsPage" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+     <StackPanel>
+      <TextBlock Text="快捷键设置" Style="{StaticResource SectionTitle}"/>
+      <TextBlock Text="为常用 YangCAD 功能分配命令缩写。Ctrl / Shift 组合键使用 CAD 原生 CUI。" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,5,0,12"/>
+      <Border Style="{StaticResource Card}">
+       <StackPanel>
+        <TextBlock Text="管理我的快捷键" FontWeight="SemiBold"/>
+        <TextBlock Text="查看当前绑定，检查是否与 CAD 原有快捷键冲突，一键备份并保存。" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,6,0,12"/>
+        <Button Content="打开快捷键面板" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Left" Click="OpenShortcutsClick"/>
        </StackPanel>
       </Border>
      </StackPanel>

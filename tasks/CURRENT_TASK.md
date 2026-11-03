@@ -1,3 +1,13 @@
+# 当前下一步：快捷键与原生 Ribbon 定点实机验证
+
+`tasks/SHORTCUT_PANEL_NATIVE_RIBBON_WINDOWS_SMOKE_20261103.md`
+
+状态：`IMPLEMENTED / STATIC PASS / WINDOWS AUTOCAD 2024 RUNTIME REQUIRED`
+
+此前未完成的图片内嵌/比例转换/引线修复/图层 QG 测试继续保留，不混写为 GO。
+
+---
+
 # 当前开发候选任务（2026-11-03）
 
 功能：图层合并、图层显隐/冻结/锁定、QG 风格切割提取大样。

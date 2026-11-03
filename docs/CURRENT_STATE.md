@@ -1,3 +1,10 @@
+## 2026-11-03 — YangCAD 自主功能库与快捷键面板（STATIC ONLY）
+- 按个人使用需求参考源泉/贱人工具箱的操作体验，建立自主功能库，不照搬第三方源码/资产，也不一次复刻整个插件。
+- 新增 `YGKEYS` 快捷键面板（控制中心 → 快捷键）：按当前 AutoCAD acad.pgp 写独立 YangCAD 标记区块，冲突检测/显式覆盖、原文件备份、REINIT 生效；组合键使用 CAD CUI。
+- Ribbon 创建保留原有选中 Tab，不在插件加载时主动把 YangCAD 变为默认选项卡。
+- 当前仅静态 PASS，Windows AutoCAD/Civil 3D 2024 PGP/REINIT/Ribbon 真实验证尚未进行。
+- 功能规划：`docs/FEATURE_LIBRARY_YQARCH_JRCAD_20261103.md`；实机任务：`tasks/SHORTCUT_PANEL_NATIVE_RIBBON_WINDOWS_SMOKE_20261103.md`。
+
 
 ## 2026-11-03 — 图层工具 + 切割提取大样（静态候选）
 

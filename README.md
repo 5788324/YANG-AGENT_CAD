@@ -1,3 +1,10 @@
+## 2026-11-03 — YangCAD 自主功能库与快捷键面板（STATIC ONLY）
+- 按个人使用需求参考源泉/贱人工具箱的操作体验，建立自主功能库，不照搬第三方源码/资产，也不一次复刻整个插件。
+- 新增 `YGKEYS` 快捷键面板（控制中心 → 快捷键）：按当前 AutoCAD acad.pgp 写独立 YangCAD 标记区块，冲突检测/显式覆盖、原文件备份、REINIT 生效；组合键使用 CAD CUI。
+- Ribbon 创建保留原有选中 Tab，不在插件加载时主动把 YangCAD 变为默认选项卡。
+- 当前仅静态 PASS，Windows AutoCAD/Civil 3D 2024 PGP/REINIT/Ribbon 真实验证尚未进行。
+- 功能规划：`docs/FEATURE_LIBRARY_YQARCH_JRCAD_20261103.md`；实机任务：`tasks/SHORTCUT_PANEL_NATIVE_RIBBON_WINDOWS_SMOKE_20261103.md`。
+
 > **2026-11-03 静态开发**：新增图层工具（合并/开关/冻结/锁定，支持点选块与宿主外参依赖层）和独立 QG 风格矩形切割提取大样。详情 `docs/LAYER_TOOLS_QG_DETAIL_V1_20261103.md`。本轮尚未 Windows 编译/运行，不升 Runtime GO。
 
 > **2026-09-08 Gemini 实机证据独立复核**：Gemini 的 `EVIDENCE COMPLETE` 不被接受；确认存在 PID/Python/SHA 不一致、未实际 GUI 却以 RPC 冒充 GUI、未测 PaperSpace 却宣称 PASS、Leader/MLeader 覆盖夸大、Undo/Revit E2E 证据不足等问题。当前改为 `PARTIAL RUNTIME EVIDENCE / TARGETED RETEST REQUIRED / FINAL NO-GO`。本候选从 2026-09-07 clean candidate 重建，只吸收经 ChatGPT 独立审查的必要 Windows 修复；Gemini post-fix ZIP 不作为新基线。详见 `docs/CHATGPT_GEMINI_EVIDENCE_AUDIT_20260908.md` 与 `docs/TARGETED_RUNTIME_FIX_REVIEW_20260908.md`。

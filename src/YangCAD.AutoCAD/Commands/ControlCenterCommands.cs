@@ -37,6 +37,29 @@ namespace YangCAD.AutoCADHost.Commands
         }
 
 
+        private static ShortcutManagerWindow? _shortcutWindow;
+
+        [CommandMethod("YGKEYS")]
+        public void OpenShortcutManager()
+        {
+            try
+            {
+                if (_shortcutWindow != null && _shortcutWindow.IsLoaded)
+                {
+                    _shortcutWindow.Activate();
+                    return;
+                }
+                _shortcutWindow = new ShortcutManagerWindow();
+                _shortcutWindow.Closed += (_, __) => _shortcutWindow = null;
+                AcApp.ShowModelessWindow(_shortcutWindow);
+            }
+            catch (System.Exception ex)
+            {
+                RuntimeLogger.Error("YGKEYS command failed.", ex);
+                AcApp.DocumentManager.MdiActiveDocument?.Editor.WriteMessage("\n[YangCAD] 快捷键窗口打开失败：" + ex.Message + "\n");
+            }
+        }
+
         [CommandMethod("YANGCAD_MCP")]
         public void OpenMcp()
         {

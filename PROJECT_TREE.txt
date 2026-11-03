@@ -4,6 +4,7 @@ AGENTS.md
 CLAUDE.md
 Directory.Build.props
 PROJECT.md
+PROJECT_TREE.txt
 README.md
 STATIC_VALIDATION.txt
 WORKLOG.md
@@ -13,6 +14,7 @@ artifacts/STATIC_TESTS_REFERENCE_EMBED_V2_20261026.log
 artifacts/STATIC_TESTS_REVIT_PREP_LEADER_REPAIR_20261027.log
 artifacts/STATIC_TESTS_REVIT_PREP_LEADER_REPAIR_V1_20261026.log
 artifacts/STATIC_TESTS_SCALE_MCP_ALIGN_20260907.log
+artifacts/STATIC_TESTS_SHORTCUT_RIBBON_20261103.log
 artifacts/STATIC_TESTS_TARGETED_RETEST_CANDIDATE_20260908.log
 bundle/PackageContents.template.xml
 bundle/README.md
@@ -32,6 +34,7 @@ docs/DECISIONS.md
 docs/DEVELOPMENT_ROUNDS.md
 docs/DOCUMENT_AUTHORITY.md
 docs/FEATURE_BACKLOG.md
+docs/FEATURE_LIBRARY_YQARCH_JRCAD_20261103.md
 docs/FEATURE_REVIEW_LAYER_SEPARATION_IMAGE_OLE_20260828.md
 docs/GIT_WORKFLOW.md
 docs/GOOGLE_DRIVE_AI_WORKFLOW_20260907.md
@@ -126,6 +129,7 @@ src/YangCAD.AutoCAD/Services/Cad/PolylineCleanupService.cs
 src/YangCAD.AutoCAD/Services/Cad/PolylineInspectionService.cs
 src/YangCAD.AutoCAD/Services/Cad/RevitExchangeService.cs
 src/YangCAD.AutoCAD/Services/Cad/ScaleConversionService.cs
+src/YangCAD.AutoCAD/Services/Cad/ShortcutAliasService.cs
 src/YangCAD.AutoCAD/Toolbox/ToolboxContracts.cs
 src/YangCAD.AutoCAD/Toolbox/ToolboxRegistry.cs
 src/YangCAD.AutoCAD/UI/ControlCenterWindow.xaml
@@ -140,6 +144,8 @@ src/YangCAD.AutoCAD/UI/McpWindowManager.cs
 src/YangCAD.AutoCAD/UI/RibbonBootstrapper.cs
 src/YangCAD.AutoCAD/UI/ScaleConvertWindow.xaml
 src/YangCAD.AutoCAD/UI/ScaleConvertWindow.xaml.cs
+src/YangCAD.AutoCAD/UI/ShortcutManagerWindow.xaml
+src/YangCAD.AutoCAD/UI/ShortcutManagerWindow.xaml.cs
 src/YangCAD.AutoCAD/UI/ThemeManager.cs
 src/YangCAD.AutoCAD/UI/Themes/Mist.xaml
 src/YangCAD.AutoCAD/UI/Themes/Obsidian.xaml
@@ -187,6 +193,7 @@ tasks/REFERENCE_EMBED_V2_WINDOWS_SMOKE_20261026.md
 tasks/REPOSITORY_SINGLE_MAIN_RESET.md
 tasks/REVIT_PREP_LEADER_REPAIR_WINDOWS_SMOKE_20261026.md
 tasks/SCALE_CONVERTER_V1_WINDOWS_SMOKE_20260907.md
+tasks/SHORTCUT_PANEL_NATIVE_RIBBON_WINDOWS_SMOKE_20261103.md
 tasks/TARGETED_RETEST_AFTER_GEMINI_AUDIT_20260908.md
 tasks/TOOLBOX_001_ROUND_00_FOUNDATION.md
 tasks/TOOLBOX_001_ROUND_01_WINDOWS_UI_SMOKE.md
@@ -220,6 +227,7 @@ tools/test_quick_install_policy.py
 tools/test_reference_embed_quick_policy.py
 tools/test_revit_exchange_v1_policy.py
 tools/test_scale_converter_policy.py
+tools/test_shortcuts_ribbon_policy.py
 tools/test_toolbox_foundation_policy.py
 tools/test_toolbox_round2_interaction_policy.py
 tools/test_toolbox_round3_real_cad_policy.py

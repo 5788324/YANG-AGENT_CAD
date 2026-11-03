@@ -1,12 +1,13 @@
-CURRENT 2026-11-03 LAYER QUICK TOOLS + RECTANGLE DETAIL EXTRACT STATIC CANDIDATE
-- state: IMPLEMENTED / ALL STATIC POLICY PASS / WINDOWS AUTOCAD 2024 BUILD + RUNTIME + UNDO REQUIRED
-- previous tested baselines/failed Gemini evidence retained; no runtime GO implied by this candidate
-- Ribbon: MCP / 工具箱 / 比例转换 / 图层工具 / 提取大样 / 控制中心
-- layer quick UI: 4 buttons + list restoring hidden/frozen layers + nested block/xref selection
-- merge covers ModelSpace, PaperSpace, local block definitions and AttributeReferences; xref source untouched
-- xref-dependent layer state is a host-DWG override (VISRETAIN matters); merge dependent layers refused
-- detail extract: source preserved, rectangle crop for lines/arcs/circles/polyline segments, safe skip for complex crossing
-- MCP contract additive: stdio 74 / AutoCAD live 37 / Civil 3D live 67; tools=74
-- all test_*_policy.py PASS; verify_source PASS; verify_release_source PASS
-- compile/runtime NOT EXECUTED in this Linux environment (no Autodesk SDK)
-- see docs/LAYER_TOOLS_QG_DETAIL_V1_20261103.md and tasks/LAYER_TOOLS_QG_WINDOWS_SMOKE_20261103.md
+CURRENT 2026-11-03 YangCAD Shortcuts + CAD Native Ribbon Selection STATIC REVIEW
+- basis: YangCAD 0.9 layer tools/detail QG 2026-11-03 feature candidate
+- change: YGKEYS shortcut management inside Control Center, PGP alias service with collision checking and backup
+- change: ribbon addition preserves preexisting Autodesk active tab, does not force YangCAD as startup default
+- native command combos (Ctrl/Shift): CAD CUI, NOT global keyboard hook
+- shortcuts: native PGP (acad.pgp), REINIT to apply, source PGP backup on every write
+- product tool count unchanged: MCP stdio 74 / live AutoCAD 37 / live Civil3D 67 (per current feature candidate; validate runtime)
+- static: 18/18 test_*_policy.py suites PASS; verify_source errors=0; verify_release_source errors=0
+- shortcut/ribbon new static policy: 25/25 PASS
+- Windows 2024 build/runtime/PGP/REINIT/Ribbon persistence: NOT_TESTED
+- earlier ImageEmbed/Scale/Revit leader/Layer/QG runtime remains pending
+- docs: docs/FEATURE_LIBRARY_YQARCH_JRCAD_20261103.md
+- task: tasks/SHORTCUT_PANEL_NATIVE_RIBBON_WINDOWS_SMOKE_20261103.md

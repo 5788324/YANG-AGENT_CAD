@@ -36,6 +36,9 @@ namespace YangCAD.AutoCADHost.UI
 
             foreach (var tab in ribbon.Tabs) if (tab.Id == TabId) return;
 
+            // Remember Autodesk's selected tab before adding our custom tab. Adding a tab
+            // late during startup must not steal the native Home/Civil 3D ribbon focus.
+            var previousTab = ribbon.ActiveTab;
             var newTab = new RibbonTab { Id = TabId, Title = "YangCAD" };
             var source = new RibbonPanelSource { Title = "YangCAD" };
             var panel = new RibbonPanel { Source = source };
@@ -51,6 +54,28 @@ namespace YangCAD.AutoCADHost.UI
             source.Items.Add(Button("控制中心", "YANGCAD ", "ControlCenter32.png"));
             newTab.Panels.Add(panel);
             ribbon.Tabs.Add(newTab);
+            // Autodesk may automatically activate a newly inserted ribbon tab. Restore only
+            // when the new YangCAD tab became active; never override a valid user selection.
+            if (ribbon.ActiveTab == newTab)
+            {
+                RibbonTab? restoreTab = previousTab;
+                if (restoreTab == null || restoreTab == newTab)
+                {
+                    foreach (var tab in ribbon.Tabs)
+                    {
+                        if (tab == newTab) continue;
+                        if ((tab.Id != null && tab.Id.IndexOf(".Home", StringComparison.OrdinalIgnoreCase) >= 0) ||
+                            string.Equals(tab.Title, "常用", StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(tab.Title, "Home", StringComparison.OrdinalIgnoreCase))
+                        { restoreTab = tab; break; }
+                    }
+                }
+                if (restoreTab != null && restoreTab != newTab)
+                {
+                    try { ribbon.ActiveTab = restoreTab; }
+                    catch (System.Exception ex) { RuntimeLogger.Error("Could not restore native ribbon tab after YangCAD tab addition.", ex); }
+                }
+            }
         }
 
         public static void Shutdown() => UnhookIdle();
