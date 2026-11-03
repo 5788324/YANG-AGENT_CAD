@@ -21,14 +21,14 @@ try {
 
         $pyLauncher = Get-Command py -ErrorAction SilentlyContinue
         if ($pyLauncher) {
-            & $pyLauncher.Source -3 -m venv $venv 1>&2
+            & $pyLauncher.Source -3 -m venv $venv 1>$null
         }
         else {
             $python = Get-Command python -ErrorAction SilentlyContinue
             if (-not $python) {
                 throw "Python 3.10+ was not found. Install Python or uv, then retry the YangCAD MCP connection."
             }
-            & $python.Source -m venv $venv 1>&2
+            & $python.Source -m venv $venv 1>$null
         }
         if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $venvPython)) {
             throw "Failed to create the YangCAD MCP Python virtual environment."
@@ -49,7 +49,7 @@ try {
 
     if ($needsDeps) {
         Write-Err "Preparing YangCAD MCP runtime for the first launch..."
-        & $venvPython -m pip install --disable-pip-version-check "mcp[cli]>=2.0,<3" 1>&2
+        & $venvPython -m pip install --disable-pip-version-check "mcp[cli]>=2.0,<3" 1>$null
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to install the MCP Python dependency. Check network access and retry."
         }

@@ -277,7 +277,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             cuts.Sort();
             for (var i = 0; i + 1 < cuts.Count; i++)
             {
-                var from = cuts[i], to = cuts[i + 1];
+                double from = cuts[i], to = cuts[i + 1];
                 if (to - from < Tolerance) continue;
                 var middle = start + (from + to) / 2;
                 if (!rect.Contains(new Point3d(center.X + radius * Math.Cos(middle), center.Y + radius * Math.Sin(middle), center.Z)))

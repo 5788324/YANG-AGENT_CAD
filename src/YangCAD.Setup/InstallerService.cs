@@ -596,7 +596,7 @@ namespace YangCAD.Setup
         private static void VerifyRequiredRuntimeAssets(string bundlePath, string label)
         {
             if (!RequiredRuntimeAssetsPresent(bundlePath))
-                throw new InvalidDataException(label + "缺少 YangCAD runtime：Contents\Mcp Python bridge 或 Contents\ImageEmbed worker 不完整。");
+                throw new InvalidDataException(label + "缺少 YangCAD runtime：Contents\\Mcp Python bridge 或 Contents\\ImageEmbed worker 不完整。");
         }
 
         private static void VerifyDirectoryMatches(string source, string installed)

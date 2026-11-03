@@ -26,7 +26,7 @@ namespace YangCAD.AutoCADHost.UI
             TargetLayer.ItemsSource = names;
             SourceLayer.Text = string.IsNullOrWhiteSpace(selected)
                 ? layers.FirstOrDefault(x => x.current)?.name ?? names.FirstOrDefault() ?? "0" : selected;
-            TargetLayer.Text = names.FirstOrDefault(x => !string.Equals(x, SourceLayer.Text, StringComparison.OrdinalIgnoreCase) && !x.xref_dependent) ?? "0";
+            TargetLayer.Text = layers.FirstOrDefault(x => !string.Equals(x.name, SourceLayer.Text, StringComparison.OrdinalIgnoreCase) && !x.xref_dependent)?.name ?? "0";
             _ready = true;
             Refresh();
         }
