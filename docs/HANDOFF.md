@@ -41,3 +41,7 @@
 ## 改动交接
 
 推送 feature 分支并开 Draft PR；提交改动说明、静态日志、实际风险、下一轮 Windows 任务；同步 README（有产品变化时）、CURRENT_STATE、HANDOFF、CURRENT_TASK 和 WORKLOG。稳定后才合并 `main`。
+
+## 2026-11-03 — Gemini 统一验收与 CI
+
+当前统一测试输入为 PR #8 分支 `feature/product-foundation-v010-20261103` **执行时 HEAD**；切勿使用 `main` 或旧 ZIP。测试矩阵 `docs/RUNTIME_TEST_MATRIX.md`、质量门禁 `docs/QUALITY_GATES.md`、执行 SOP `docs/GEMINI_EXECUTOR_SOP.md`。GitHub Actions 仅静态 CI；无 Windows Autodesk SDK 的 runner 不具备编译/加载证据。

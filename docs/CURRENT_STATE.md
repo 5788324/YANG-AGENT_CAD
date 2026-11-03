@@ -43,3 +43,7 @@
 ## 下一步
 
 按 `tasks/CURRENT_TASK.md` 统一执行 Windows 定点测试；修编译/运行问题时必须重新绑定源码 SHA。最终 GO 需审查原始 AutoCAD DWG、属性 readback、截图、日志与 Loaded DLL。
+
+## 2026-11-03 — 统一质量门禁 / Gemini Windows 任务（STATIC ONLY）
+
+新增源代码 CI、统一测试脚本与 SHA manifest 校验、GitHub Issue/PR 模板、Gemini 实机执行 SOP、R00–R10 状态矩阵和 PR 分支依赖图。**无 Windows 业务实机结果新增，0.10.0-dev 仍为 STATIC_ONLY。**

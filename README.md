@@ -78,3 +78,7 @@ python tools/test_product_handoff_policy.py
 - [历史开发记录](WORKLOG.md)
 
 **项目性质**：个人工作流工具，中文界面，优先少点击、原生对象、可撤销；与 Autodesk、源泉设计及贱人工具箱均无官方关联。第三方名称仅用于功能对照。
+
+## 开发、测试与 AI 接手（2026-11-03）
+
+新 AI/新对话从 [`docs/AI_START_HERE.md`](docs/AI_START_HERE.md) 开始；当前可执行静态门禁见 `docs/QUALITY_GATES.md`，Windows 实机待测范围见 `docs/RUNTIME_TEST_MATRIX.md`。Gemini 统一任务：`tasks/GEMINI_WINDOWS_INTEGRATED_SMOKE_20261103.md`。CI 只验证源代码/策略测试，不等于 AutoCAD Runtime GO。父 PR 依赖关系见 `docs/BRANCH_DEPENDENCIES.md`。

@@ -252,3 +252,7 @@ Final review：`docs/RVT_EXCHANGE_V1_FINAL_REVIEW.md`
 - [ ] reopen output after source image moved
 - [ ] PaperSpace image
 - [ ] multi-DWG continuation after one FAIL
+
+## 0.10.0-dev 新增质量门禁
+
+发布前核对 `docs/QUALITY_GATES.md` G0–G5、`docs/RUNTIME_TEST_MATRIX.md` R00–R10 实际状态、GitHub PR/Issue 的 SHA 及 Drive 原始证据。GitHub Actions 静态 PASS 不得替代 Windows Build/Loaded 或真 Undo。

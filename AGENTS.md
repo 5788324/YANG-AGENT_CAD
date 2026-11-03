@@ -34,3 +34,7 @@
 ## 每轮交付
 
 同步 README 入口（必要时）、`docs/CURRENT_STATE.md`、`docs/HANDOFF.md`、`tasks/CURRENT_TASK.md`、`WORKLOG.md`，执行静态门禁；需要 Windows 实机的任务必须保留具体样本与证据要求。
+
+## 当前统一测试约束
+
+所有 AI 必须按 `docs/AI_START_HERE.md` 确认 GitHub 真实 HEAD；Gemini 按 `docs/GEMINI_EXECUTOR_SOP.md`、`tasks/GEMINI_WINDOWS_INTEGRATED_SMOKE_20261103.md` 运行。禁止仅用 SUMMARY/静态结果升级 Runtime GO。

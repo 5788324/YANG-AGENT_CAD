@@ -1,4 +1,8 @@
 .editorconfig
+.github/ISSUE_TEMPLATE/bug_report.md
+.github/ISSUE_TEMPLATE/windows_test.md
+.github/PULL_REQUEST_TEMPLATE.md
+.github/workflows/static-validation.yml
 .gitignore
 AGENTS.md
 CLAUDE.md
@@ -9,6 +13,7 @@ STATIC_VALIDATION.txt
 WORKLOG.md
 YangCADAgent.sln
 artifacts/REORG_CHANGED_FILES_20261103.txt
+artifacts/STATIC_TESTS_GOVERNANCE_20261103.log
 artifacts/STATIC_TESTS_LAYER_QG_20261103.log
 artifacts/STATIC_TESTS_PRODUCT_REORG_20261103.log
 artifacts/STATIC_TESTS_REFERENCE_EMBED_V2_20261026.log
@@ -21,7 +26,9 @@ bundle/PackageContents.template.xml
 bundle/README.md
 docs/AGENT_RULES.md
 docs/AI_FEATURE_DEVELOPMENT_STANDARD.md
+docs/AI_START_HERE.md
 docs/ARCHITECTURE.md
+docs/BRANCH_DEPENDENCIES.md
 docs/BUILD_DEPLOY.md
 docs/CADTOOL_YANGTOOLS_ALIGNMENT_20260907.md
 docs/CHANGED_FILES_SCALE_MCP_ALIGN_20260907.md
@@ -38,6 +45,7 @@ docs/FEATURE_BACKLOG.md
 docs/FEATURE_CATALOG.md
 docs/FEATURE_LIBRARY_YQARCH_JRCAD_20261103.md
 docs/FEATURE_REVIEW_LAYER_SEPARATION_IMAGE_OLE_20260828.md
+docs/GEMINI_EXECUTOR_SOP.md
 docs/GIT_WORKFLOW.md
 docs/GOOGLE_DRIVE_AI_WORKFLOW_20260907.md
 docs/HANDOFF.md
@@ -50,6 +58,7 @@ docs/ON_DEMAND_FEATURE_WORKFLOW.md
 docs/PRESTART_AUDIT_20260828.md
 docs/PRODUCT_STRUCTURE.md
 docs/PRODUCT_UI.md
+docs/QUALITY_GATES.md
 docs/REFERENCE_EMBED_V2_REVIEW_20261026.md
 docs/RELEASE002_PHASE_B1_CIVIL_RUNTIME_RESULT_20260828.md
 docs/RELEASE_CHECKLIST.md
@@ -60,6 +69,7 @@ docs/ROUND2_STATIC_REVIEW.md
 docs/ROUND2_WINDOWS_EVIDENCE.md
 docs/ROUND3A_FINAL_REVIEW.md
 docs/ROUND3B_FINAL_REVIEW.md
+docs/RUNTIME_TEST_MATRIX.md
 docs/RVT_EXCHANGE_V1.md
 docs/RVT_EXCHANGE_V1_FINAL_REVIEW.md
 docs/RVT_EXCHANGE_V1_WINDOWS_AUTOCAD_EVIDENCE.md
@@ -197,6 +207,7 @@ tasks/FEATURE_CAD_REVIT_PREP_001_YANGTOOLS_3136_ALIGNMENT_WINDOWS_SMOKE.md
 tasks/FEATURE_INFRA_MCP_CONFIG_001_WINDOWS_RETEST.md
 tasks/FEATURE_INFRA_MCP_CONFIG_001_WINDOWS_SMOKE.md
 tasks/FEATURE_PROJECT_IMAGE_EMBED_001_WINDOWS_SMOKE.md
+tasks/GEMINI_WINDOWS_INTEGRATED_SMOKE_20261103.md
 tasks/LAYER_TOOLS_QG_WINDOWS_SMOKE_20261103.md
 tasks/NEXT_TASKS.md
 tasks/REFERENCE_EMBED_V2_WINDOWS_SMOKE_20261026.md
@@ -226,8 +237,10 @@ tools/Test-CompatibilityMatrix.ps1
 tools/Verify-Release.ps1
 tools/fixtures/RVT_EXCHANGE_V1_CONTROLLED_11.json
 tools/fixtures/RVT_EXCHANGE_V1_YANGTOOLS_FIXTURE.json
+tools/run_static_checks.py
 tools/test_civil_api_compat_policy.py
 tools/test_extension_policy.py
+tools/test_governance_policy.py
 tools/test_image_embed_batch_policy.py
 tools/test_layer_detail_policy.py
 tools/test_leader_rebuild_policy.py
@@ -247,4 +260,5 @@ tools/test_ui_surface_policy.py
 tools/test_ui_theme_policy.py
 tools/verify_release_source.py
 tools/verify_source.py
+tools/verify_source_manifest.py
 workers/ImageEmbed/Start-YangCAD-ImageEmbed.ps1

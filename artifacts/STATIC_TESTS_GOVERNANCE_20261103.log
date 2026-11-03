@@ -1,0 +1,25 @@
+YangCAD 0.10.0-dev governance static
+PASS tools/verify_source.py
+PASS tools/verify_release_source.py
+PASS tools/test_civil_api_compat_policy.py
+PASS tools/test_extension_policy.py
+PASS tools/test_governance_policy.py
+PASS tools/test_image_embed_batch_policy.py
+PASS tools/test_layer_detail_policy.py
+PASS tools/test_leader_rebuild_policy.py
+PASS tools/test_mcp_copy_config_policy.py
+PASS tools/test_mcp_product_coverage_policy.py
+PASS tools/test_product_handoff_policy.py
+PASS tools/test_quick_install_policy.py
+PASS tools/test_reference_embed_quick_policy.py
+PASS tools/test_revit_exchange_v1_policy.py
+PASS tools/test_scale_converter_policy.py
+PASS tools/test_shortcuts_ribbon_policy.py
+PASS tools/test_toolbox_foundation_policy.py
+PASS tools/test_toolbox_round2_interaction_policy.py
+PASS tools/test_toolbox_round3_real_cad_policy.py
+PASS tools/test_toolbox_round3b_write_cad_policy.py
+PASS tools/test_ui_surface_policy.py
+PASS tools/test_ui_theme_policy.py
+22/22 PASS
+NO Windows / Autodesk runtime test executed.
