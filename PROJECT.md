@@ -1,3 +1,14 @@
+
+## 2026-11-03 — 图层工具 + 切割提取大样（静态候选）
+
+- Ribbon 新增 `图层工具` 和 `提取大样`，操作入口尽量简单。
+- LayerQuickService：模型/布局/本地块定义/块属性 LayerId 合并；显隐/冻结/锁定支持宿主 DWG 中的外参依赖层，但不改 Xref 源文件；当前层不可隐藏/冻结，外参依赖层不可直接合并。
+- `YGLAYER/YGLMERGE/YGLONOFF/YGLFREEZE/YGLLOCK` + 一个 WPF 小窗；隐藏或冻结的层仍可在列表中恢复；嵌套点选区分内部对象层与块/外参插入层。
+- `YGDETAIL`：矩形框+目标放置点+可选放大倍率；LINE/ARC/CIRCLE/普通 LWPOLYLINE 直线与弧段做精确裁切；复杂跨界对象及含属性/动态块/关联 Hatch 安全跳过；不删除原图对象。
+- MCP 新增 `cad.layer.merge/visibility/freeze/lock` + `cad.detail.extract`，默认 dry-run；合约 74 / 37 / 67，仅静态。
+- 旧的图片内嵌/比例转换/引线重建仍未 Windows 实机验收，不可宣称 Runtime GO。
+- 限制：当前不能运行 dotnet / Autodesk SDK；Windows 2024 build、Xref nested pick、Undo 与裁切实体 readback 待 `tasks/LAYER_TOOLS_QG_WINDOWS_SMOKE_20261103.md`。
+
 > **2026-09-08 Gemini 实机证据独立复核**：Gemini 的 `EVIDENCE COMPLETE` 不被接受；确认存在 PID/Python/SHA 不一致、未实际 GUI 却以 RPC 冒充 GUI、未测 PaperSpace 却宣称 PASS、Leader/MLeader 覆盖夸大、Undo/Revit E2E 证据不足等问题。当前改为 `PARTIAL RUNTIME EVIDENCE / TARGETED RETEST REQUIRED / FINAL NO-GO`。本候选从 2026-09-07 clean candidate 重建，只吸收经 ChatGPT 独立审查的必要 Windows 修复；Gemini post-fix ZIP 不作为新基线。详见 `docs/CHATGPT_GEMINI_EVIDENCE_AUDIT_20260908.md` 与 `docs/TARGETED_RUNTIME_FIX_REVIEW_20260908.md`。
 
 > **2026-09-07 急用功能：图纸比例转换 V1（STATIC DEVELOPMENT）**：新增 Ribbon `比例转换` / 命令 `YGSCALE` / MCP `cad.scale.convert`。支持 `standard_1to1`（真实 1:1，几何不变、注释倍率 New/Old）与 `scaled_drawing`（非 1:1，几何倍率 Old/New、纸面注释恢复）两种模式。第一版对 Annotative/Xref/Underlay/Civil/AEC/Proxy 安全跳过；标准模式普通块因无法判定几何块/注释块而先跳过。当前 MCP additive contract 变为 stdio **68** / AutoCAD **31** / Civil 3D **61**。尚未 Windows Build/Runtime/Undo 实机证明。

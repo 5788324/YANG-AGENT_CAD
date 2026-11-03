@@ -24,16 +24,18 @@ tb_c=text('src/YangCAD.AutoCAD/UI/ToolboxView.xaml.cs')
 param_c=text('src/YangCAD.AutoCAD/UI/ToolboxParameterPanel.xaml.cs')
 scale_x=text('src/YangCAD.AutoCAD/UI/ScaleConvertWindow.xaml')
 scale_c=text('src/YangCAD.AutoCAD/UI/ScaleConvertWindow.xaml.cs')
+layer_x=text('src/YangCAD.AutoCAD/UI/LayerQuickWindow.xaml')
+layer_c=text('src/YangCAD.AutoCAD/UI/LayerQuickWindow.xaml.cs')
 
 buttons=re.findall(r'Button\("([^"]+)",\s*"([^"]+)"', ribbon)
-ok('ribbon contains MCP/工具箱/比例转换/控制中心', [x[0] for x in buttons] == ['MCP','工具箱','比例转换','控制中心'])
+ok('ribbon contains MCP/工具箱/比例转换/图层工具/提取大样/控制中心', [x[0] for x in buttons] == ['MCP','工具箱','比例转换','图层工具','提取大样','控制中心'])
 ok('ribbon commands have command methods', all(cmd.strip() in commands for _,cmd in buttons))
 ok('control center has no visible MCP controls', all(x not in cc_x for x in ['MCP 状态','复制 MCP 配置','允许 MCP 修改当前 DWG','Tag="MCP"']))
 ok('mcp window has no duplicate theme selector', all(x not in mcp_x for x in ['墨曜 · Obsidian','月瓷 · Porcelain','雾蓝 · Mist']))
 ok('toolbox registry is exactly two descriptors', re.findall(r'Id\s*=\s*"([^"]+)"', registry) == ['project.revit.prepare','project.image.embed'])
 ok('toolbox has no system/planning navigation', all(x not in tb_x for x in ['系统','规划','CategoryList','SearchBox','收藏','最近']))
 
-for label,x,c in [('control center',cc_x,cc_c),('mcp window',mcp_x,mcp_c),('toolbox',tb_x,tb_c),('scale converter',scale_x,scale_c)]:
+for label,x,c in [('control center',cc_x,cc_c),('mcp window',mcp_x,mcp_c),('toolbox',tb_x,tb_c),('scale converter',scale_x,scale_c),('layer quick',layer_x,layer_c)]:
     missing=handlers(x)-methods(c)
     ok(label+' xaml event handlers exist', not missing)
 

@@ -1,3 +1,14 @@
+
+## 2026-11-03 — 图层工具 + 切割提取大样（静态候选）
+
+- Ribbon 新增 `图层工具` 和 `提取大样`，操作入口尽量简单。
+- LayerQuickService：模型/布局/本地块定义/块属性 LayerId 合并；显隐/冻结/锁定支持宿主 DWG 中的外参依赖层，但不改 Xref 源文件；当前层不可隐藏/冻结，外参依赖层不可直接合并。
+- `YGLAYER/YGLMERGE/YGLONOFF/YGLFREEZE/YGLLOCK` + 一个 WPF 小窗；隐藏或冻结的层仍可在列表中恢复；嵌套点选区分内部对象层与块/外参插入层。
+- `YGDETAIL`：矩形框+目标放置点+可选放大倍率；LINE/ARC/CIRCLE/普通 LWPOLYLINE 直线与弧段做精确裁切；复杂跨界对象及含属性/动态块/关联 Hatch 安全跳过；不删除原图对象。
+- MCP 新增 `cad.layer.merge/visibility/freeze/lock` + `cad.detail.extract`，默认 dry-run；合约 74 / 37 / 67，仅静态。
+- 旧的图片内嵌/比例转换/引线重建仍未 Windows 实机验收，不可宣称 Runtime GO。
+- 限制：当前不能运行 dotnet / Autodesk SDK；Windows 2024 build、Xref nested pick、Undo 与裁切实体 readback 待 `tasks/LAYER_TOOLS_QG_WINDOWS_SMOKE_20261103.md`。
+
 ## 2026-09-07 — CADTool / YangCAD ↔ YangTools business alignment + product MCP
 
 - Formal input locked to YangCAD 0.9 `B452D326...B599EB7` and YangTools 3.1.36 FINAL_E2E `D126F1A6...40CDBA4`; no 3.1.38 dependency.

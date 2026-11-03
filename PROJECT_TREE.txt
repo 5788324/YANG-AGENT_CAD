@@ -8,6 +8,7 @@ README.md
 STATIC_VALIDATION.txt
 WORKLOG.md
 YangCADAgent.sln
+artifacts/STATIC_TESTS_LAYER_QG_20261103.log
 artifacts/STATIC_TESTS_REFERENCE_EMBED_V2_20261026.log
 artifacts/STATIC_TESTS_REVIT_PREP_LEADER_REPAIR_20261027.log
 artifacts/STATIC_TESTS_REVIT_PREP_LEADER_REPAIR_V1_20261026.log
@@ -36,6 +37,7 @@ docs/GIT_WORKFLOW.md
 docs/GOOGLE_DRIVE_AI_WORKFLOW_20260907.md
 docs/HANDOFF.md
 docs/IMAGE_EMBED_V1.md
+docs/LAYER_TOOLS_QG_DETAIL_V1_20261103.md
 docs/MCP_ARCHITECTURE.md
 docs/MCP_CONNECTION_HANDOFF.md
 docs/MCP_COVERAGE_MATRIX.md
@@ -77,6 +79,8 @@ mcp/yangcad_mcp/extensions.py
 mcp/yangcad_mcp/gateway.py
 mcp/yangcad_mcp/server.py
 src/YangCAD.AutoCAD/Commands/ControlCenterCommands.cs
+src/YangCAD.AutoCAD/Commands/DetailExtractCommands.cs
+src/YangCAD.AutoCAD/Commands/LayerQuickCommands.cs
 src/YangCAD.AutoCAD/Commands/LeaderRepairCommands.cs
 src/YangCAD.AutoCAD/Commands/ScaleConvertCommands.cs
 src/YangCAD.AutoCAD/Commands/ToolboxCommands.cs
@@ -102,6 +106,7 @@ src/YangCAD.AutoCAD/Mcp/LocalGateway.cs
 src/YangCAD.AutoCAD/Mcp/McpClientConfigBuilder.cs
 src/YangCAD.AutoCAD/Mcp/ToolRegistry.cs
 src/YangCAD.AutoCAD/Mcp/Tools/CadCreateTools.cs
+src/YangCAD.AutoCAD/Mcp/Tools/CadLayerQuickTools.cs
 src/YangCAD.AutoCAD/Mcp/Tools/CadLeaderTools.cs
 src/YangCAD.AutoCAD/Mcp/Tools/CadProductionTools.cs
 src/YangCAD.AutoCAD/Mcp/Tools/CadReadTools.cs
@@ -110,10 +115,12 @@ src/YangCAD.AutoCAD/Mcp/Tools/CadWriteTools.cs
 src/YangCAD.AutoCAD/Mcp/Tools/ProjectProductTools.cs
 src/YangCAD.AutoCAD/Mcp/Tools/ToolJson.cs
 src/YangCAD.AutoCAD/RuntimeHost.cs
+src/YangCAD.AutoCAD/Services/Cad/DetailExtractService.cs
 src/YangCAD.AutoCAD/Services/Cad/DrawingAuditService.cs
 src/YangCAD.AutoCAD/Services/Cad/ImageEmbedBatchService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerAuditService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerCleanupService.cs
+src/YangCAD.AutoCAD/Services/Cad/LayerQuickService.cs
 src/YangCAD.AutoCAD/Services/Cad/LeaderRepairService.cs
 src/YangCAD.AutoCAD/Services/Cad/PolylineCleanupService.cs
 src/YangCAD.AutoCAD/Services/Cad/PolylineInspectionService.cs
@@ -125,6 +132,8 @@ src/YangCAD.AutoCAD/UI/ControlCenterWindow.xaml
 src/YangCAD.AutoCAD/UI/ControlCenterWindow.xaml.cs
 src/YangCAD.AutoCAD/UI/Icons/ControlCenter32.png
 src/YangCAD.AutoCAD/UI/Icons/Mcp32.png
+src/YangCAD.AutoCAD/UI/LayerQuickWindow.xaml
+src/YangCAD.AutoCAD/UI/LayerQuickWindow.xaml.cs
 src/YangCAD.AutoCAD/UI/McpWindow.xaml
 src/YangCAD.AutoCAD/UI/McpWindow.xaml.cs
 src/YangCAD.AutoCAD/UI/McpWindowManager.cs
@@ -172,6 +181,7 @@ tasks/FEATURE_CAD_REVIT_PREP_001_YANGTOOLS_3136_ALIGNMENT_WINDOWS_SMOKE.md
 tasks/FEATURE_INFRA_MCP_CONFIG_001_WINDOWS_RETEST.md
 tasks/FEATURE_INFRA_MCP_CONFIG_001_WINDOWS_SMOKE.md
 tasks/FEATURE_PROJECT_IMAGE_EMBED_001_WINDOWS_SMOKE.md
+tasks/LAYER_TOOLS_QG_WINDOWS_SMOKE_20261103.md
 tasks/NEXT_TASKS.md
 tasks/REFERENCE_EMBED_V2_WINDOWS_SMOKE_20261026.md
 tasks/REPOSITORY_SINGLE_MAIN_RESET.md
@@ -202,6 +212,7 @@ tools/fixtures/RVT_EXCHANGE_V1_YANGTOOLS_FIXTURE.json
 tools/test_civil_api_compat_policy.py
 tools/test_extension_policy.py
 tools/test_image_embed_batch_policy.py
+tools/test_layer_detail_policy.py
 tools/test_leader_rebuild_policy.py
 tools/test_mcp_copy_config_policy.py
 tools/test_mcp_product_coverage_policy.py

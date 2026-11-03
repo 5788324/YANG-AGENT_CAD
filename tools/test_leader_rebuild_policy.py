@@ -45,7 +45,7 @@ ok('MCP server tool exists and dry_run default true', 'name="cad.leader.rebuild"
 ok('MCP deletion protection', 'cad.leader.rebuild' in runner and '!settings.AllowErase' in runner)
 ok('MCP gateway has binding', '"cad.leader.rebuild"' in text('mcp/yangcad_mcp/gateway.py'))
 ok('tool registered live', 'RegisterOptional("cad.leader.rebuild"' in text('src/YangCAD.AutoCAD/RuntimeHost.cs'))
-ok('coverage matrix updated', '`cad.leader.rebuild`' in coverage and '**69**' in coverage)
+ok('coverage matrix updated', '`cad.leader.rebuild`' in coverage and '**74**' in coverage)
 for name,passed in checks:print(('PASS' if passed else 'FAIL')+': '+name)
 print(f'leader rebuild static policy {sum(x for _,x in checks)}/{len(checks)} PASS')
 raise SystemExit(any(not x for _,x in checks))

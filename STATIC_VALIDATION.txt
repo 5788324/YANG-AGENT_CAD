@@ -1,15 +1,12 @@
-CURRENT 2026-10-26 REVIT PREP SIMPLE UI + NATIVE LEADER REPAIR STATIC REVIEW
-- base: 2026-09-08 targeted-retest clean / GitHub main 396a79408bfb38d374871fb030b54012748be8b6
-- state: IMPLEMENTED / STATIC PASS / WINDOWS COM + AutoCAD 2024 RUNTIME REQUIRED / NOT RELEASE GO
-- GUI: current saved DWG quick start; select folder batch; still safe output-copy, no in-place overwrite
-- reference coverage: top-level RasterImage→OLE; resolved DWG Xref→internal Block (runtime required); PDF/DGN/DWF remain diagnosed unsupported
-- fixes: relative image paths use input DWG, worker-per-file failure isolation, existing AutoCAD process ownership guard, report residual nested external refs
-- YGSCALE: dynamic blocks explicitly skipped; DIMLFAC failure rolls back object; Leader/MLeader and Undo runtime pending
-- MCP contract additive: stdio 69 / AutoCAD 32 / Civil 3D 62; tools=69
-- static: all test_*_policy.py PASS; verify_source PASS; verify_release_source PASS
-- compile/runtime: not executed in this Linux environment
-- see: docs/REFERENCE_EMBED_V2_REVIEW_20261026.md and tasks/REFERENCE_EMBED_V2_WINDOWS_SMOKE_20261026.md
-
-- Revit Prep UI: one-click, advanced collapsed; new YGLEADERFIX + cad.leader.rebuild static 31/31; Windows runtime NOT_TESTED
-
-- 2026-10-27 hardening: reject 2D self-intersecting/overlapping and off-plane leader chains; escape DBText formatting chars for MText; preserve MText attachment; 31/31 static; AutoCAD runtime still NOT_TESTED.
+CURRENT 2026-11-03 LAYER QUICK TOOLS + RECTANGLE DETAIL EXTRACT STATIC CANDIDATE
+- state: IMPLEMENTED / ALL STATIC POLICY PASS / WINDOWS AUTOCAD 2024 BUILD + RUNTIME + UNDO REQUIRED
+- previous tested baselines/failed Gemini evidence retained; no runtime GO implied by this candidate
+- Ribbon: MCP / 工具箱 / 比例转换 / 图层工具 / 提取大样 / 控制中心
+- layer quick UI: 4 buttons + list restoring hidden/frozen layers + nested block/xref selection
+- merge covers ModelSpace, PaperSpace, local block definitions and AttributeReferences; xref source untouched
+- xref-dependent layer state is a host-DWG override (VISRETAIN matters); merge dependent layers refused
+- detail extract: source preserved, rectangle crop for lines/arcs/circles/polyline segments, safe skip for complex crossing
+- MCP contract additive: stdio 74 / AutoCAD live 37 / Civil 3D live 67; tools=74
+- all test_*_policy.py PASS; verify_source PASS; verify_release_source PASS
+- compile/runtime NOT EXECUTED in this Linux environment (no Autodesk SDK)
+- see docs/LAYER_TOOLS_QG_DETAIL_V1_20261103.md and tasks/LAYER_TOOLS_QG_WINDOWS_SMOKE_20261103.md
