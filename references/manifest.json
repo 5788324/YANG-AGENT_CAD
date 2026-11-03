@@ -1,0 +1,22 @@
+{
+  "schema": "yangcad-reference-index/1",
+  "updated_at": "2026-11-03",
+  "purpose": "public functional reference, not code redistribution",
+  "entries": [
+    {
+      "slug": "yqarch",
+      "name": "源泉设计",
+      "publisher_evidence": "林穗聪（YQArch 帮助手册）",
+      "public_documentation": "https://code.buxiantang.top/file/yqhelp.pdf",
+      "license": "freeware with explicit prohibition against modifying/decompiling yqarch.vlx; source reuse not licensed",
+      "binary_in_repository": false
+    },
+    {
+      "slug": "jianren-toolbox",
+      "name": "贱人工具箱",
+      "public_documentation": "https://cloud.tencent.com/developer/news/2598233",
+      "license": "source and redistribution permission unverified",
+      "binary_in_repository": false
+    }
+  ]
+}

@@ -1,36 +1,14 @@
-# CLAUDE.md
+# YangCAD — AI 接手提示
 
-先读 `AGENTS.md`。
+先读 [`AGENTS.md`](AGENTS.md)，再看 [`docs/HANDOFF.md`](docs/HANDOFF.md) 和 [`tasks/CURRENT_TASK.md`](tasks/CURRENT_TASK.md)。
 
-YangCAD 当前已完成 Toolbox Core Foundation，项目处于：
+- 项目：个人 AutoCAD / Civil 3D 插件工具箱 + MCP，**0.10.0-dev**。
+- Git：`main` 是稳定回退基线；`feature/*` + Draft PR 是当前未验收开发候选，不要只看 `main` 就判断功能缺失。
+- 静态、Windows Build、Autodesk Runtime、E2E 是不同阶段；缺证据写 `NOT_TESTED`。
+- GUI/Command/MCP 共用 CAD Service；不直接从 Python/Gateway 线程访问 Autodesk API。
+- 原生 CAD 对象优先，写操作需考虑 Undo、异常回滚与源图保护。
+- UI 中文、少参数、快捷入口；不为了设计复杂度重做架构。
+- `references/` 只收录源泉设计/贱人工具箱的合法功能参考，禁止复制第三方保护程序或资产。
+- 新需求先定位现有工具；不要擅自从 Backlog 连续开发未授权功能。
 
-> **ON-DEMAND DEVELOPMENT**
-
-不要恢复旧 YANG-AGENT_CAD 历史，不要自动开始 Round 4/5，也不要从 Backlog 自选功能。
-
-## 强制规范
-
-所有功能开发必须遵循：
-
-`docs/AI_FEATURE_DEVELOPMENT_STANDARD.md`
-
-关键点：
-
-- 默认每次 1–3 个 Tool；
-- 真实需求驱动；
-- GUI/MCP 共享 Service，不互相调用；
-- Service 不取 `MdiActiveDocument`；
-- Ordinary Write 不增加确认；
-- High-Destructive 只用 Preview/dry_run 或最多一次确认；
-- 不做 DI/CQRS/EventBus/RBAC 等无收益平台化；
-- 每次正式包更新事实文档与交接；
-- 65/28/58 非必要不变；
-- 不擅自推送 Git。
-
-事实源：
-
-- `docs/CURRENT_STATE.md`
-- `docs/AI_FEATURE_DEVELOPMENT_STANDARD.md`
-- `docs/DECISIONS.md`
-- `tasks/CURRENT_TASK.md`
-- `docs/HANDOFF.md`
+验收与 Git 具体规则：`docs/RELEASE_CHECKLIST.md`、`docs/GIT_WORKFLOW.md`。

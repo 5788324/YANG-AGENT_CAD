@@ -1,13 +1,9 @@
-CURRENT 2026-11-03 YangCAD Shortcuts + CAD Native Ribbon Selection STATIC REVIEW
-- basis: YangCAD 0.9 layer tools/detail QG 2026-11-03 feature candidate
-- change: YGKEYS shortcut management inside Control Center, PGP alias service with collision checking and backup
-- change: ribbon addition preserves preexisting Autodesk active tab, does not force YangCAD as startup default
-- native command combos (Ctrl/Shift): CAD CUI, NOT global keyboard hook
-- shortcuts: native PGP (acad.pgp), REINIT to apply, source PGP backup on every write
-- product tool count unchanged: MCP stdio 74 / live AutoCAD 37 / live Civil3D 67 (per current feature candidate; validate runtime)
-- static: 18/18 test_*_policy.py suites PASS; verify_source errors=0; verify_release_source errors=0
-- shortcut/ribbon new static policy: 25/25 PASS
-- Windows 2024 build/runtime/PGP/REINIT/Ribbon persistence: NOT_TESTED
-- earlier ImageEmbed/Scale/Revit leader/Layer/QG runtime remains pending
-- docs: docs/FEATURE_LIBRARY_YQARCH_JRCAD_20261103.md
-- task: tasks/SHORTCUT_PANEL_NATIVE_RIBBON_WINDOWS_SMOKE_20261103.md
+CURRENT 2026-11-03 YangCAD 0.10.0-dev PRODUCT STRUCTURE + DOCUMENTATION CANDIDATE
+- based on feature/shortcut-manager-native-ribbon-20261103 SHA 53cacbc780dcd97e674af3819b42586c81aec9d0
+- version: 0.10.0-dev (not stable)
+- product contract: tools=74 / AutoCAD live=37 / Civil live=67 (static expected)
+- references: lawful descriptive indexes only, no third-party plugin code
+- UI: native Ribbon group + dockable Palette quick actions + ControlCenter About refresh
+- status: STATIC CANDIDATE / WINDOWS COMPILATION AND RUNTIME NOT_TESTED
+- previous ImageEmbed, Scale, LeaderRepair, Layer/QG, Shortcuts runtime remain PENDING
+- task: tasks/CURRENT_TASK.md

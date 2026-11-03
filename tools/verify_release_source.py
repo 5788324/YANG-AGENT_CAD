@@ -4,10 +4,10 @@ ROOT=Path(__file__).resolve().parents[1]
 errors=[]
 def text(rel): return (ROOT/rel).read_text(encoding='utf-8-sig')
 checks={
- 'Directory.Build.props':'<Version>0.9.0</Version>',
- 'mcp/pyproject.toml':'version = "0.9.0"',
- 'mcp/yangcad_mcp/__init__.py':'__version__ = "0.9.0"',
- 'bundle/PackageContents.template.xml':'AppVersion="0.9.0"',
+ 'Directory.Build.props':'<Version>0.10.0</Version>',
+ 'mcp/pyproject.toml':'version = "0.10.0"',
+ 'mcp/yangcad_mcp/__init__.py':'__version__ = "0.10.0"',
+ 'bundle/PackageContents.template.xml':'AppVersion="0.10.0"',
 }
 for rel,needle in checks.items():
     if needle not in text(rel): errors.append(f'version mismatch: {rel}')

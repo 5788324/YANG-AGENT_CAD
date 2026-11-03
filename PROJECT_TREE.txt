@@ -4,12 +4,13 @@ AGENTS.md
 CLAUDE.md
 Directory.Build.props
 PROJECT.md
-PROJECT_TREE.txt
 README.md
 STATIC_VALIDATION.txt
 WORKLOG.md
 YangCADAgent.sln
+artifacts/REORG_CHANGED_FILES_20261103.txt
 artifacts/STATIC_TESTS_LAYER_QG_20261103.log
+artifacts/STATIC_TESTS_PRODUCT_REORG_20261103.log
 artifacts/STATIC_TESTS_REFERENCE_EMBED_V2_20261026.log
 artifacts/STATIC_TESTS_REVIT_PREP_LEADER_REPAIR_20261027.log
 artifacts/STATIC_TESTS_REVIT_PREP_LEADER_REPAIR_V1_20261026.log
@@ -34,6 +35,7 @@ docs/DECISIONS.md
 docs/DEVELOPMENT_ROUNDS.md
 docs/DOCUMENT_AUTHORITY.md
 docs/FEATURE_BACKLOG.md
+docs/FEATURE_CATALOG.md
 docs/FEATURE_LIBRARY_YQARCH_JRCAD_20261103.md
 docs/FEATURE_REVIEW_LAYER_SEPARATION_IMAGE_OLE_20260828.md
 docs/GIT_WORKFLOW.md
@@ -46,6 +48,8 @@ docs/MCP_CONNECTION_HANDOFF.md
 docs/MCP_COVERAGE_MATRIX.md
 docs/ON_DEMAND_FEATURE_WORKFLOW.md
 docs/PRESTART_AUDIT_20260828.md
+docs/PRODUCT_STRUCTURE.md
+docs/PRODUCT_UI.md
 docs/REFERENCE_EMBED_V2_REVIEW_20261026.md
 docs/RELEASE002_PHASE_B1_CIVIL_RUNTIME_RESULT_20260828.md
 docs/RELEASE_CHECKLIST.md
@@ -72,6 +76,7 @@ docs/TOOL_DEVELOPMENT_GUIDE.md
 docs/TOOL_INDEX.md
 docs/UI_MCP_TOOLBOX_CLOSEOUT_20260901.md
 docs/USER_GUIDE.md
+docs/VERSIONING.md
 docs/YANGTOOLS_3.1.36_RVT_INTEROP_20260901.md
 mcp/README.md
 mcp/Start-YangCAD-Mcp.ps1
@@ -81,6 +86,11 @@ mcp/yangcad_mcp/batch.py
 mcp/yangcad_mcp/extensions.py
 mcp/yangcad_mcp/gateway.py
 mcp/yangcad_mcp/server.py
+references/FEATURE_COMPARISON.md
+references/README.md
+references/jianren-toolbox/README.md
+references/manifest.json
+references/yqarch/README.md
 src/YangCAD.AutoCAD/Commands/ControlCenterCommands.cs
 src/YangCAD.AutoCAD/Commands/DetailExtractCommands.cs
 src/YangCAD.AutoCAD/Commands/LayerQuickCommands.cs
@@ -223,6 +233,7 @@ tools/test_layer_detail_policy.py
 tools/test_leader_rebuild_policy.py
 tools/test_mcp_copy_config_policy.py
 tools/test_mcp_product_coverage_policy.py
+tools/test_product_handoff_policy.py
 tools/test_quick_install_policy.py
 tools/test_reference_embed_quick_policy.py
 tools/test_revit_exchange_v1_policy.py

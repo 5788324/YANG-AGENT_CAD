@@ -1,43 +1,36 @@
-# AGENTS.md — YangCAD
+# AGENTS.md — YangCAD 项目接手规则
 
-## 强制读取顺序
+## 先读
 
-1. README.md
-2. PROJECT.md
-3. docs/CURRENT_STATE.md
-4. docs/DOCUMENT_AUTHORITY.md
-5. docs/DECISIONS.md
-6. docs/AI_FEATURE_DEVELOPMENT_STANDARD.md
-7. docs/AGENT_RULES.md
-8. docs/COMPATIBILITY.md
-9. docs/TOOLBOX_ARCHITECTURE.md
-10. docs/TOOL_INDEX.md
-11. tasks/CURRENT_TASK.md
-12. docs/HANDOFF.md
-13. WORKLOG.md
+1. `README.md`
+2. `docs/CURRENT_STATE.md`
+3. `docs/HANDOFF.md`
+4. `docs/FEATURE_CATALOG.md`
+5. `docs/PRODUCT_STRUCTURE.md`
+6. `tasks/CURRENT_TASK.md`
+7. `docs/AI_FEATURE_DEVELOPMENT_STANDARD.md`
+8. 所涉功能的 `docs/*` 规范及 `tools/test_*_policy.py`
 
-## 单主线
+完整权威顺序见 `docs/DOCUMENT_AUTHORITY.md`。
 
-- GitHub `main` 是唯一开发线。
-- 不恢复旧 YANG-AGENT_CAD history/archive/backup。
-- 不从旧 SHA/旧文档推断当前状态。
+## Git 事实源
 
-## 项目原则
+- `main`：稳定回退基线，不允许把未经实机验收的功能当作已发布。
+- `feature/*`：开发候选；Draft PR 用于审查与 Windows 验收。**查看分支/PR 的最新 HEAD，不从日期猜。**
+- 2026-11-03 当前开发线上最新增量以 `tasks/CURRENT_TASK.md` 为准；旧 PR 可能是父分支，提交前确认基点。
+- 用户允许覆盖仓库，但常规开发不要无理由 force push；任何版本发布必须明确 SHA 和状态。
 
-- 个人工作插件箱，优先 AI 快速开发、迭代、维护、上线。
-- 不直接从 MCP/HTTP background thread 访问 Autodesk API。
-- 写操作保持正确 Document/Transaction/rollback/Undo。
-- Batch 不破坏输入 DWG。
-- 不跨年份复制 Autodesk/YangCAD runtime DLL。
-- 不把 Autodesk DLL、token、runtime logs、bin/obj 提交 Git。
-- GUI Toolbox 普通写工具不强制 dry_run；高破坏工具按需 Preview/确认。
-- TASK-007 动态 Extension 安全机制不扩散到静态 Toolbox。
-- GUI 与 MCP 共享 Service，但 GUI 不绕 MCP。
-- 不为“架构完整”引入无实际收益的平台化层。
-- 每轮保持小范围并更新 CURRENT_STATE/HANDOFF/WORKLOG。
+## 代码与安全边界
 
-## AI 功能开发规范
+- 优先使用现有 `Service / Request / Result`；GUI、命令、MCP 共享业务层，不重写三套。
+- Autodesk API 只在合法 Document/Command/Transaction 上下文运行，禁止由 MCP HTTP 后台线程直接调用。
+- 写图尽量一次操作一次 Undo；高破坏操作提供预览或可回退，不增加无意义弹窗。
+- Batch 必须保留输入 DWG；外参源文件不可被静默修改。
+- 不将静态 PASS、已有旧版 Runtime PASS 冒充当前候选 Windows GO。
+- 不把源泉/贱人工具箱 VLX/LSP/安装包、版权资产、破解版本或未知许可内容直接提交到公开仓库；参考目录仅放合法资料和自主整理的功能对照。
+- 不提交 Autodesk DLL、bin/obj、token、用户工程文件、真实私密日志。
+- 不做无需求的 DI/CQRS/EventBus/RBAC；用户是主要个人使用者。
 
-- 所有 AI 必须遵循 `docs/AI_FEATURE_DEVELOPMENT_STANDARD.md`。
-- 默认每次 1–3 个 Tool；不得自动从 Backlog 继续开发。
-- 正式打包必须同步 CURRENT_STATE / HANDOFF / WORKLOG / CURRENT_TASK 与完整源码 SHA。
+## 每轮交付
+
+同步 README 入口（必要时）、`docs/CURRENT_STATE.md`、`docs/HANDOFF.md`、`tasks/CURRENT_TASK.md`、`WORKLOG.md`，执行静态门禁；需要 Windows 实机的任务必须保留具体样本与证据要求。

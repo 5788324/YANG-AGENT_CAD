@@ -63,14 +63,30 @@
       <TextBlock Text="关于 YangCAD" Style="{StaticResource SectionTitle}"/>
       <Border Style="{StaticResource AccentCard}" Margin="0,10,0,0">
        <StackPanel>
-        <TextBlock Text="YangCAD" FontSize="26" FontWeight="SemiBold"/>
-        <TextBlock Text="AutoCAD / Civil 3D 个人生产力工具" Style="{StaticResource MutedText}" Margin="0,3,0,0"/>
-        <TextBlock x:Name="ProductVersionText" Text="Version 0.9.0-dev" Margin="0,12,0,0" FontWeight="SemiBold"/>
+        <TextBlock Text="YangCAD" FontSize="30" FontWeight="SemiBold"/>
+        <TextBlock Text="CAD 工具箱 · 图纸处理 · AI 自动化" Style="{StaticResource MutedText}" Margin="0,3,0,0"/>
+        <TextBlock x:Name="ProductVersionText" Text="v0.10.0-dev" Margin="0,12,0,0" FontWeight="SemiBold" FontSize="16"/>
+        <TextBlock Text="开发预览版 · 新增功能尚待 Windows / AutoCAD 实机验证" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,6,0,0"/>
        </StackPanel>
       </Border>
-      <Border Style="{StaticResource Card}" Margin="0,12,0,0"><StackPanel><TextBlock Text="开发声明" FontWeight="SemiBold"/><TextBlock Text="YangCAD 是面向个人工程工作的 AutoCAD / Civil 3D 生产力工具，由项目作者独立开发与维护。项目开发过程中使用 AI 辅助完成部分代码编写、架构设计、测试、文档整理与自动化任务。" TextWrapping="Wrap" Style="{StaticResource MutedText}" Margin="0,7,0,0"/></StackPanel></Border>
-      <Border Style="{StaticResource Card}" Margin="0,12,0,0"><StackPanel><TextBlock Text="版权" FontWeight="SemiBold"/><TextBlock Text="Copyright © 2026 YangCAD · All Rights Reserved.&#x0a;本软件为个人开发和使用项目。未经许可，请勿擅自复制、分发、出售或修改后重新发布。" TextWrapping="Wrap" Style="{StaticResource MutedText}" Margin="0,7,0,0"/></StackPanel></Border>
-      <Border Style="{StaticResource Card}" Margin="0,12,0,0"><StackPanel><TextBlock Text="运行环境" FontWeight="SemiBold"/><TextBlock x:Name="AboutEnvironmentText" Style="{StaticResource MutedText}" Margin="0,7,0,0" TextWrapping="Wrap"/><WrapPanel Margin="0,12,0,0"><Button Content="复制版本信息" Style="{StaticResource SecondaryButton}" Click="CopyAboutClick" Margin="0,0,8,0"/><Button Content="打开日志目录" Style="{StaticResource SecondaryButton}" Click="OpenLogsClick"/></WrapPanel></StackPanel></Border>
+      <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+       <StackPanel>
+        <TextBlock Text="产品定位" FontWeight="SemiBold"/>
+        <TextBlock Text="面向个人工程工作流的本地 CAD 工具箱。可停靠工具面板处理日常绘图，Ribbon 提供轻量入口，MCP 提供 AI 调用能力。" TextWrapping="Wrap" Style="{StaticResource MutedText}" Margin="0,8,0,0"/>
+       </StackPanel>
+      </Border>
+      <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+       <StackPanel>
+        <TextBlock Text="本机运行信息" FontWeight="SemiBold"/>
+        <TextBlock x:Name="AboutEnvironmentText" Style="{StaticResource MutedText}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+        <WrapPanel Margin="0,12,0,0">
+         <Button Content="复制诊断信息" Style="{StaticResource SecondaryButton}" Click="CopyAboutClick" Margin="0,0,8,8"/>
+         <Button Content="打开日志目录" Style="{StaticResource SecondaryButton}" Click="OpenLogsClick" Margin="0,0,8,8"/>
+         <Button Content="GitHub 项目" Style="{StaticResource SecondaryButton}" Click="OpenProjectClick" Margin="0,0,0,8"/>
+        </WrapPanel>
+       </StackPanel>
+      </Border>
+      <TextBlock Text="© 2026 YangCAD。个人开发项目，使用 AI 辅助开发。非 Autodesk 官方产品；第三方插件参考资料及其著作权归各自权利人。" TextWrapping="Wrap" Style="{StaticResource MutedText}" Margin="0,12,0,0"/>
      </StackPanel>
     </ScrollViewer>
    </Grid>

@@ -1,107 +1,42 @@
+# YangCAD · 项目总览
 
-## 2026-11-03 — 图层工具 + 切割提取大样（静态候选）
+更新时间：2026-11-03  
+版本：**0.10.0-dev**  
+状态：**结构与文档整理的静态候选，Windows 实机待验收**。
 
-- Ribbon 新增 `图层工具` 和 `提取大样`，操作入口尽量简单。
-- LayerQuickService：模型/布局/本地块定义/块属性 LayerId 合并；显隐/冻结/锁定支持宿主 DWG 中的外参依赖层，但不改 Xref 源文件；当前层不可隐藏/冻结，外参依赖层不可直接合并。
-- `YGLAYER/YGLMERGE/YGLONOFF/YGLFREEZE/YGLLOCK` + 一个 WPF 小窗；隐藏或冻结的层仍可在列表中恢复；嵌套点选区分内部对象层与块/外参插入层。
-- `YGDETAIL`：矩形框+目标放置点+可选放大倍率；LINE/ARC/CIRCLE/普通 LWPOLYLINE 直线与弧段做精确裁切；复杂跨界对象及含属性/动态块/关联 Hatch 安全跳过；不删除原图对象。
-- MCP 新增 `cad.layer.merge/visibility/freeze/lock` + `cad.detail.extract`，默认 dry-run；合约 74 / 37 / 67，仅静态。
-- 旧的图片内嵌/比例转换/引线重建仍未 Windows 实机验收，不可宣称 Runtime GO。
-- 限制：当前不能运行 dotnet / Autodesk SDK；Windows 2024 build、Xref nested pick、Undo 与裁切实体 readback 待 `tasks/LAYER_TOOLS_QG_WINDOWS_SMOKE_20261103.md`。
+## 产品目标
 
-> **2026-09-08 Gemini 实机证据独立复核**：Gemini 的 `EVIDENCE COMPLETE` 不被接受；确认存在 PID/Python/SHA 不一致、未实际 GUI 却以 RPC 冒充 GUI、未测 PaperSpace 却宣称 PASS、Leader/MLeader 覆盖夸大、Undo/Revit E2E 证据不足等问题。当前改为 `PARTIAL RUNTIME EVIDENCE / TARGETED RETEST REQUIRED / FINAL NO-GO`。本候选从 2026-09-07 clean candidate 重建，只吸收经 ChatGPT 独立审查的必要 Windows 修复；Gemini post-fix ZIP 不作为新基线。详见 `docs/CHATGPT_GEMINI_EVIDENCE_AUDIT_20260908.md` 与 `docs/TARGETED_RUNTIME_FIX_REVIEW_20260908.md`。
+建立一个能持续扩展的**个人 AutoCAD / Civil 3D 生产力工具箱**：点一次完成日常动作，通过统一服务将同一功能提供给 GUI、命令和 MCP，并能在必要时与 Revit / YangTools 对接。
 
-> **2026-09-07 急用功能：图纸比例转换 V1（STATIC DEVELOPMENT）**：新增 Ribbon `比例转换` / 命令 `YGSCALE` / MCP `cad.scale.convert`。支持 `standard_1to1`（真实 1:1，几何不变、注释倍率 New/Old）与 `scaled_drawing`（非 1:1，几何倍率 Old/New、纸面注释恢复）两种模式。第一版对 Annotative/Xref/Underlay/Civil/AEC/Proxy 安全跳过；标准模式普通块因无法判定几何块/注释块而先跳过。当前 MCP additive contract 变为 stdio **68** / AutoCAD **31** / Civil 3D **61**。尚未 Windows Build/Runtime/Undo 实机证明。
+优先级：**实际能用 > 简单交互 > 原生 CAD 对象与 Undo > 统一代码结构 > 外观效果**。不为了扩展性引入过度框架。
 
-> **2026-09-07 CADTool ↔ YangTools 业务对齐**：`project.revit.prepare` 与 `project.image.embed` 已补产品级 MCP Adapter，GUI/MCP 共用业务 Service/Request/Result；当前静态合同调整为 stdio **67** / AutoCAD live **30** / Civil 3D live **60**。Exchange 继续锁定 `yangcad-rvt-exchange/1.0`，`LWPOLYLINE vertices[].point + bulge` 不回退。Windows Build/Runtime/真实 11/11 E2E 尚需独立验收。
+## 产品界面
 
-# YangCAD Project
+1. CAD 原生 Ribbon：YangCAD 标签的轻量入口，默认不替换 CAD 首页。
+2. 可停靠 PaletteSet：主要工具箱，常用操作入口、图纸处理。
+3. CAD 命令 + PGP 快捷键：不修改键盘底层，不强行替换用户 CUI。
+4. 控制中心：主题、快捷键、关于和本机诊断；MCP 另有专门窗口。
 
-更新时间：2026-09-01  
-阶段：`0.9.0-dev / UI + MCP Closeout`
+产品结构见 `docs/PRODUCT_STRUCTURE.md`；交互规范见 `docs/PRODUCT_UI.md`。
 
-## 当前产品形态
+## 架构边界
 
-### Ribbon
+`CAD 命令 / WPF Palette / MCP Adapter → Shared Service → CadTransactionRunner → Autodesk API`
 
-- **MCP**：独立一级核心入口；
-- **工具箱**：仅两个业务功能；
-- **比例转换**：YGSCALE 双模式急用生产功能；
-- **控制中心**：系统设置 / 关于。
+Batch/Worker 单独隔离。MCP stdio 通过 host gateway，不允许后台线程直接调用 Autodesk API。所有新增写操作考虑 Undo、预览/取消和当前 Document binding。
 
-### Toolbox GUI
+## 当前功能与验收
 
-只保留：
+详见 `docs/FEATURE_CATALOG.md` 和 `docs/CURRENT_STATE.md`。当前静态 MCP 合同为 **74 / 37 / 67**，不等于本轮运行验证。历史可用功能与新增待验收功能明确分开。
 
-1. `project.revit.prepare` / Revit 图纸预处理；
-2. `project.image.embed` / 批量图片内嵌。
+## 开发与交接
 
-已从可见 Toolbox UI 移除：旧 CAD/Civil 审计/清理卡片、System、Planning、当前文档、MCP 状态、参数面板自检、Recent/Favorites/Search 等开发期/重复入口。
+源码基线：GitHub `main`；开发中的 `feature/*` 分支 + Draft PR。完整源码 ZIP 可作为候选快照，但不取代 Git 历史。
 
-这些 GUI 的旧共享 Service/MCP backend 不做破坏性删除；MCP 是大核心，现有 backend 不删除；新增 `cad.scale.convert` 后当前 contract 为 68 / 31 / 61。
+- 当前任务：`tasks/CURRENT_TASK.md`
+- 接手手册：`docs/HANDOFF.md`
+- Windows 证据清单：`docs/RELEASE_CHECKLIST.md`
+- 版本规则：`docs/VERSIONING.md`
+- 参考工具：`references/README.md`
 
-## MCP Core
-
-状态：**STATIC CLOSEOUT PASS / WINDOWS TARGETED RETEST REQUIRED**
-
-本轮修复：
-
-- 独立 `McpWindow`；Control Center 不再承载 MCP 页面；
-- `LocalGateway.IsRunning`；
-- AutoCAD/Civil host-specific 31/61 自检 + 关键 Tool 校验；
-- partial/stale MCP runtime 也触发 embedded self-heal；
-- runtime asset 逐文件内容一致性检查；
-- launcher dependency 检查要求 MCP major version 2；
-- copy config 保持 token-free + current-PID-bound。
-
-Windows 硬门禁仍按：`tasks/FEATURE_INFRA_MCP_CONFIG_001_WINDOWS_RETEST.md`。
-
-## FEATURE-CAD-REVIT-PREP-001
-
-历史核心状态：**CLOSED / GO / PASS**
-
-当前 0.9 closeout delta：**STATIC PASS / WINDOWS REGRESSION REQUIRED**
-
-2026-09-01 YangTools 3.1.36 对接增量：**STATIC PASS / AUTOCAD + REVIT E2E RETEST REQUIRED**。保持 `yangcad-rvt-exchange/1.0`，只做 additive schema 加固：`DxfType` 正式化、`units/origin/Traits/counts`、稳定 Dimension/Hatch/Leader 语义与固定 fixture。
-
-本轮只做收尾，不破坏核心交换协议：
-
-- UI status → Available；
-- Exchange layer 在 detached clone 中统一恢复为 On / Thawed / Unlocked / Plottable；
-- 动态块引用检测与 warning/report；
-- GUI 描述不再宣称特殊对象“完整”转换。
-
-## FEATURE-PROJECT-IMAGE-EMBED-001
-
-状态：**STATIC HARDENED / WINDOWS PENDING**
-
-静态策略保持：
-
-- source DWG 不覆盖；
-- working-copy → OLE → output；
-- output publish no-overwrite；
-- source SHA 发布前/后检查；
-- PaperSpace 显式上下文；
-- status replace；
-- unsafe raster / nested raster / partial failure fail-closed。
-
-最终硬门禁：AutoCAD 2024 Windows OLE Smoke。
-
-## 版本
-
-当前统一：
-
-- Product Version：`0.9.0`
-- Informational Version：`0.9.0-dev`
-
-## 当前急用开发与下一步
-
-CAD→Revit/MCP 对齐的实机 E2E 暂停，源码改动保留；优先完成 `YGSCALE` 后一起交 Windows 执行器测试。
-
-顺序：
-
-1. 本候选完成比例转换静态开发与封包；
-2. Windows AutoCAD 2024 clean build / deploy / loaded；
-3. YGSCALE 两模式 + 一次 Undo + MCP `cad.scale.convert`；
-4. 同一候选继续完成 MCP self-heal、Image Embed OLE、Revit Exchange GUI↔MCP↔YangTools 11/11；
-5. ChatGPT 根据原始证据决定 GO/NO-GO。
+未经 Windows 编译和实机核验，不标记 Stable / Runtime GO。

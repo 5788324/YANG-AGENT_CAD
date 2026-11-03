@@ -27,7 +27,7 @@ namespace YangCAD.AutoCADHost.UI
                     ThemeList.SelectedItem = item;
                     break;
                 }
-            ProductVersionText.Text = "Version " + ProductVersion();
+            ProductVersionText.Text = "v" + ProductVersion();
             _loading = false;
             RefreshAbout();
         }
@@ -40,7 +40,13 @@ namespace YangCAD.AutoCADHost.UI
 
         private void RefreshAbout()
         {
-            AboutEnvironmentText.Text = $"Host: {CadHostInfo.Product} {CadHostInfo.Version}\nInstall/User Data: %LOCALAPPDATA%\\YangCADAgent";
+            var assembly = Assembly.GetExecutingAssembly();
+            var current = Process.GetCurrentProcess();
+            AboutEnvironmentText.Text =
+                $"宿主：{CadHostInfo.Product} {CadHostInfo.Version}\n" +
+                $"进程 PID：{current.Id}\n" +
+                $"插件 DLL：{assembly.Location}\n" +
+                $"用户设置：{UserSettings.SettingsPath}";
         }
 
         private void NavigationChanged(object sender, SelectionChangedEventArgs e)
@@ -83,7 +89,23 @@ namespace YangCAD.AutoCADHost.UI
                 .OfType<AssemblyInformationalVersionAttribute>()
                 .FirstOrDefault()?.InformationalVersion;
             if (!string.IsNullOrWhiteSpace(informational)) return informational!;
-            return Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.9.0-dev";
+            return Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.10.0-dev";
+        }
+
+        private void OpenProjectClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "https://github.com/5788324/YANG-AGENT_CAD",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "YangCAD", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
 
         private void OpenShortcutsClick(object sender, RoutedEventArgs e)

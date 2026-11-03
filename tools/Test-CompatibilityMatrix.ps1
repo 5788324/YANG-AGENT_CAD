@@ -54,7 +54,7 @@ foreach($y in ($Years|Sort-Object -Unique)){
     runtime_autocad='NOT_TESTED';runtime_civil3d='NOT_TESTED';batch_runtime='NOT_TESTED';contract='NOT_TESTED';token='NOT_TESTED';notes=''
   }
 }
-$result=@{schema=2;generated_at=(Get-Date).ToString('o');source_version='0.9.0';rows=$rows}
+$result=@{schema=2;generated_at=(Get-Date).ToString('o');source_version='0.10.0';rows=$rows}
 $path=Join-Path $outDir 'compatibility-matrix.json';$result|ConvertTo-Json -Depth 6|Set-Content $path -Encoding UTF8
 Write-Host "Compatibility build matrix: $path"
 $rows|Format-Table year,framework,autocad_installed,civil3d_installed,autocad_build,batch_build,civil_build,clean_build -AutoSize

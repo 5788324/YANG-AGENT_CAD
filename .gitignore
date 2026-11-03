@@ -21,3 +21,11 @@ logs/operations/*.jsonl
 logs/conversations/*.local.md
 Thumbs.db
 .DS_Store
+
+# Third-party reference packages stay local unless explicitly licensed.
+references/**/downloads/
+references/**/binaries/
+references/**/*.vlx
+references/**/*.fas
+references/**/*.arx
+references/**/*.lsp

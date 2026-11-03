@@ -1,3 +1,13 @@
+## 2026-11-03 — 0.10.0-dev 项目正规化 / 文档与产品 UI 整理
+
+- README/PROJECT/AGENTS/CLAUDE/HANDOFF/CURRENT_STATE 与功能索引统一到 0.10.0-dev，明确 `main` 稳定基线和未合并 `feature/*` 候选的事实差异。
+- 建立 references/yqarch 与 references/jianren-toolbox，整理功能来源及版权边界；不上传原插件 VLX 或未经许可文件。
+- Ribbon 拆分常用工具/连接设置；Palette 顶部新增常用快捷命令，原两项图纸产品 Service 不改；关于页显示真实运行诊断与项目链接。
+- 统一 C#/MCP/Bundle/Release 的 0.10.0 版本元数据；仅开发预览，不升 Stable。
+- Windows AutoCAD/Civil 3D 2024 Build/Runtime 尚未执行；本轮不会覆盖历史证据结论。
+
+---
+
 ## 2026-11-03 — YangCAD 自主功能库与快捷键面板（STATIC ONLY）
 - 按个人使用需求参考源泉/贱人工具箱的操作体验，建立自主功能库，不照搬第三方源码/资产，也不一次复刻整个插件。
 - 新增 `YGKEYS` 快捷键面板（控制中心 → 快捷键）：按当前 AutoCAD acad.pgp 写独立 YangCAD 标记区块，冲突检测/显式覆盖、原文件备份、REINIT 生效；组合键使用 CAD CUI。

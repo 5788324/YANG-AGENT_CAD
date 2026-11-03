@@ -81,6 +81,22 @@ namespace YangCAD.AutoCADHost.UI
             };
         }
 
+        // Quick commands route through the normal AutoCAD command context; no duplicate business logic.
+        private void QuickNativeCommandClick(object sender, RoutedEventArgs e)
+        {
+            if (!((sender as Button)?.Tag is string command)) return;
+            var allowed = new[] { "YGLAYER", "YGDETAIL", "YGSCALE", "YGLEADERFIX", "YGKEYS" };
+            if (!allowed.Contains(command, StringComparer.OrdinalIgnoreCase)) return;
+            var document = Application.DocumentManager.MdiActiveDocument;
+            if (document == null)
+            {
+                ShowResult(false, "请先打开图纸", "打开 DWG 后即可使用这些工具。");
+                return;
+            }
+            try { document.SendStringToExecute(command + " ", true, false, false); }
+            catch (System.Exception ex) { ShowResult(false, "无法启动工具", ex.Message); }
+        }
+
         private void ToolClick(object sender, RoutedEventArgs e)
         {
             if (!((sender as Button)?.Tag is string id)) return;
@@ -220,7 +236,7 @@ namespace YangCAD.AutoCADHost.UI
             }
             // Send a native modal command to the CAD editor. Selection must not run inside a WPF callback.
             // This reports only that the command was queued, NOT that the repair succeeded.
-            doc.SendStringToExecute("_.YGLEADERFIX ", true, false, false);
+            doc.SendStringToExecute("YGLEADERFIX\n", true, false, false);
             ShowResult(true, "请在绘图区选择引线", "1. 选择旧引线或炸开的连续线段，回车。\n2. 选择旁边的文字；没有文字直接回车。\n3. 无文字时拾取箭头端点。\n原生 MLeader 创建成功后才会替换原对象。");
         }
 

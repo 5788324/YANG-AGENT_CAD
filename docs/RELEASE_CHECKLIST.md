@@ -1,3 +1,18 @@
+# 当前 0.10.0-dev 发布前门禁（2026-11-03）
+
+- [ ] 2024 Windows clean build: AutoCAD / BatchWorker / Civil3D 目标文件一致。
+- [ ] 产品版本 File/Assembly/Informational/Python MCP/Bundle/Setup 元数据核对一致。
+- [ ] 2024 实机加载与真实 DLL SHA；Ribbon 不抢默认 Home。
+- [ ] Palette 快捷工具点击与 Dock/Float；关于页版本、宿主、DLL、GitHub、诊断复制。
+- [ ] `YGKEYS` PGP 修改、冲突、备份、REINIT。
+- [ ] 图片内嵌、比例转换、引线重建、图层/QG 的专项 Windows 回归与 Undo。
+- [ ] 当前 MCP stdio 74 / AutoCAD live 37 / Civil 3D live 67；真实来源与会话。
+- [ ] 完整原始证据已审计，按 Git SHA 晋升 RC/Stable。
+
+以下保留旧版本历史发布清单，不等于当前候选已通过。
+
+---
+
 # Release / Development Checklist
 
 更新时间：2026-08-28
