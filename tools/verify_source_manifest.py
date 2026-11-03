@@ -38,6 +38,7 @@ def validate(*, complete: bool = False) -> tuple[int,list[str]]:
         for path in ROOT.rglob('*'):
             if not path.is_file(): continue
             rel=path.relative_to(ROOT).as_posix()
+            if '.git' in path.relative_to(ROOT).parts: continue
             if (rel in ('SHA256SUMS.txt','artifacts/ci-static-report.json')
                 or '__pycache__' in path.parts or path.suffix in ('.pyc', '.pyo')): continue
             if rel not in seen: issues.append(f'not in manifest: {rel}')
