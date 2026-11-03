@@ -9,7 +9,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Windows.Threading;
-using Autodesk.AutoCAD.ApplicationServices.Core;
+using AcApp = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace YangCAD.AutoCADHost.UI
 {
@@ -87,7 +87,7 @@ namespace YangCAD.AutoCADHost.UI
             if (!((sender as Button)?.Tag is string command)) return;
             var allowed = new[] { "YGLAYER", "YGDETAIL", "YGSCALE", "YGLEADERFIX", "YGKEYS" };
             if (!allowed.Contains(command, StringComparer.OrdinalIgnoreCase)) return;
-            var document = Application.DocumentManager.MdiActiveDocument;
+            var document = AcApp.DocumentManager.MdiActiveDocument;
             if (document == null)
             {
                 ShowResult(false, "请先打开图纸", "打开 DWG 后即可使用这些工具。");
@@ -228,7 +228,7 @@ namespace YangCAD.AutoCADHost.UI
 
         private void QuickLeaderRepairClick(object sender, RoutedEventArgs e)
         {
-            var doc = Application.DocumentManager.MdiActiveDocument;
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
             if (doc == null)
             {
                 ShowResult(false, "请先打开图纸", "需要在 CAD 绘图区选择要修复的引线。");
@@ -242,13 +242,13 @@ namespace YangCAD.AutoCADHost.UI
 
         private void QuickEmbedCurrentClick(object sender, RoutedEventArgs e)
         {
-            var doc = Application.DocumentManager.MdiActiveDocument;
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
             if (doc == null || string.IsNullOrWhiteSpace(doc.Name) || !File.Exists(doc.Name))
             {
                 ShowResult(false, "请先保存图纸", "请先将当前 DWG 保存到磁盘。为避免把未保存更改误作最终结果，请保存后再执行一键内嵌。");
                 return;
             }
-            if (System.Convert.ToInt32(Application.GetSystemVariable("DBMOD")) != 0)
+            if (System.Convert.ToInt32(AcApp.GetSystemVariable("DBMOD")) != 0)
             {
                 ShowResult(false, "请先保存更改", "当前图纸有未保存修改。请 Ctrl+S 后再运行，避免输出副本缺少当前更改。");
                 return;
