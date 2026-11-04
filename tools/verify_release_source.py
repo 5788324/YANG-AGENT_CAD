@@ -59,6 +59,18 @@ for forbidden in ['SECURELOAD=0','SECURELOAD", 0','requestedExecutionLevel level
         errors.append(f'setup must not weaken security/elevate: {forbidden}')
 
 package=text('tools/Package-Release.ps1')
+# A stale release manifest must fail G1 before a Windows package is generated.
+if 'contract=@{stdio=74;plain=37;civil=67}' not in package:
+    errors.append('release package MCP contract must be current 74/37/67')
+release_verify=text('tools/Verify-Release.ps1')
+for token in [
+    '$expectedContract=@{stdio=74;plain=37;civil=67}',
+    '$serverToolMatches=[regex]::Matches',
+    '$serverToolMatches.Count -ne [int]$m.contract.stdio',
+    '$uniqueServerToolNames.Count -ne $serverToolNames.Count',
+]:
+    if token not in release_verify:
+        errors.append('release verifier MCP contract/packaged runtime guard missing: '+token)
 for needle in [
     'Build-Setup.ps1','YangCADAgent_Setup.exe',"[ValidateSet('Quick','Signed')]", "[string]$Mode='Quick'",
     "mode='unsigned-quick'","installerMode='quick-trusted-path'", "trustStrategy='user-profile-trustedpaths+appautoload'",

@@ -60,7 +60,7 @@ $manifest=@{
   product='YangCAD Agent'
   version='0.10.0'
   years=$years
-  contract=@{stdio=68;plain=31;civil=61}
+  contract=@{stdio=74;plain=37;civil=67}
   installer=@{
     file='YangCADAgent_Setup.exe';scope_default='User';requires_admin=$false;ui_language='zh-CN';
     mode=$installerMode;trust_strategy=$trustStrategy;secureload_change=$false

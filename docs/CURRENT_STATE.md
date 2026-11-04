@@ -1,3 +1,11 @@
+## 2026-11-04 独立 Windows 证据复核与发布元数据修复（定点候选）
+
+- Gemini 受测源码提交 `b6ff1370b0ed48e5e50fec43d2a5a2e14ca5ec54` 已进入 GitHub；独立核验新版证据 ZIP SHA、发布 ZIP SHA 和真实打包 AutoCAD DLL SHA 均与报告吻合。
+- AutoCAD 2024 相关 11 个测试阶段原始证据具有有效价值，但 R08 Civil 3D live、R09 Revit Native E2E 仍为 `NOT_TESTED`；不得声明完整产品跨宿主 GO。
+- 发现发行脚本 `Package-Release.ps1` 的 `release-manifest.json.contract` 仍固定旧值 `68/31/61`，而实际 MCP 为 `74/37/67`。
+- 本修复仅纠正发行清单数量，强化 `Verify-Release.ps1` 对实际打包 Python server 工具数量/重复名称的校验，并在静态验证中防止回归。**当前修复仍需 Gemini 执行 Windows 2024 定向重新打包及校验；原 b6ff 已验收 DLL 不因元数据修复改变。**
+- 禁止修改既有受测 `b6ff137` 提交、不得将修复后的未测试 release 工件冒充旧 release；新的发行 ZIP 必须有独立 SHA 和测试记录。
+
 # YangCAD 当前状态（唯一事实入口）
 
 更新时间：2026-11-03  

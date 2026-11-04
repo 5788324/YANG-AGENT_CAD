@@ -24,6 +24,24 @@ foreach($relative in $requiredRuntime){
   if(-not(Test-Path (Join-Path $bundle $relative))){throw "发布 Bundle 缺少 runtime：$relative"}
 }
 $m=Get-Content $manifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
+# Release contract must match the current version, not a historical MCP tool count.
+# Runtime validation checks the actual exposed stdio names in the packaged Python bridge.
+$expectedContract=@{stdio=74;plain=37;civil=67}
+foreach($field in @('stdio','plain','civil')){
+  if(-not $m.contract -or [int]$m.contract.$field -ne [int]$expectedContract[$field]){
+    throw "Release contract mismatch: $field expected $($expectedContract[$field]); manifest=$($m.contract.$field)"
+  }
+}
+$serverPath=Join-Path $bundle 'Contents\Mcp\yangcad_mcp\server.py'
+$serverSource=Get-Content -LiteralPath $serverPath -Raw -Encoding UTF8
+$serverToolMatches=[regex]::Matches($serverSource,'(?m)^\s*@mcp\.tool\(name="([^"]+)"')
+if($serverToolMatches.Count -ne [int]$m.contract.stdio){
+  throw "MCP stdio count mismatch: packaged=$($serverToolMatches.Count); manifest=$($m.contract.stdio)"
+}
+$serverToolNames=@($serverToolMatches | ForEach-Object {$_.Groups[1].Value})
+$uniqueServerToolNames=@($serverToolNames | Sort-Object -Unique)
+if($uniqueServerToolNames.Count -ne $serverToolNames.Count){throw 'MCP stdio duplicate tool names in packaged server.py'}
+
 foreach($item in $m.files){
   $p=Join-Path $PackageRoot $item.path
   if(-not(Test-Path -LiteralPath $p)){throw "release manifest 缺少文件：$($item.path)"}

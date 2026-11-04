@@ -1,3 +1,28 @@
+# 当前任务 — G4 Release Contract 定点修复与 Windows 复核（2026-11-04）
+
+**测试基线**：`b6ff1370b0ed48e5e50fec43d2a5a2e14ca5ec54`（真实 AutoCAD 2024 11 阶段测试）；本分支是其上追加的发行元数据修复。
+
+## 修复点
+
+1. `Package-Release.ps1` 内 `release-manifest.json.contract` 旧值 `68/31/61`，应为 `74/37/67`。
+2. `Verify-Release.ps1` 此前只校验文件哈希/Bundle 结构，未校验上述契约与打包后 Python MCP 工具数量。
+3. `verify_release_source.py` 需要在 Linux CI 即阻断旧值回归。
+
+## Gemini 定点验收（无需重跑 R01–R10）
+
+- 从本 PR 的**最终精确 Git SHA**重新检出源码并记录 `git status`、`git show`。
+- Windows PowerShell 5.1：`Package-Release.ps1 -Years 2024 -Mode Quick`；若沿用旧 `b6ff137` 的经验证 DLL，应先核验该 DLL SHA 仍为 `880329CF7E5C464078686FE56B0BB7070B4C2F7B0CDA98B7B7F482A91771D9C8`，使用 `-SkipBuild`，且对新 ZIP 单独计算 SHA。
+- 检查新包内 `release-manifest.json.contract == {stdio:74, plain:37, civil:67}`；实际包内 `server.py` 必须存在 74 个不同 Tool。
+- 对新包运行 `Verify-Release.ps1 -PackageRoot <解压目录>`，记录 ExitCode=0；手动篡改 manifest 三个计数中的任意一个，再运行校验，应非零退出并明确拒绝（负向测试）。
+- 如编译/部署 DLL 字节有变化，重做 R00 Build/Deploy/Loaded 定点复验。若仅 manifest / Verify 脚本变化，既有 R01–R10 数据不必重复。
+- 只向 Issue #9 提交本次额外验证的最小原始日志、新旧工件 SHA、Git SHA。不要覆盖旧证据 ZIP，禁止自行合并 PR。
+
+## 已确认不属于本轮
+
+Civil 3D live 67 与 Revit Native E2E 两项仍为 `NOT_TESTED`。任意多段线裁切、删除边界外、折断线仍在 Backlog。
+
+---
+
 # 当前任务 — 0.10.0-dev 统一 Windows 实机验收
 
 更新时间：2026-11-03；GitHub PR：[#8](https://github.com/5788324/YANG-AGENT_CAD/pull/8)。
