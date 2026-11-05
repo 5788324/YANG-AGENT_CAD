@@ -1,3 +1,11 @@
+## 2026-11-05 — main 合并收口与图形编辑 V2 开发启动
+
+- PR #11 已保留历史地合并到 main，merge SHA `2f0980d4acd08b087d924b5c1f5a5bb18e8668a8`；旧 PR #4–#10 已归档；Issue #9 验收关闭。
+- Issue #12 重新定义三个真实需求：闭合边界 QG、删除边界外、直线 Z 折断。
+- 新功能从 main 独立 feature 分支开始，首批代码实现 YGBREAKLINE（原生多段线替换，事务、Undo、UI/PGP 入口），STATIC ONLY、Windows 2024 待 Gemini 新增代码实机测试；不得沿用旧 DLL Runtime PASS。
+
+---
+
 ## 2026-11-05 — AutoCAD 2024 Quick 0.10.0 RC1 集成（仅管理文档）
 
 - ChatGPT G5 独立审核 Issue #9：已验收源码 b6ff137，Release 修复 d5200c5，Quick ZIP ACA88A...，DLL 880329CF...，AutoCAD 2024 指定范围 GO；Civil/Revit Native NOT_TESTED。

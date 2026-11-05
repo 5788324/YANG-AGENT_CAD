@@ -1,3 +1,10 @@
+## 2026-11-05 main 合并收口 + 图形编辑 V2 开发
+
+- **main 已更新**：PR #11 已经合并，merge SHA `2f0980d4acd08b087d924b5c1f5a5bb18e8668a8`，并保留 RC1 提交链；Issue #9 已关闭（仅 AutoCAD 2024 测试范围）。旧 PR #4–#10 已归档，不得重复合并。
+- **本轮新工作区**：`feature/geometry-edit-v2-20261105`，从上述 `main` 开始（Issue #12）；Z 折断线 `YGBREAKLINE` 已写源码，但 **STATIC_ONLY / WINDOWS_NOT_TESTED**，不能使用原 RC1 DLL 的已验收 SHA 证明新增命令可运行。
+- 闭合多段线切割提取、删除边界外、复杂对象裁切策略仍属 **NOT_IMPLEMENTED**；Civil 3D live / Revit Native E2E 仍 **NOT_TESTED**。
+- 用户日常使用的已验收版本仍为 **AutoCAD 2024 Quick 0.10.0 RC1**，新功能开发不改变该历史证据。
+
 # YangCAD 当前事实（2026-11-05）
 
 **当前发布管理标记：`0.10.0-rc.1`（AutoCAD 2024 Quick 范围） / `G5_AUTOCAD2024_SCOPE_PASS`。**
@@ -6,10 +13,10 @@
 
 ## Git 与证据
 
-- `main`：旧稳定回退 SHA `396a79408bfb38d374871fb030b54012748be8b6`，**尚不含 0.10 RC**。
+- `main`：当前 RC1 合并版本 `2f0980d4acd08b087d924b5c1f5a5bb18e8668a8`，已包含 0.10 RC。
 - R00–R10 AutoCAD 2024 实机基线：`b6ff1370b0ed48e5e50fec43d2a5a2e14ca5ec54`。
 - 修复发布契约且 Windows PS5.1 定点验收：`d5200c57a75b1fd228713dc67b606126a5c04924`。
-- 唯一 RC 文档集成分支：`release/autocad2024-0.10.0-rc1`，基于 d520；[Draft PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) → `main`，静态 CI 已通过、无冲突、**尚未合并**。
+- 唯一 RC 文档集成分支：`release/autocad2024-0.10.0-rc1`，基于 d520；[Draft PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) → `main`，静态 CI 已通过、无冲突、**已由集成 PR #11 合并进入 main**。
 - G5 ChatGPT 独立审计：`https://github.com/5788324/YANG-AGENT_CAD/issues/9#issuecomment-6646760886`。
 - 已验收 Quick ZIP SHA256 `ACA88A9440968411A2D7A014800AC70FE8E60C314ECBE936BBBC4037C5C79692`；AutoCAD DLL SHA256 `880329CF7E5C464078686FE56B0BB7070B4C2F7B7F482A91771D9C8`。
 

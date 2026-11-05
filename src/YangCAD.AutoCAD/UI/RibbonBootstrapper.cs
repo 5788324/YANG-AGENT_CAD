@@ -52,6 +52,7 @@ namespace YangCAD.AutoCADHost.UI
             quickSource.Items.Add(Button("比例转换", "YGSCALE ", "ControlCenter32.png"));
             quickSource.Items.Add(Button("图层工具", "YGLAYER ", "ControlCenter32.png"));
             quickSource.Items.Add(Button("提取大样", "YGDETAIL ", "ControlCenter32.png"));
+            quickSource.Items.Add(Button("直线折断", "YGBREAKLINE ", "ControlCenter32.png"));
             systemSource.Items.Add(Button("MCP", "YANGCAD_MCP ", "Mcp32.png"));
             systemSource.Items.Add(Button("控制中心", "YANGCAD ", "ControlCenter32.png"));
             newTab.Panels.Add(quickPanel);

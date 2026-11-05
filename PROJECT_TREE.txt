@@ -30,6 +30,7 @@ docs/AI_FEATURE_DEVELOPMENT_STANDARD.md
 docs/AI_START_HERE.md
 docs/ARCHITECTURE.md
 docs/BRANCH_DEPENDENCIES.md
+docs/BREAKLINE_V1_20261105.md
 docs/BUILD_DEPLOY.md
 docs/CADTOOL_YANGTOOLS_ALIGNMENT_20260907.md
 docs/CHANGED_FILES_SCALE_MCP_ALIGN_20260907.md
@@ -104,6 +105,7 @@ references/README.md
 references/jianren-toolbox/README.md
 references/manifest.json
 references/yqarch/README.md
+src/YangCAD.AutoCAD/Commands/BreaklineCommands.cs
 src/YangCAD.AutoCAD/Commands/ControlCenterCommands.cs
 src/YangCAD.AutoCAD/Commands/DetailExtractCommands.cs
 src/YangCAD.AutoCAD/Commands/LayerQuickCommands.cs
@@ -141,6 +143,7 @@ src/YangCAD.AutoCAD/Mcp/Tools/CadWriteTools.cs
 src/YangCAD.AutoCAD/Mcp/Tools/ProjectProductTools.cs
 src/YangCAD.AutoCAD/Mcp/Tools/ToolJson.cs
 src/YangCAD.AutoCAD/RuntimeHost.cs
+src/YangCAD.AutoCAD/Services/Cad/BreaklineService.cs
 src/YangCAD.AutoCAD/Services/Cad/DetailExtractService.cs
 src/YangCAD.AutoCAD/Services/Cad/DrawingAuditService.cs
 src/YangCAD.AutoCAD/Services/Cad/ImageEmbedBatchService.cs
@@ -211,6 +214,7 @@ tasks/FEATURE_INFRA_MCP_CONFIG_001_WINDOWS_RETEST.md
 tasks/FEATURE_INFRA_MCP_CONFIG_001_WINDOWS_SMOKE.md
 tasks/FEATURE_PROJECT_IMAGE_EMBED_001_WINDOWS_SMOKE.md
 tasks/GEMINI_WINDOWS_INTEGRATED_SMOKE_20261103.md
+tasks/GEOMETRY_EDIT_V2_WINDOWS_SMOKE_20261105.md
 tasks/LAYER_TOOLS_QG_WINDOWS_SMOKE_20261103.md
 tasks/NEXT_TASKS.md
 tasks/REFERENCE_EMBED_V2_WINDOWS_SMOKE_20261026.md
@@ -241,6 +245,7 @@ tools/Verify-Release.ps1
 tools/fixtures/RVT_EXCHANGE_V1_CONTROLLED_11.json
 tools/fixtures/RVT_EXCHANGE_V1_YANGTOOLS_FIXTURE.json
 tools/run_static_checks.py
+tools/test_breakline_policy.py
 tools/test_civil_api_compat_policy.py
 tools/test_extension_policy.py
 tools/test_governance_policy.py
@@ -265,3 +270,4 @@ tools/verify_release_source.py
 tools/verify_source.py
 tools/verify_source_manifest.py
 workers/ImageEmbed/Start-YangCAD-ImageEmbed.ps1
+SHA256SUMS.txt

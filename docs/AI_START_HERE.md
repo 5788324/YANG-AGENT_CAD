@@ -1,3 +1,5 @@
+> **最新主线**（2026-11-05）：RC1 已在 `main`，merge SHA `2f0980d4acd08b087d924b5c1f5a5bb18e8668a8`。新图形编辑代码在 `feature/geometry-edit-v2-20261105`（Issue #12），`YGBREAKLINE` STATIC_ONLY；其它两项尚未实现。以下历史 PR #8 文字是旧执行说明，不作为新源码入口。
+
 # YangCAD — 新 AI / 新对话 60 秒接手（2026-11-05）
 
 仓库：`https://github.com/5788324/YANG-AGENT_CAD`。

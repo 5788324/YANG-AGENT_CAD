@@ -1,0 +1,41 @@
+"""Static gate for YGBREAKLINE V1; this cannot substitute for Autodesk 2024 runtime."""
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+ROOT=Path(__file__).resolve().parents[1]
+def read(path): return (ROOT/path).read_text(encoding='utf-8-sig')
+
+service=read('src/YangCAD.AutoCAD/Services/Cad/BreaklineService.cs')
+command=read('src/YangCAD.AutoCAD/Commands/BreaklineCommands.cs')
+ribbon=read('src/YangCAD.AutoCAD/UI/RibbonBootstrapper.cs')
+palette=read('src/YangCAD.AutoCAD/UI/ToolboxView.xaml')
+back=read('src/YangCAD.AutoCAD/UI/ToolboxView.xaml.cs')
+alias=read('src/YangCAD.AutoCAD/Services/Cad/ShortcutAliasService.cs')
+checks=[]
+def check(name, ok): checks.append((name, bool(ok)))
+ET.fromstring(palette)
+check('native command registered', '[CommandMethod("YGBREAKLINE", CommandFlags.Modal)]' in command)
+check('click a LINE, no re-draw', 'ed.GetEntity(opts)' in command and 'AddAllowedClass(typeof(Line)' in command)
+check('click location controls break', 'PickPoint = selected.PickedPoint' in command and 'DotProduct(unit)' in service)
+check('created native editable polyline 2D', 'new Polyline(vertices.Length)' in service and 'poly.AddVertexAt' in service)
+check('created native polyline 3D for 3D lines', 'new Polyline3d(Poly3dType.SimplePoly' in service)
+check('same exact start/end points', 'a,' in service and 'b\n' in service)
+check('near endpoints clamped', 'Math.Max(0.2, Math.Min(0.8, projection))' in service)
+check('short/invalid lines checked', 'length <= Tolerance' in service)
+check('locked / hidden layer rejects', 'layer.IsLocked || layer.IsFrozen || layer.IsOff' in service)
+check('current space only, no xref edit', 'source.OwnerId != ctx.Database.CurrentSpaceId' in service)
+check('preserve source properties', 'replacement.SetPropertiesFrom(source)' in service)
+check('replacement created before original erased', service.index('space.AppendEntity(replacement)') < service.index('source.Erase()'))
+check('transaction enforces undo', 'CadTransactionRunner.WriteContext(doc, false' in command)
+check('dry-run does not write', 'if (dryRun) return result;' in service)
+check('source erase exclusively real mode', service.count('source.Erase()') == 1)
+check('resource cleanup for dryrun', 'replacement.ObjectId.IsNull' in service and 'replacement.Dispose()' in service)
+check('Ribbon primary action available', 'Button("直线折断", "YGBREAKLINE "' in ribbon)
+check('Palette quick button available', 'Tag="YGBREAKLINE"' in palette)
+check('Palette whitelist includes new command', '"YGBREAKLINE"' in back)
+check('PGP binding registry updated', 'new Feature("直线转 Z 折断线", "YGBREAKLINE")' in alias)
+check('not claiming runtime pass', 'WINDOWS_NOT_TESTED' in read('docs/BREAKLINE_V1_20261105.md'))
+check('distinct Windows smoke case', 'YGBREAKLINE' in read('tasks/GEOMETRY_EDIT_V2_WINDOWS_SMOKE_20261105.md'))
+for name,ok in checks: print(('PASS' if ok else 'FAIL')+': '+name)
+print(f'breakline source policy: {sum(x for _,x in checks)}/{len(checks)} PASS')
+if not all(x for _,x in checks): raise SystemExit(1)
