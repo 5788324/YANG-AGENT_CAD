@@ -18,7 +18,7 @@
 | 图纸/引用 | 工具箱 → Revit 图纸预处理、图片/外参内嵌 | 一键或选择文件夹；原图保留副本策略 |
 | 自动化 | `YANGCAD_MCP` | stdio 74 / AutoCAD live 37；Civil 67 仅合同，未本轮实机 |
 
-**可预期的限制**：R07 文件夹内嵌现场结果为 **2 PASS / 1 SKIP / 1 FAIL（PARTIAL）**，并非全部图纸成功；R06 标准 1:1 模式安全跳过受检 INSERT；CAD Exchange 的 11/11 MAP/ReaderVerifier 通过，**不是 Revit 原生 ElementId 重建通过**。任意闭合多段线裁切、删除边界外、Z 折断线仍在需求池，**未实现**。
+**可预期的限制**：R07 文件夹内嵌现场结果为 **2 PASS / 1 SKIP / 1 FAIL（PARTIAL）**，并非全部图纸成功；R06 标准 1:1 模式安全跳过受检 INSERT；CAD Exchange 的 11/11 MAP/ReaderVerifier 通过，**不是 Revit 原生 ElementId 重建通过**。任意闭合多段线裁切、删除边界外仍在需求池；**直线转 Z 折断线已进入新功能 Draft 开发分支，尚未编译或实机验收，不属于 0.10.0 RC1**。
 
 ## 0.10.0 AutoCAD 2024 RC 证据与源码
 
@@ -44,3 +44,8 @@ python tools/run_static_checks.py --output artifacts/ci-static-report.json
 ```
 
 静态 PASS 不代替 Windows Build/Loaded、真实 DWG 对象读回与 Undo；参见 [`docs/QUALITY_GATES.md`](docs/QUALITY_GATES.md)。项目为非商业的个人工程工具，与 Autodesk、源泉设计、贱人工具箱均无官方关联。
+
+## 后续功能开发（与 RC1 隔离）
+
+- [Issue #12](https://github.com/5788324/YANG-AGENT_CAD/issues/12) → `feature/geometry-edit-v2-20261105`：已开始 `YGBREAKLINE` 直线转 Z 折断线（STATIC ONLY），后续接入闭合多段线大样与删除边界外。
+- 本功能不属于上述 **AutoCAD 2024 RC1 已验收列表**。新代码必须由 Gemini 重新编译、加载与 Undo 验收后才能进入 `main`。

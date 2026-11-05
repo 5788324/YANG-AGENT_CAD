@@ -14,6 +14,6 @@
 | 快捷键 | `YGKEYS`，PGP / CUI | — | R02 PGP/备份/REINIT 通过 |
 | 本地 MCP | `YANGCAD_MCP` | stdio 74 / AutoCAD 37 | R08 当前 AutoCAD 样例通过；Civil live 67 **NOT_TESTED** |
 
-**未实现（Backlog）**：按任意闭合多段线边界提取、跨边界复杂对象按选项裁切、删除闭合边界外全部图元、直线转 Z 形折断线。此处不可视为本版功能。
+**新功能开发分支（非 RC1）**：`YGBREAKLINE` 直线转 Z 折断线已实现源码，STATIC_ONLY / WINDOWS_NOT_TESTED；任意闭合边界大样、复杂对象按选项裁切、删除闭合边界外仍 NOT_IMPLEMENTED。此处不可视为已验收的 0.10.0 RC1 功能。
 
 **其他年份和宿主**：Civil 3D live / Revit Native / 非 AutoCAD 2024 均不属于本轮 G5 通过范围。详细验收 SHA 与发布包见 `docs/RC_AUTOCAD2024_0.10.0.md`；单个 MCP tool 见 `docs/MCP_COVERAGE_MATRIX.md`。
