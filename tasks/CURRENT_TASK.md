@@ -9,9 +9,9 @@
 - [x] 已完成 G5 AutoCAD 2024 指定范围审查：`https://github.com/5788324/YANG-AGENT_CAD/issues/9#issuecomment-6646760886`。
 - [x] Release Contract 74/37/67、19/19 SHA、PS5.1 正向/负向证据核验。
 - [x] RC 源码基点为 `d5200c57a75b1fd228713dc67b606126a5c04924`；不重新实现 PR #4–#10 的代码。
-- [ ] GitHub 建立 `release/autocad2024-0.10.0-rc1` 和 Draft 集成 PR → `main`，核对完整差异。
-- [ ] GitHub 静态 CI、SHA manifest、确认 **Runtime 源码无更改**。
-- [ ] 基于已审计差异决定何时合并；未获新明确指令前不合并 `main`、不打跨宿主 stable 标签。
+- [x] GitHub 建立 `release/autocad2024-0.10.0-rc1` 和 [Draft 集成 PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) → `main`，完整 PR 107 个变更文件、无冲突。
+- [x] GitHub CI [41948088165](https://github.com/5788324/YANG-AGENT_CAD/actions/runs/41948088165) SUCCESS；SHA manifest 267/267；RC 与 d520 **Runtime 源码 0 差异**。
+- [ ] 等待对 PR #11 的合并决定；未获新明确指令前不合并 `main`、不打跨宿主 stable 标签。
 - [ ] 在集成完成后逐项整理堆叠 PR，避免重复合并/重复发布。
 
 ## 源码及交接

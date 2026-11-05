@@ -4,7 +4,7 @@
 
 ## 唯一当前任务
 
-查看 `tasks/CURRENT_TASK.md`：将叠加 PR #4–#10 统一进入 **RC Draft 集成 PR**，核对完整 diff、静态 CI 和受测 Runtime 代码一致；不自动 merge `main`，不新开发功能。
+查看 `tasks/CURRENT_TASK.md`：已将叠加 PR #4–#10 统一到 **[RC Draft PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11)**，完整 diff/静态 CI/受测 Runtime 一致性已核；不自动 merge `main`，不新开发功能。
 
 ## 从哪里读代码
 

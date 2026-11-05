@@ -22,7 +22,7 @@
 
 ## 0.10.0 AutoCAD 2024 RC 证据与源码
 
-- **统一集成候选**：`release/autocad2024-0.10.0-rc1`；整合此前 PR #4、#5、#6、#7、#8、#10，目标为 `main`，**先 Draft/审查，不自动合并**。
+- **统一集成候选**：[PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) · `release/autocad2024-0.10.0-rc1`；整合此前 PR #4、#5、#6、#7、#8、#10，目标为 `main`，**Draft，未合并**。
 - **受测源码**：`b6ff1370b0ed48e5e50fec43d2a5a2e14ca5ec54`；**发布契约修正基线**：`d5200c57a75b1fd228713dc67b606126a5c04924`。
 - **已核验 Quick 发布 ZIP**：SHA-256 `ACA88A9440968411A2D7A014800AC70FE8E60C314ECBE936BBBC4037C5C79692`。
 - **已验收 AutoCAD 2024 DLL**：SHA-256 `880329CF7E5C464078686FE56B0BB7070B4C2F7B7F482A91771D9C8`（558,080 字节）。

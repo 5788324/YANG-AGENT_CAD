@@ -4,7 +4,7 @@
 
 ## 先确认当前分支，不要测错版本
 
-- **唯一 RC 集成入口**：`release/autocad2024-0.10.0-rc1`；它是从 `d5200c57...` 派生的 docs-only 版本，用于审查全部叠加功能如何进入 `main`。
+- **唯一 RC 集成入口**：[PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) · `release/autocad2024-0.10.0-rc1`；它是从 `d5200c57...` 派生的 docs-only 版本，用于审查全部叠加功能如何进入 `main`。
 - 当前旧开发父链末端：`feature/product-foundation-v010-20261103` / PR #8，受测 `b6ff137...`。原先的 `feature/product-foundation-v010-20261103` 是 0.10.0-dev 测试基线，不是 RC 合并入口。
 - 原始 G5 审核：`https://github.com/5788324/YANG-AGENT_CAD/issues/9#issuecomment-6646760886`；后续测试以 **完整 Git SHA** 为准。
 

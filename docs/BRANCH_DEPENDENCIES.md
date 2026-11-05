@@ -8,7 +8,7 @@ main @ 396a79408bfb38d374871fb030b54012748be8b6 [旧回退版本]
           └─ PR #7 快捷键 + Ribbon
              └─ PR #8 产品正规化 + Gemini 编译修复 b6ff137
                 └─ PR #10 Release Contract 修复 d5200c5 [已验收]
-                   └─ release/autocad2024-0.10.0-rc1 [仅文档/CI，Draft 集成 PR → main]
+                   └─ release/autocad2024-0.10.0-rc1 [仅文档/CI，Draft PR #11 → main]
 ```
 
 #4/#5/#6/#7/#8/#10 目前仍保持 Draft，并未单独合并 `main`。**RC 集成 PR 是单独的全链审查入口，不代表这些老 PR 应当一个个乱序合并。** 完整操作步骤见 `docs/RC_MERGE_PLAN.md`。

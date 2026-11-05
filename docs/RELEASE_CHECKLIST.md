@@ -7,7 +7,8 @@
 - [x] Ribbon、Palette、关于、PGP/REINIT、图层、大样、引线、比例、图片 OLE/Xref、MCP、CAD MAP 的**指定样例**运行验证。
 - [x] Release Manifest 74/37/67，19/19 SHA，stdio 74 不重复；PS5.1 正向 ExitCode 0 与三组篡改 ExitCode 1。
 - [x] G5 ChatGPT 独立审核 AutoCAD 2024 scope PASS（Issue #9）。
-- [ ] docs-only RC 集成 PR → main：审核完整 diff / SHA manifest / GitHub CI，**不擅自合并**。
+- [x] docs-only RC [Draft PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) → main：完整 diff / SHA manifest / GitHub CI PASS，且 Runtime 代码无变化。
+- [ ] PR #11 合并审批及后续主分支核对：**未获批准，不擅自合并**。
 - [ ] Civil 3D live 67：NOT_TESTED。
 - [ ] Revit Native ElementId E2E：NOT_TESTED。
 - [ ] 其他 CAD 年份兼容：NOT_TESTED_CURRENT_RC。
