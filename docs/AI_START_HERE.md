@@ -1,3 +1,6 @@
+> **开发分支新增说明（2026-11-05）**：`feature/detail-polygon-v1-20261105` 实现 `YGDETAIL` 的闭合直边多边形源码，基于已经合并 PR #11 的 `main@2f0980d`。原本文的“PR #11 尚待合并”叙述是历史快照，不能当作当前任务。
+> 新代码标记 STATIC_ONLY / WINDOWS_NOT_TESTED；Windows 执行 `tasks/DETAIL_POLYGON_WINDOWS_SMOKE_20261105.md`。折断线 Draft PR #13 为**独立分支**，不可合并其运行时证据。
+
 # YangCAD — 新 AI / 新对话 60 秒接手（2026-11-05）
 
 仓库：`https://github.com/5788324/YANG-AGENT_CAD`。

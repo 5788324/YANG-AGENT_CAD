@@ -1,3 +1,12 @@
+## 2026-11-05 接手续开发：闭合多边形提取（独立候选）
+
+- 本分支 `feature/detail-polygon-v1-20261105` 从 `main@2f0980d4acd08b087d924b5c1f5a5bb18e8668a8` 派生。
+- 代码：`src/YangCAD.AutoCAD/Services/Cad/PolygonBoundary2d.cs`、`PolygonDetailExtractService.cs`、`Commands/DetailExtractCommands.cs`。
+- `YGDETAIL` 默认矩形继续使用原有 Service，新增 Select/Draw 的 WCS XY 直边多边形模式；`YGOUTSIDE` 仍待开发。
+- 请先执行 `tools/test_polygon_detail_policy.py` / 源码静态门禁，再将此 SHA 交 Gemini 实机 2024，完整证据写入 Issue #12；所有 Windows 状态目前 NOT_TESTED，勿与 PR #13 混验。
+
+---
+
 # YangCAD 接手与工程边界（2026-11-05）
 
 **当前管理版本**：`0.10.0-rc.1` / **AutoCAD 2024 Quick 特定范围 G5 GO**。现有程序集版本仍为 `0.10.0-dev`，这是为了保留与已验收 DLL 的一致性，**不是遗漏更新 DLL**。

@@ -1,3 +1,12 @@
+## 2026-11-05 — 新 Draft：YGDETAIL 闭合直边多边形（SOURCE ONLY）
+
+- 基于已经合并 RC1 的 `main@2f0980d4acd08b087d924b5c1f5a5bb18e8668a8` 创建独立分支 `feature/detail-polygon-v1-20261105`；此分支**不包含 PR #13 未合并的折断线源码**。
+- 新增可复用的 `PolygonBoundary2d` 与 `PolygonDetailExtractService`，增强 `YGDETAIL` 为 Rectangle / Select / Draw 三种模式；原矩形 Service 未变。支持凸/凹的直边边界及 LINE/ARC/CIRCLE/Polyline 跨界精确分段；拒绝带 bulge 的裁切边界。
+- **STATIC_CANDIDATE / AutoCAD 2024 WINDOWS_NOT_TESTED**；旧 RC1 SHA 与现有 GUI/Undo 证据不适用于本分支。后续 `YGOUTSIDE` 尚未实现。
+- 新验收任务：`tasks/DETAIL_POLYGON_WINDOWS_SMOKE_20261105.md`；PR #13 独立待 Gemini Windows 实机验证。
+
+---
+
 # YangCAD 当前事实（2026-11-05）
 
 **当前发布管理标记：`0.10.0-rc.1`（AutoCAD 2024 Quick 范围） / `G5_AUTOCAD2024_SCOPE_PASS`。**

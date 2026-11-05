@@ -10,6 +10,7 @@ Directory.Build.props
 PROJECT.md
 PROJECT_TREE.txt
 README.md
+SHA256SUMS.txt
 STATIC_VALIDATION.txt
 WORKLOG.md
 YangCADAgent.sln
@@ -40,6 +41,7 @@ docs/CLAUDE_ROUND00_REVIEW_RESULT.md
 docs/COMPATIBILITY.md
 docs/CURRENT_STATE.md
 docs/DECISIONS.md
+docs/DETAIL_POLYGON_V1_20261105.md
 docs/DEVELOPMENT_ROUNDS.md
 docs/DOCUMENT_AUTHORITY.md
 docs/FEATURE_BACKLOG.md
@@ -148,6 +150,8 @@ src/YangCAD.AutoCAD/Services/Cad/LayerAuditService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerCleanupService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerQuickService.cs
 src/YangCAD.AutoCAD/Services/Cad/LeaderRepairService.cs
+src/YangCAD.AutoCAD/Services/Cad/PolygonBoundary2d.cs
+src/YangCAD.AutoCAD/Services/Cad/PolygonDetailExtractService.cs
 src/YangCAD.AutoCAD/Services/Cad/PolylineCleanupService.cs
 src/YangCAD.AutoCAD/Services/Cad/PolylineInspectionService.cs
 src/YangCAD.AutoCAD/Services/Cad/RevitExchangeService.cs
@@ -203,6 +207,7 @@ src/YangCAD.Setup/YangCAD.Setup.csproj
 src/YangCAD.Setup/app.manifest
 tasks/CADTOOL_YANGTOOLS_ALIGNMENT_20260907_WINDOWS_E2E.md
 tasks/CURRENT_TASK.md
+tasks/DETAIL_POLYGON_WINDOWS_SMOKE_20261105.md
 tasks/FEATURE_CAD_REVIT_PREP_001.md
 tasks/FEATURE_CAD_REVIT_PREP_001_REVIT_TARGETED_RETEST.md
 tasks/FEATURE_CAD_REVIT_PREP_001_WINDOWS_REVIT_SMOKE.md
@@ -249,6 +254,7 @@ tools/test_layer_detail_policy.py
 tools/test_leader_rebuild_policy.py
 tools/test_mcp_copy_config_policy.py
 tools/test_mcp_product_coverage_policy.py
+tools/test_polygon_detail_policy.py
 tools/test_product_handoff_policy.py
 tools/test_quick_install_policy.py
 tools/test_reference_embed_quick_policy.py

@@ -1,3 +1,11 @@
+## 2026-11-05 — YGDETAIL Polygon V1 独立开发候选
+
+- 从已合并 RC1 的 main 建立 `feature/detail-polygon-v1-20261105`，不堆叠 PR #13。保留原矩形 DetailExtractService，不改变 MCP 74 / 37 / 67 契约。
+- 新增 `PolygonBoundary2d`（凹边界、自交验证、直线-边界相交、圆-边界相交）、`PolygonDetailExtractService`（非破坏性复制与安全跳过）、`YGDETAIL` 的 Select/Draw 交互，新增静态策略检查和 Windows 任务书。
+- 标记 SOURCE ONLY / WINDOWS_NOT_TESTED；不发布 DLL、不声称用户级 Undo 验收。
+
+---
+
 ## 2026-11-05 — AutoCAD 2024 Quick 0.10.0 RC1 集成（仅管理文档）
 
 - ChatGPT G5 独立审核 Issue #9：已验收源码 b6ff137，Release 修复 d5200c5，Quick ZIP ACA88A...，DLL 880329CF...，AutoCAD 2024 指定范围 GO；Civil/Revit Native NOT_TESTED。
