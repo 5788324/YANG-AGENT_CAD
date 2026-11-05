@@ -1,3 +1,5 @@
+> **新 Draft 增量（2026-11-05）**：YGDETAIL 闭合直边多边形 Select/Draw 已提交源码候选，**STATIC ONLY / AutoCAD 2024 NOT_TESTED**，不属于 RC1 已验收功能。带 bulge 弧形边界明确拒绝；`YGOUTSIDE` 仍未实现，PR #13 的折断线另行待测。
+
 # YangCAD 功能目录与证据范围（2026-11-05）
 
 版本：`0.10.0-rc.1`（**RC 文档标记**；实际 Assembly/MCP 仍 `0.10.0-dev`）；范围：AutoCAD 2024 Quick 特定样例 G5 GO。

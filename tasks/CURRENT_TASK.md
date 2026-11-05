@@ -1,23 +1,24 @@
-# 当前任务 — YangCAD 0.10.0 RC1 集成审查（2026-11-05）
+# 当前开发任务 — YGDETAIL 闭合多边形 V1（Issue #12）
 
-## 唯一范围
+日期 2026-11-05；开发分支 `feature/detail-polygon-v1-20261105`；直接从 `main@2f0980d4acd08b087d924b5c1f5a5bb18e8668a8` 派生。
 
-将 PR #4–#10 的已验收代码由一个 **docs-only RC 集成分支**向 `main` 发起 Draft PR。实际运行内容继承受测 `b6ff137` + Release 修复 `d5200c5`，不重新编译 DLL、不扩展 Civil/Revit/其他年份的 GO。
+## 实际已编码范围（G1 SOURCE ONLY）
 
-## 本轮 DoD
+- 原有 Rectangle 大样保持原路径；`YGDETAIL` 新增 Select（拾取 WCS XY 闭合零宽度 LWPOLYLINE）与 Draw（逐点闭合）两种模式。
+- 新 `PolygonBoundary2d` 精确点内判断、凸/凹直边多边形自交检验、LINE 与 ARC/CIRCLE 分割；`PolygonDetailExtractService` 管理当前空间的受控复制、裁切、缩放与单事务写入。
+- 明确不支持带 bulge 弧线作为**裁切边界**，复杂跨界块/标注/Hatch 采取安全跳过；源图保持不擦除。
+- 文档 `docs/DETAIL_POLYGON_V1_20261105.md`，策略 `tools/test_polygon_detail_policy.py`。
 
-- [x] 已完成 G5 AutoCAD 2024 指定范围审查：`https://github.com/5788324/YANG-AGENT_CAD/issues/9#issuecomment-6646760886`。
-- [x] Release Contract 74/37/67、19/19 SHA、PS5.1 正向/负向证据核验。
-- [x] RC 源码基点为 `d5200c57a75b1fd228713dc67b606126a5c04924`；不重新实现 PR #4–#10 的代码。
-- [x] GitHub 建立 `release/autocad2024-0.10.0-rc1` 和 [Draft 集成 PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) → `main`，完整 PR 107 个变更文件、无冲突。
-- [x] GitHub CI [41948088165](https://github.com/5788324/YANG-AGENT_CAD/actions/runs/41948088165) SUCCESS；SHA manifest 267/267；RC 与 d520 **Runtime 源码 0 差异**。
-- [ ] 等待对 PR #11 的合并决定；未获新明确指令前不合并 `main`、不打跨宿主 stable 标签。
-- [ ] 在集成完成后逐项整理堆叠 PR，避免重复合并/重复发布。
+## 仍需完成的验收
 
-## 源码及交接
+- [ ] GitHub G1 CI 与 SHA manifest 验证。
+- [ ] Windows AutoCAD 2024 真正 Build/Deploy/Loaded 同一 SHA。
+- [ ] 真实 DWG 的凸/凹、多交点、弧段、Undo/重开、布局/图层、锁定/外参保护。
+- [ ] ChatGPT 独立复核证据后才讨论合并。
 
-文档：`docs/RC_AUTOCAD2024_0.10.0.md`、`docs/RC_MERGE_PLAN.md`、`docs/CURRENT_STATE.md`、`docs/AI_START_HERE.md`、`docs/RUNTIME_TEST_MATRIX.md`。CI：`python tools/verify_source_manifest.py --complete` / `python tools/run_static_checks.py`。
+## 未实现 / 独立并行
 
-## NOT_TESTED / NOT_IMPLEMENTED
-
-Civil 3D live 67 / Revit Native E2E / 其他 AutoCAD 年份均 **NOT_TESTED_CURRENT_RC**。未实现：任意闭合多段线提取、跨界复杂对象可选裁切、删除边界外、直线 Z 折断线。
+- `YGOUTSIDE`（删除边界外）仍 NOT_IMPLEMENTED。
+- `YGBREAKLINE` 在独立 Draft PR #13（不同 HEAD），不能作为本分支实现或测试结果。
+- Civil3D live/Revit Native E2E/其它 AutoCAD 年份仍 NOT_TESTED。
+- 按 `tasks/DETAIL_POLYGON_WINDOWS_SMOKE_20261105.md` 交 Gemini；不可修改 main 或将 STATIC PASS 写为 Windows PASS。
