@@ -10,6 +10,7 @@ Directory.Build.props
 PROJECT.md
 PROJECT_TREE.txt
 README.md
+SHA256SUMS.txt
 STATIC_VALIDATION.txt
 WORKLOG.md
 YangCADAgent.sln
@@ -56,6 +57,7 @@ docs/MCP_ARCHITECTURE.md
 docs/MCP_CONNECTION_HANDOFF.md
 docs/MCP_COVERAGE_MATRIX.md
 docs/ON_DEMAND_FEATURE_WORKFLOW.md
+docs/OUTSIDE_V1_20261105.md
 docs/PRESTART_AUDIT_20260828.md
 docs/PRODUCT_STRUCTURE.md
 docs/PRODUCT_UI.md
@@ -108,6 +110,7 @@ src/YangCAD.AutoCAD/Commands/ControlCenterCommands.cs
 src/YangCAD.AutoCAD/Commands/DetailExtractCommands.cs
 src/YangCAD.AutoCAD/Commands/LayerQuickCommands.cs
 src/YangCAD.AutoCAD/Commands/LeaderRepairCommands.cs
+src/YangCAD.AutoCAD/Commands/OutsideBoundaryCommands.cs
 src/YangCAD.AutoCAD/Commands/ScaleConvertCommands.cs
 src/YangCAD.AutoCAD/Commands/ToolboxCommands.cs
 src/YangCAD.AutoCAD/ExtensionApplication.cs
@@ -148,6 +151,8 @@ src/YangCAD.AutoCAD/Services/Cad/LayerAuditService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerCleanupService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerQuickService.cs
 src/YangCAD.AutoCAD/Services/Cad/LeaderRepairService.cs
+src/YangCAD.AutoCAD/Services/Cad/OutsideBoundaryService.cs
+src/YangCAD.AutoCAD/Services/Cad/PolygonBoundary2d.cs
 src/YangCAD.AutoCAD/Services/Cad/PolylineCleanupService.cs
 src/YangCAD.AutoCAD/Services/Cad/PolylineInspectionService.cs
 src/YangCAD.AutoCAD/Services/Cad/RevitExchangeService.cs
@@ -213,6 +218,7 @@ tasks/FEATURE_PROJECT_IMAGE_EMBED_001_WINDOWS_SMOKE.md
 tasks/GEMINI_WINDOWS_INTEGRATED_SMOKE_20261103.md
 tasks/LAYER_TOOLS_QG_WINDOWS_SMOKE_20261103.md
 tasks/NEXT_TASKS.md
+tasks/OUTSIDE_WINDOWS_SMOKE_20261105.md
 tasks/REFERENCE_EMBED_V2_WINDOWS_SMOKE_20261026.md
 tasks/REPOSITORY_SINGLE_MAIN_RESET.md
 tasks/REVIT_PREP_LEADER_REPAIR_WINDOWS_SMOKE_20261026.md
@@ -249,6 +255,7 @@ tools/test_layer_detail_policy.py
 tools/test_leader_rebuild_policy.py
 tools/test_mcp_copy_config_policy.py
 tools/test_mcp_product_coverage_policy.py
+tools/test_outside_policy.py
 tools/test_product_handoff_policy.py
 tools/test_quick_install_policy.py
 tools/test_reference_embed_quick_policy.py

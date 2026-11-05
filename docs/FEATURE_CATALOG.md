@@ -1,3 +1,5 @@
+> **新候选（2026-11-05）**：`YGOUTSIDE` 边界外删除 + 可裁切曲线保留 + 只读预览与确认已编写源码（STATIC_ONLY / WINDOWS_NOT_TESTED），不属于 AutoCAD 2024 RC1 的已验收功能。PR #13 的折断线和 PR #14 的多边形大样仍独立未合并。
+
 # YangCAD 功能目录与证据范围（2026-11-05）
 
 版本：`0.10.0-rc.1`（**RC 文档标记**；实际 Assembly/MCP 仍 `0.10.0-dev`）；范围：AutoCAD 2024 Quick 特定样例 G5 GO。

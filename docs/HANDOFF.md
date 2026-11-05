@@ -1,3 +1,12 @@
+## 2026-11-05 — YGOUTSIDE V1 接续交接
+
+- 新候选 `feature/outside-boundary-v1-20261105` 直接从 `main@2f0980d4` 派生，保留 RC1 稳定范围。
+- 核心入口：`OutsideBoundaryCommands.cs` / `OutsideBoundaryService.cs`；`PolygonBoundary2d.cs` 和 PR #14 相同 Git blob，后续合并时核对 SHA；不增加 MCP 契约。
+- 只读预览和一次确认后执行。复杂跨界对象、关联填充、动态/属性块、外参、图片和受保护层保守跳过，原始边界不删。
+- 新增测试 `tools/test_outside_policy.py` 和 Gemini 任务 `tasks/OUTSIDE_WINDOWS_SMOKE_20261105.md`；仅能宣称静态候选，Windows 编译、CAD GUI/Undo 均 NOT_TESTED。
+
+---
+
 # YangCAD 接手与工程边界（2026-11-05）
 
 **当前管理版本**：`0.10.0-rc.1` / **AutoCAD 2024 Quick 特定范围 G5 GO**。现有程序集版本仍为 `0.10.0-dev`，这是为了保留与已验收 DLL 的一致性，**不是遗漏更新 DLL**。

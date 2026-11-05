@@ -1,3 +1,11 @@
+## 2026-11-05 — YGOUTSIDE V1 新 Draft 源码开发
+
+- 从 `main@2f0980d4` 创建独立 `feature/outside-boundary-v1-20261105`，复用 PR #14 的 `PolygonBoundary2d` 源代码，按用户“删除边界外”新增命令/Service、中文 Palette、PGP 入口。
+- 采用 WCS XY 闭合直边边界的保守几何分类，预览->Yes 确认->原生事务写操作；外参/受保护层/复杂跨界对象跳过；不改动历史主线。
+- 源码测试及 Windows 定点任务书已编写；未经 Windows Autodesk Build/Loaded/Undo，标记 STATIC_ONLY。
+
+---
+
 ## 2026-11-05 — AutoCAD 2024 Quick 0.10.0 RC1 集成（仅管理文档）
 
 - ChatGPT G5 独立审核 Issue #9：已验收源码 b6ff137，Release 修复 d5200c5，Quick ZIP ACA88A...，DLL 880329CF...，AutoCAD 2024 指定范围 GO；Civil/Revit Native NOT_TESTED。

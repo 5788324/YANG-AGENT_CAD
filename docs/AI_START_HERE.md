@@ -1,3 +1,5 @@
+> **最新独立任务（2026-11-05）**：`feature/outside-boundary-v1-20261105`，实现 `YGOUTSIDE` 的源码候选，基于已合并的 RC1 main；无 Windows 实测。此条覆盖下面历史“PR #11 仍待合并”的旧说明。PR #13/#14 独立 Draft，三者不得误判为已经集成。
+
 # YangCAD — 新 AI / 新对话 60 秒接手（2026-11-05）
 
 仓库：`https://github.com/5788324/YANG-AGENT_CAD`。
