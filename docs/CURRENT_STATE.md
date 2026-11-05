@@ -1,3 +1,12 @@
+## 2026-11-05 — YGOUTSIDE 独立候选（删除边界外）
+
+- 基于已合并 RC1 的 `main@2f0980d4acd08b087d924b5c1f5a5bb18e8668a8` 建立独立分支 `feature/outside-boundary-v1-20261105`；绝不等同合并 PR #13/#14。
+- 新增 `YGOUTSIDE` Rectangle/Select/Draw、只读预览、一次确认、预览指纹复核、单事务删除及跨界 LINE/ARC/CIRCLE/Polyline 修剪；共享 PR #14 的同一份 `PolygonBoundary2d` Blob。
+- 状态 **STATIC_ONLY / AutoCAD 2024 WINDOWS_NOT_TESTED**。UI 可见、构建、Loaded DLL、撤销均未经实机证明；Civil/Revit 仍 NOT_TESTED，保留原 RC1 状态。
+- PR #13（折断线）、PR #14（多边形大样）和本候选分支分开验收。尚未进行这 3 项的新功能集成发布。
+
+---
+
 # YangCAD 当前事实（2026-11-05）
 
 **当前发布管理标记：`0.10.0-rc.1`（AutoCAD 2024 Quick 范围） / `G5_AUTOCAD2024_SCOPE_PASS`。**
