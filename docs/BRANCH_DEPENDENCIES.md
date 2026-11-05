@@ -1,22 +1,18 @@
-# 开发分支与依赖关系（2026-11-03）
-
-当前 `main` 不包含下面全部增量。不要简单地说“main 没有功能，所以功能不存在”；也不要把开发分支误当稳定版。
+# YangCAD 0.10.0 RC 分支关系（2026-11-05）
 
 ```text
-main @ 396a79408bfb38d374871fb030b54012748be8b6
-  └─ PR #4 feature/reference-embed-v2-20261026
-      └─ PR #5 feature/revit-prep-leader-repair-20261027
-          └─ PR #6 feature/layer-tools-detail-qg-20261103
-              └─ PR #7 feature/shortcut-manager-native-ribbon-20261103
-                  └─ PR #8 feature/product-foundation-v010-20261103
-                      └─ [本轮管理/Gemini 验收资料进入 PR #8 头部]
+main @ 396a79408bfb38d374871fb030b54012748be8b6 [旧回退版本]
+ └─ PR #4 引用内嵌 + 比例转换
+    └─ PR #5 引线重建 + 一键预处理
+       └─ PR #6 图层工具 + 矩形大样
+          └─ PR #7 快捷键 + Ribbon
+             └─ PR #8 产品正规化 + Gemini 编译修复 b6ff137
+                └─ PR #10 Release Contract 修复 d5200c5 [已验收]
+                   └─ release/autocad2024-0.10.0-rc1 [仅文档/CI，Draft 集成 PR → main]
 ```
 
-所有完整 SHA 以 GitHub API 在执行时查询为准；这是关系图，不是新的测试证据。
+#4/#5/#6/#7/#8/#10 目前仍保持 Draft，并未单独合并 `main`。**RC 集成 PR 是单独的全链审查入口，不代表这些老 PR 应当一个个乱序合并。** 完整操作步骤见 `docs/RC_MERGE_PLAN.md`。
 
-## 当前策略
-
-1. **Gemini 只测试 PR #8 当前 HEAD**，它包含所有父 PR 的功能代码；禁止自行切换旧 ZIP 或主分支。
-2. Windows 原始证据通过后由 ChatGPT 审核；失败项优先修复或拆出，不要求从 #4 到 #8 每个 PR 重复全量跑一次。
-3. 不能因旧 PR 保持 Draft 就让 `main` 永远落后：审核通过后按 #4→#8 顺序合并，或在保留来源和证据的前提下建立明确的整合 PR。切忌无验证地批量 merge。
-4. `main` 保持稳定，发布版本独立打 Tag。含未完成功能的整合分支不能按正式版分发。
+- 源泉/贱人工具箱功能仅是独立研发参考，未把第三方未授权二进制放进仓库。
+- 此前的原生 AutoCAD 2024 证据绑定 `b6ff137`；发布检查绑定 `d5200c5`。RC docs-only SHA 的出现不改变受测 DLL。
+- 不能把 AutoCAD G5 PASS 扩大为 Civil 3D / Revit native / 所有年份 PASS。

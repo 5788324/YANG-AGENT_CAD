@@ -1,15 +1,19 @@
-# 当前 0.10.0-dev 发布前门禁（2026-11-03）
+# YangCAD 0.10.0 RC1 — AutoCAD 2024 Quick 验收清单（2026-11-05）
 
-- [ ] 2024 Windows clean build: AutoCAD / BatchWorker / Civil3D 目标文件一致。
-- [ ] 产品版本 File/Assembly/Informational/Python MCP/Bundle/Setup 元数据核对一致。
-- [ ] 2024 实机加载与真实 DLL SHA；Ribbon 不抢默认 Home。
-- [ ] Palette 快捷工具点击与 Dock/Float；关于页版本、宿主、DLL、GitHub、诊断复制。
-- [ ] `YGKEYS` PGP 修改、冲突、备份、REINIT。
-- [ ] 图片内嵌、比例转换、引线重建、图层/QG 的专项 Windows 回归与 Undo。
-- [ ] 当前 MCP stdio 74 / AutoCAD live 37 / Civil 3D live 67；真实来源与会话。
-- [ ] 完整原始证据已审计，按 Git SHA 晋升 RC/Stable。
+这是**当前范围验收**；下方原 2026-08 历史清单不代表本次 RC 中 Civil 3D 或其他年份已经通过。
 
-以下保留旧版本历史发布清单，不等于当前候选已通过。
+- [x] GitHub 唯一受测源码 b6ff137 / 修复 d5200c5 可追溯，Release ZIP SHA 对账。
+- [x] AutoCAD 2024 Windows 10 Build/Deploy/Loaded DLL SHA 880329CF...。
+- [x] Ribbon、Palette、关于、PGP/REINIT、图层、大样、引线、比例、图片 OLE/Xref、MCP、CAD MAP 的**指定样例**运行验证。
+- [x] Release Manifest 74/37/67，19/19 SHA，stdio 74 不重复；PS5.1 正向 ExitCode 0 与三组篡改 ExitCode 1。
+- [x] G5 ChatGPT 独立审核 AutoCAD 2024 scope PASS（Issue #9）。
+- [ ] docs-only RC 集成 PR → main：审核完整 diff / SHA manifest / GitHub CI，**不擅自合并**。
+- [ ] Civil 3D live 67：NOT_TESTED。
+- [ ] Revit Native ElementId E2E：NOT_TESTED。
+- [ ] 其他 CAD 年份兼容：NOT_TESTED_CURRENT_RC。
+- [ ] 如需正式 Stable 或签名发布：单独申请、重新定义兼容矩阵并实测。
+
+已知限制：R06 对象级 Undo 证据不代表整个 DWG 二进制一致；R07 文件夹 batch 为 2 PASS/1 SKIP/1 FAIL（PARTIAL）。RC1 只是管理标签，现有程序集仍为 0.10.0-dev，已验收 ZIP SHA 与 DLL SHA 见 `docs/RC_AUTOCAD2024_0.10.0.md`。
 
 ---
 

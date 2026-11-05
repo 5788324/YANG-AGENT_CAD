@@ -26,3 +26,9 @@
 
 - 每轮 feature commit 可回退；不要求清空整个仓库。
 - 除用户明确要求重写仓库历史外，不对正常 `main` 使用 force push。
+
+## 2026-11-05 0.10.0 RC1 集成例外
+
+本轮父链 PR #4→#5→#6→#7→#8→#10 均经同一最终代码/工件链追踪；从 d5200c5 建立 `release/autocad2024-0.10.0-rc1` 的 **docs-only RC 集成 PR → main**，以防逐级合并时遗漏分支关系。不要从历史主分支 cherry-pick 重拼 DLL。完整规范见 `docs/RC_MERGE_PLAN.md`。
+
+在集成 PR 被审查/批准前不自行 merge，合并后才处理旧 Draft PR 的状态。AutoCAD 2024 Quick scope GO 不等于 Civil 3D/Revit native / 其他年份发布 GO。

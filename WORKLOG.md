@@ -1,3 +1,11 @@
+## 2026-11-05 — AutoCAD 2024 Quick 0.10.0 RC1 集成（仅管理文档）
+
+- ChatGPT G5 独立审核 Issue #9：已验收源码 b6ff137，Release 修复 d5200c5，Quick ZIP ACA88A...，DLL 880329CF...，AutoCAD 2024 指定范围 GO；Civil/Revit Native NOT_TESTED。
+- 统一 README、CURRENT_STATE、HANDOFF、AI_START_HERE、RUNTIME_TEST_MATRIX、FEATURE_CATALOG、VERSIONING、Release Checklist，并新增 RC 证据/合并计划，明确未实现需求、R06/R07 限制。
+- 从 d5200c5 建立 RC1 集成分支，源代码/DLL 不变；GitHub CI 将监视 release/**；主分支保持旧回退基线，Draft 集成 PR 不自动合并。
+
+---
+
 ## 2026-11-03 — 0.10.0-dev 项目正规化 / 文档与产品 UI 整理
 
 - README/PROJECT/AGENTS/CLAUDE/HANDOFF/CURRENT_STATE 与功能索引统一到 0.10.0-dev，明确 `main` 稳定基线和未合并 `feature/*` 候选的事实差异。
