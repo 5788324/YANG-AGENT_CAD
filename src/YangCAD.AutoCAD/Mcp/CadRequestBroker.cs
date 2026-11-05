@@ -123,7 +123,8 @@ namespace YangCAD.AutoCADHost.Mcp
                 var settings = UserSettings.Load();
                 if (write && !settings.AllowWrites) { p.Response = RpcResponse.Failure(r.Id, r.Tool, "当前设置禁止 MCP 写入。"); return; }
                 if ((string.Equals(r.Tool, "cad.entity.erase", StringComparison.OrdinalIgnoreCase) ||
-                     string.Equals(r.Tool, "cad.layer.cleanup", StringComparison.OrdinalIgnoreCase)) &&
+                     string.Equals(r.Tool, "cad.layer.cleanup", StringComparison.OrdinalIgnoreCase) ||
+                     (string.Equals(r.Tool, "cad.leader.rebuild", StringComparison.OrdinalIgnoreCase) && !dry)) &&
                     !settings.AllowErase)
                 {
                     p.Response = RpcResponse.Failure(r.Id, r.Tool, "当前设置禁止 MCP 删除/清理对象；请先在控制中心显式开启删除权限。");

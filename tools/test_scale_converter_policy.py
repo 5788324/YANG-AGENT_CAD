@@ -40,7 +40,7 @@ ok("scaled mode uses Matrix3d.Scaling", 'Matrix3d.Scaling(geometryFactor, reques
 ok("scaled text restores model text height", 'dbText.Height = oldHeight' in scaled and 'mText.TextHeight = oldHeight' in scaled)
 ok("standard text scales annotation height", 'dbText.Height *= annotationFactor' in standard and 'mText.TextHeight *= annotationFactor' in standard)
 ok("dimension keeps standard Dimlfac", 'Standard 1:1 mode must keep Dimlfac unchanged' in standard)
-ok("scaled dimension adjusts Dimlfac by inverse geometry factor", 'dimlfac.Value / geometryFactor' in scaled)
+ok("scaled dimension adjusts Dimlfac by inverse geometry factor", 'oldDimlfac / geometryFactor' in scaled and '无法设置对象级 DIMLFAC' in scaled)
 ok("dimension visual properties are object-level snapshots", all(x in SERVICE for x in ['"Dimtxt"','"Dimasz"','"Dimgap"','"Dimexe"','"Dimexo"']))
 ok("service does not mutate global style tables", all(x not in SERVICE for x in ['DimStyleTableRecord','TextStyleTableRecord','MLeaderStyleTableRecord']))
 ok("hatch paper scale handled", 'PatternScale' in SERVICE and 'PreserveHatchPaperScale' in SERVICE)
@@ -66,7 +66,7 @@ for node in tree.body:
             if isinstance(dec,ast.Call) and isinstance(dec.func,ast.Attribute) and dec.func.attr=='tool':
                 for kw in dec.keywords:
                     if kw.arg=='name' and isinstance(kw.value,ast.Constant): public.append(kw.value.value)
-ok("stdio contract is 68 unique", len(public)==68 and len(set(public))==68)
+ok("stdio contract is 74 unique", len(public)==74 and len(set(public))==74)
 
 failed=[n for n,v in checks if not v]
 for n,v in checks: print(("PASS" if v else "FAIL")+": "+n)

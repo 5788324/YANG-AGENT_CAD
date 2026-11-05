@@ -170,6 +170,58 @@ def cad_scale_convert(
     })
 
 
+@mcp.tool(name="cad.leader.rebuild")
+def cad_leader_rebuild(
+    source_handles: list[str],
+    text_handle: str | None = None,
+    arrow_point: list[float] | None = None,
+    keep_originals: bool = False,
+    dry_run: bool = True,
+) -> dict[str, Any]:
+    """重建一条旧 Leader/炸开的连续线段为原生 MLeader，并可显式关联 TEXT/MTEXT。默认只预览。"""
+    return call("cad.leader.rebuild", {
+        "source_handles": source_handles,
+        "text_handle": text_handle or "",
+        "arrow_point": arrow_point,
+        "keep_originals": keep_originals,
+        "dry_run": dry_run,
+    })
+
+
+# One-click CAD layer & detail tools ------------------------------------------
+@mcp.tool(name="cad.layer.merge")
+def cad_layer_merge(source_layer: str, target_layer: str, dry_run: bool = True) -> dict[str, Any]:
+    """把源图层的本地图元（含普通块定义）移入目标图层；不修改外部参照源文件。"""
+    return call("cad.layer.merge", {"source_layer": source_layer, "target_layer": target_layer, "dry_run": dry_run})
+
+@mcp.tool(name="cad.layer.visibility")
+def cad_layer_visibility(layer: str, off: bool, dry_run: bool = True) -> dict[str, Any]:
+    """显示或关闭图层（包括本图内的 XREF|Layer 图层）。"""
+    return call("cad.layer.visibility", {"layer": layer, "off": off, "dry_run": dry_run})
+
+@mcp.tool(name="cad.layer.freeze")
+def cad_layer_freeze(layer: str, frozen: bool, dry_run: bool = True) -> dict[str, Any]:
+    """冻结或解冻图层（包括本图内的 XREF|Layer 图层）。"""
+    return call("cad.layer.freeze", {"layer": layer, "frozen": frozen, "dry_run": dry_run})
+
+@mcp.tool(name="cad.layer.lock")
+def cad_layer_lock(layer: str, locked: bool, dry_run: bool = True) -> dict[str, Any]:
+    """锁定或解锁图层（包括本图内的 XREF|Layer 图层）。"""
+    return call("cad.layer.lock", {"layer": layer, "locked": locked, "dry_run": dry_run})
+
+@mcp.tool(name="cad.detail.extract")
+def cad_detail_extract(
+    first_corner: list[float], opposite_corner: list[float], destination: list[float],
+    factor: float = 1.0, keep_dimensions_and_leaders: bool = True,
+    draw_frame: bool = True, dry_run: bool = True
+) -> dict[str, Any]:
+    """切割提取矩形大样并放置，支持直线/圆弧/圆/直线与弧段多段线精确裁切。"""
+    return call("cad.detail.extract", {"first_corner": first_corner, "opposite_corner": opposite_corner,
+        "destination": destination, "factor": factor,
+        "keep_dimensions_and_leaders": keep_dimensions_and_leaders,
+        "draw_frame": draw_frame, "dry_run": dry_run})
+
+
 # TASK-003 CAD productivity ---------------------------------------------------
 @mcp.tool(name="cad.line.create")
 def cad_line_create(start: list[float], end: list[float], layer: str | None = None, color_index: int | None = None, dry_run: bool = True) -> dict[str, Any]:

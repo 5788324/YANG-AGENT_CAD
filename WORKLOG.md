@@ -1,3 +1,39 @@
+## 2026-11-05 — AutoCAD 2024 Quick 0.10.0 RC1 集成（仅管理文档）
+
+- ChatGPT G5 独立审核 Issue #9：已验收源码 b6ff137，Release 修复 d5200c5，Quick ZIP ACA88A...，DLL 880329CF...，AutoCAD 2024 指定范围 GO；Civil/Revit Native NOT_TESTED。
+- 统一 README、CURRENT_STATE、HANDOFF、AI_START_HERE、RUNTIME_TEST_MATRIX、FEATURE_CATALOG、VERSIONING、Release Checklist，并新增 RC 证据/合并计划，明确未实现需求、R06/R07 限制。
+- 从 d5200c5 建立 RC1 集成分支，源代码/DLL 不变；GitHub CI 将监视 release/**；主分支保持旧回退基线，Draft 集成 PR 不自动合并。
+
+---
+
+## 2026-11-03 — 0.10.0-dev 项目正规化 / 文档与产品 UI 整理
+
+- README/PROJECT/AGENTS/CLAUDE/HANDOFF/CURRENT_STATE 与功能索引统一到 0.10.0-dev，明确 `main` 稳定基线和未合并 `feature/*` 候选的事实差异。
+- 建立 references/yqarch 与 references/jianren-toolbox，整理功能来源及版权边界；不上传原插件 VLX 或未经许可文件。
+- Ribbon 拆分常用工具/连接设置；Palette 顶部新增常用快捷命令，原两项图纸产品 Service 不改；关于页显示真实运行诊断与项目链接。
+- 统一 C#/MCP/Bundle/Release 的 0.10.0 版本元数据；仅开发预览，不升 Stable。
+- Windows AutoCAD/Civil 3D 2024 Build/Runtime 尚未执行；本轮不会覆盖历史证据结论。
+
+---
+
+## 2026-11-03 — YangCAD 自主功能库与快捷键面板（STATIC ONLY）
+- 按个人使用需求参考源泉/贱人工具箱的操作体验，建立自主功能库，不照搬第三方源码/资产，也不一次复刻整个插件。
+- 新增 `YGKEYS` 快捷键面板（控制中心 → 快捷键）：按当前 AutoCAD acad.pgp 写独立 YangCAD 标记区块，冲突检测/显式覆盖、原文件备份、REINIT 生效；组合键使用 CAD CUI。
+- Ribbon 创建保留原有选中 Tab，不在插件加载时主动把 YangCAD 变为默认选项卡。
+- 当前仅静态 PASS，Windows AutoCAD/Civil 3D 2024 PGP/REINIT/Ribbon 真实验证尚未进行。
+- 功能规划：`docs/FEATURE_LIBRARY_YQARCH_JRCAD_20261103.md`；实机任务：`tasks/SHORTCUT_PANEL_NATIVE_RIBBON_WINDOWS_SMOKE_20261103.md`。
+
+
+## 2026-11-03 — 图层工具 + 切割提取大样（静态候选）
+
+- Ribbon 新增 `图层工具` 和 `提取大样`，操作入口尽量简单。
+- LayerQuickService：模型/布局/本地块定义/块属性 LayerId 合并；显隐/冻结/锁定支持宿主 DWG 中的外参依赖层，但不改 Xref 源文件；当前层不可隐藏/冻结，外参依赖层不可直接合并。
+- `YGLAYER/YGLMERGE/YGLONOFF/YGLFREEZE/YGLLOCK` + 一个 WPF 小窗；隐藏或冻结的层仍可在列表中恢复；嵌套点选区分内部对象层与块/外参插入层。
+- `YGDETAIL`：矩形框+目标放置点+可选放大倍率；LINE/ARC/CIRCLE/普通 LWPOLYLINE 直线与弧段做精确裁切；复杂跨界对象及含属性/动态块/关联 Hatch 安全跳过；不删除原图对象。
+- MCP 新增 `cad.layer.merge/visibility/freeze/lock` + `cad.detail.extract`，默认 dry-run；合约 74 / 37 / 67，仅静态。
+- 旧的图片内嵌/比例转换/引线重建仍未 Windows 实机验收，不可宣称 Runtime GO。
+- 限制：当前不能运行 dotnet / Autodesk SDK；Windows 2024 build、Xref nested pick、Undo 与裁切实体 readback 待 `tasks/LAYER_TOOLS_QG_WINDOWS_SMOKE_20261103.md`。
+
 ## 2026-09-07 — CADTool / YangCAD ↔ YangTools business alignment + product MCP
 
 - Formal input locked to YangCAD 0.9 `B452D326...B599EB7` and YangTools 3.1.36 FINAL_E2E `D126F1A6...40CDBA4`; no 3.1.38 dependency.
@@ -972,3 +1008,18 @@ Windows 2024 首轮 Quick Install 报告证明：User-scope 四按钮安装、AP
 - Toolbox GUI 新增明确 runtime provenance 日志，防止 RPC 再冒充 GUI。
 - Image Embed 静态门禁提升为 31/31；MCP Product Coverage 25/25。
 - 下一步只跑 targeted retest，不重复已经可信的全部项目。
+
+## 2026-10-26 — Revit 图纸预处理简化 + 原生引线修复 V1
+- 从 `feature/reference-embed-v2-20261026` 静态候选继承；不改 Exchange `yangcad-rvt-exchange/1.0`。
+- 工具箱 Revit 详情页：一键预处理；隐藏技术详情；参数默认收起。
+- 新增 `YGLEADERFIX`、`LeaderRepairService` 和产品 MCP `cad.leader.rebuild`；明确选择已有引线/炸开连续线段及可选独立文字后，构造原生 MLeader。
+- 修复支持：旧 Leader、单条开放直线 Polyline、连通多条 Line、无内容 MLeader + Text/MText；不自动按距离配文字；无文字需明确箭头端点。
+- Fail-closed：闭合/弧段/分叉/断裂/不同空间/不支持实体/现有带内容 MLeader 不执行；新对象创建完成前不擦除旧对象。
+- MCP 真实执行若会删旧实体，必须开启 AllowErase；默认 dry-run。
+- 增量工具合同：69 stdio / AutoCAD 32 / Civil 3D 62；静态门禁通过，Windows AutoCAD 2024 构建及 GUI/撤销尚未验证；不声明 Runtime GO。
+
+## 2026-10-27 — Revit 一键预处理 / 引线重建后续静态加固
+- 已将 2026-10-26 静态候选推送至独立开发分支，不覆盖 main。
+- 独立复查 `LeaderRepairService`，新增非邻接线段自交/重叠、3D 非共面坐标保护；校正 DBText→MText 格式字符转义与 MText Attachment。
+- 新增对应静态门禁。**重要：Autodesk 2024 环境尚未编译或实机验证，仍是候选。**
+- 保留 Gemini 专项：选线+关联中文 TEXT/MTEXT、仅重建 Leader、MLeader 文字与箭头位置、一次 Ctrl+Z、Revit Export Map 输出与 YangTools Reader。

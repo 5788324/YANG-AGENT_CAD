@@ -1,50 +1,34 @@
-# Git Workflow
+# GitHub 协作与发布流程
 
-Repository：
+更新时间：2026-11-03 · Repo：`https://github.com/5788324/YANG-AGENT_CAD`
 
-`https://github.com/5788324/YANG-AGENT_CAD`
+## 分支语义
 
-## 唯一主线
+- `main`：**稳定回退基线**，不是所有已开发功能的全集。
+- `feature/*`：按用户真实需求开发；允许创建 Draft PR 供测试、审查、回滚。
+- 功能分支若基于另一个未合并 PR（当前历史已发生），必须在 PR 中显式说明父分支/依赖；合并时避免重复提交/覆盖。
+- 不用日期、聊天记录、ZIP 名称推断 HEAD。任何任务先取 `git rev-parse HEAD` / GitHub API 的 commit SHA。
 
-**`main` 是唯一开发线、唯一事实源。**
+## 日常工作
 
-用户明确：
-- 旧 YANG-AGENT_CAD 历史没有保留价值；
-- 不需要 archive/backup branch；
-- 不需要旧项目 worklog/handoff；
-- 后续所有开发只在当前 YangCAD 主线继续。
+1. 获取最新 HEAD，核对正在使用的分支和未合并 PR。
+2. 代码修改后完成静态测试，更新事实文档和版本元数据。
+3. 需要 Autodesk 的测试交 Windows 执行者：真实 Build/Deploy/Loaded + DWG 对象回读 + Undo，证据按 SHA 归档。
+4. 开 Draft PR，Windows 通过且审计通过后再 Merge/Tag；当前 `0.10.0-dev` 不是 stable。
+5. 未经重新验证，不能复制前版的 PASS 结论。
 
-## 一次性主线重置
+## 大文件
 
-TOOLBOX-001 Round 0 开始时执行：
+- 源码及文档进 GitHub；含隐私/大尺寸的 DWG、截图、binlog、运行日志进受控云盘证据目录。
+- 禁止将第三方原插件、Autodesk DLL、编译缓存、凭据提交 GitHub。`references/README.md` 描述合法资料收集流程。
 
-1. 用当前完整仓库包作为新根；
-2. 建 orphan commit；
-3. force push 到 `main`；
-4. 删除所有 archive/backup 旧分支；
-5. 从这一提交开始建立新的历史。
+## 回滚
 
-旧 Git 对象可能在 GitHub 后台 GC 前短期仍可通过旧 SHA 缓存访问，但它们不再属于任何项目 ref，也不再作为项目资产。
+- 每轮 feature commit 可回退；不要求清空整个仓库。
+- 除用户明确要求重写仓库历史外，不对正常 `main` 使用 force push。
 
-## 日常
+## 2026-11-05 0.10.0 RC1 集成例外
 
-个人项目不强制 PR。
+本轮父链 PR #4→#5→#6→#7→#8→#10 均经同一最终代码/工件链追踪；从 d5200c5 建立 `release/autocad2024-0.10.0-rc1` 的 **docs-only RC 集成 PR → main**，以防逐级合并时遗漏分支关系。不要从历史主分支 cherry-pick 重拼 DLL。完整规范见 `docs/RC_MERGE_PLAN.md`。
 
-推荐：
-- 一轮任务 = 一个或少数清晰 commit；
-- AI 开发完 → static → Windows smoke → commit；
-- 重要稳定节点打 tag；
-- 不逐文件碎提交；
-- 不 force-push 正常新主线历史，除非用户明确要求再次重置。
-
-## 禁止提交
-
-- Autodesk DLL
-- bin/obj
-- *.dll / *.pdb / *.exe
-- *.binlog
-- __pycache__ / *.pyc
-- release ZIP
-- token / secret
-- runtime logs
-- 临时测试 DWG
+在集成 PR 被审查/批准前不自行 merge，合并后才处理旧 Draft PR 的状态。AutoCAD 2024 Quick scope GO 不等于 Civil 3D/Revit native / 其他年份发布 GO。

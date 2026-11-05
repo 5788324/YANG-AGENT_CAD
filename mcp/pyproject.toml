@@ -1,6 +1,6 @@
 [project]
 name = "yangcad-mcp"
-version = "0.9.0"
+version = "0.10.0"
 description = "YangCAD Agent MCP v2 bridge for AutoCAD / Civil 3D"
 requires-python = ">=3.10"
 dependencies = ["mcp[cli]>=2.0,<3"]

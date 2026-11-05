@@ -1,0 +1,55 @@
+<Window x:Class="YangCAD.AutoCADHost.UI.ShortcutManagerWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="YangCAD · 快捷键" Width="620" Height="510" MinWidth="540" MinHeight="460"
+ WindowStartupLocation="CenterScreen"
+ Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+ <Window.Resources>
+  <ResourceDictionary>
+   <ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="Themes/Obsidian.xaml"/>
+    <ResourceDictionary Source="Themes/SharedStyles.xaml"/>
+   </ResourceDictionary.MergedDictionaries>
+  </ResourceDictionary>
+ </Window.Resources>
+ <Grid Margin="22">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="20"/><RowDefinition Height="*"/><RowDefinition Height="16"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <StackPanel>
+   <TextBlock Text="快捷键管理" Style="{StaticResource TitleText}"/>
+   <TextBlock Text="选择功能，输入命令缩写即可。CAD 原有快捷键默认不修改。" Style="{StaticResource MutedText}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+  </StackPanel>
+  <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+   <StackPanel>
+    <Border Style="{StaticResource Card}">
+     <StackPanel>
+      <TextBlock Text="选择功能" FontWeight="SemiBold"/>
+      <ComboBox x:Name="FeatureBox" SelectionChanged="FeatureChanged" Margin="0,8,0,14" Height="34"/>
+      <TextBlock Text="命令缩写" FontWeight="SemiBold"/>
+      <TextBox x:Name="AliasBox" TextChanged="AliasChanged" Height="32" Margin="0,8,0,5" MaxLength="16"/>
+      <TextBlock Text="例如 YL、YG、QG；在 CAD 命令行输入即可启动。" Style="{StaticResource MutedText}" TextWrapping="Wrap"/>
+      <TextBlock x:Name="CurrentText" Margin="0,14,0,0" FontWeight="SemiBold" Text="当前：未设置"/>
+      <TextBlock x:Name="CollisionText" Margin="0,10,0,0" TextWrapping="Wrap" Foreground="#E1A14C"/>
+      <CheckBox x:Name="OverrideBox" Content="我确认要覆盖已有的 CAD/其他插件同名快捷键" Margin="0,8,0,0" Visibility="Collapsed"/>
+      <WrapPanel Margin="0,16,0,0">
+       <Button Content="保存快捷键" Style="{StaticResource PrimaryButton}" Click="SaveClick" Margin="0,0,10,0"/>
+       <Button Content="移除本功能的快捷键" Style="{StaticResource SecondaryButton}" Click="RemoveClick"/>
+      </WrapPanel>
+     </StackPanel>
+    </Border>
+    <Border Style="{StaticResource Card}" Margin="0,10,0,0">
+     <StackPanel>
+      <TextBlock Text="Ctrl / Shift 等组合快捷键" FontWeight="SemiBold"/>
+      <TextBlock Text="这类组合键由 CAD 的 CUI 管理，不使用全局键盘监听。" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,6,0,9"/>
+      <Button Content="打开 CAD 原生快捷键设置（CUI）" Style="{StaticResource SecondaryButton}" Click="OpenCuiClick" HorizontalAlignment="Left"/>
+     </StackPanel>
+    </Border>
+   </StackPanel>
+  </ScrollViewer>
+  <Grid Grid.Row="4">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <TextBlock x:Name="StatusText" VerticalAlignment="Center" Style="{StaticResource MutedText}" Text="仅管理 YangCAD 自己的配置区块" TextWrapping="Wrap"/>
+   <Button Grid.Column="1" Content="应用到 CAD" Style="{StaticResource SecondaryButton}" Click="ReloadClick" Margin="0,0,10,0"/>
+   <Button Grid.Column="2" Content="关闭" Style="{StaticResource PrimaryButton}" Click="CloseClick"/>
+  </Grid>
+ </Grid>
+</Window>

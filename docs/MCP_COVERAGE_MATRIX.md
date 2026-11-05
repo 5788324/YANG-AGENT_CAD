@@ -1,6 +1,6 @@
 # MCP_COVERAGE_MATRIX
 
-更新时间：2026-09-07  
+更新时间：2026-10-26  
 范围：YangCAD 0.9 CADTool ↔ YangTools 业务对齐候选。**每个公开 MCP Tool / 真实业务动作一行。**
 
 > `PASS` 仅表示源码/静态产品契约已实现并被本候选静态门禁覆盖；不等于 Windows Runtime PASS。真实 AutoCAD/Civil/GUI↔MCP/E2E 证据另行验收。
@@ -24,6 +24,12 @@
 | Revit 图纸预处理。GUI/MCP 共用 RevitExchangeService；默认 dry_run，real 输出 RVT DWG/MAP/REPORT。 | 工具箱 → Revit 图纸预处理 | `RevitExchangeService` | `project.revit.prepare` | Write | 是 | `success/map_path/report_path/scanned_entities/classified_entities/unsupported_count/warnings` | PASS |
 | 批量图片内嵌。GUI/MCP 共用 ImageEmbedBatchService；默认 dry_run，real 启动独立 AutoCAD worker。 | 工具箱 → 批量图片内嵌 | `ImageEmbedBatchService` | `project.image.embed` | Write | 是 | `success/job_id/status_path/output_folder/file_count/warnings` | PASS |
 | 图纸比例转换。Ribbon/MCP 共用 ScaleConversionService；支持标准 1:1 与缩尺绘图两种模式，默认 dry_run。 | Ribbon → 比例转换（YGSCALE） | `ScaleConversionService` | `cad.scale.convert` | Write | 是 | `mode/old_scale/new_scale/geometry_factor/annotation_factor/processed/skipped/failed/issues/undo_semantics` | PASS |
+| 把炸开的连续 LINE/开放 Polyline 或旧式 Leader 转为原生 MLeader，可显式关联 TEXT/MTEXT，不自动猜关联。 | 工具箱 → Revit 图纸预处理 → 修复引线 / 关联文字（YGLEADERFIX） | `LeaderRepairService` | `cad.leader.rebuild` | Write | 是 | `source_handles/text_handle/new_mleader_handle/removed_handles/vertex_count/text_associated/warning` | PASS |
+| 图层合并：本地图元（包括模型、布局和普通块定义内部）从来源图层迁移到目标，外参定义不修改。 | Ribbon → 图层工具 / YGLMERGE | `LayerQuickService` | `cad.layer.merge` | Write | 是 | source_layer/target_layer/moved/skipped | STATIC PASS / RUNTIME PENDING |
+| 图层显隐：可在本文件中控制普通层和外参依赖层。 | Ribbon → 图层工具 / YGLONOFF | `LayerQuickService` | `cad.layer.visibility` | Write | 是 | layer/off | STATIC PASS / RUNTIME PENDING |
+| 图层冻结与解冻：可控制块插入层或外参依赖层。 | Ribbon → 图层工具 / YGLFREEZE | `LayerQuickService` | `cad.layer.freeze` | Write | 是 | layer/frozen | STATIC PASS / RUNTIME PENDING |
+| 图层锁定与解锁：不修改外部 DWG 源文件。 | Ribbon → 图层工具 / YGLLOCK | `LayerQuickService` | `cad.layer.lock` | Write | 是 | layer/locked | STATIC PASS / RUNTIME PENDING |
+| 切割提取矩形大样：直线/圆弧/圆/多段线精确裁切，原图保留；块与填充跨界安全跳过。 | Ribbon → 提取大样 / YGDETAIL | `DetailExtractService` | `cad.detail.extract` | Write | 是 | source_candidates/copied_entities/clipped_sources/skipped_sources | STATIC PASS / RUNTIME PENDING |
 | 创建 Line。默认 dry_run；real 前先读取当前 DWG 建立绑定。 | 无（MCP 产品/高级入口） | `Mcp/Tools/CadCreateTools` | `cad.line.create` | Write | 是 | 结构化 JSON/dict | PASS |
 | 创建 2D lightweight Polyline；顶点必须共面同 Z。默认 dry_run。 | 无（MCP 产品/高级入口） | `Mcp/Tools/CadCreateTools` | `cad.polyline.create` | Write | 是 | 结构化 JSON/dict | PASS |
 | 创建 DBText/MText。默认 dry_run。 | 无（MCP 产品/高级入口） | `Mcp/Tools/CadCreateTools` | `cad.text.create` | Write | 是 | 结构化 JSON/dict | PASS |
@@ -78,10 +84,10 @@
 
 ## 合同统计
 
-- MCP stdio：**68** 个公开 Tool。
-- AutoCAD live Gateway：**31** 个 Tool。
-- Civil 3D live Gateway：**61** 个 Tool。
-- Toolbox 可见业务功能：**2** 个；另有 Ribbon 生产功能 **比例转换**。三项正式 GUI 业务均有产品 MCP Tool，并共享 Business Service。
+- MCP stdio：**74** 个公开 Tool。
+- AutoCAD live Gateway：**37** 个 Tool。
+- Civil 3D live Gateway：**67** 个 Tool。
+- Toolbox 可见业务功能：**2** 个；另有 Ribbon 生产功能 **比例转换 / 图层工具 / 切割提取大样**。新增功能均有专用 MCP Tool 并共享 Business Service。
 
 ## 覆盖规则
 
@@ -92,3 +98,5 @@
 - `project.revit.prepare` 与 `project.image.embed` 是当前两项可见 Toolbox 业务，因此必须同时通过 GUI 路径、MCP 产品路径、结构化结果读回和 GUI↔MCP 对账。
 
 - `cad.scale.convert`：标准模式保持 1:1 几何不变并调整注释显示尺度；缩尺绘图模式按 old/new 缩放几何并恢复纸面表现。
+
+**当前增量合约（2026-11-03）**：stdio **74** / AutoCAD live **37** / Civil 3D live **67**；均待 Windows 实机确认。

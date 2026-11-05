@@ -1,0 +1,42 @@
+<Window x:Class="YangCAD.AutoCADHost.UI.LayerQuickWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="图层工具 · YangCAD" Width="450" Height="450" MinWidth="400" MinHeight="390"
+ WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip"
+ Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource TextPrimaryBrush}">
+ <Window.Resources>
+  <ResourceDictionary>
+   <ResourceDictionary.MergedDictionaries>
+    <ResourceDictionary Source="Themes/Obsidian.xaml"/>
+    <ResourceDictionary Source="Themes/SharedStyles.xaml"/>
+   </ResourceDictionary.MergedDictionaries>
+  </ResourceDictionary>
+ </Window.Resources>
+ <Grid Margin="18">
+  <Grid.RowDefinitions>
+   <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+   <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+  </Grid.RowDefinitions>
+  <TextBlock Text="图层工具" Style="{DynamicResource SectionTitle}"/>
+  <TextBlock Grid.Row="1" Margin="0,8,0,14" Text="选一个图层，点一下操作。也可以回到图中点选块或外参。" TextWrapping="Wrap" Style="{DynamicResource MutedText}"/>
+  <Grid Grid.Row="2">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+   <ComboBox x:Name="SourceLayer" MinHeight="34" IsEditable="True" IsTextSearchEnabled="True" Style="{DynamicResource ParameterComboBox}" SelectionChanged="LayerChanged"/>
+   <Button Grid.Column="1" Margin="8,0,0,0" Content="图中选取" Style="{DynamicResource SecondaryButton}" Click="PickClick"/>
+  </Grid>
+  <TextBlock Grid.Row="3" x:Name="LayerStatus" Margin="0,10,0,16" Style="{DynamicResource MutedText}" TextWrapping="Wrap"/>
+  <Grid Grid.Row="4">
+   <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="9"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="9"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+   <Button x:Name="VisibilityButton" Grid.Row="0" Grid.Column="0" Content="关闭图层" Style="{DynamicResource PrimaryButton}" Click="VisibilityClick"/>
+   <Button x:Name="FreezeButton" Grid.Row="0" Grid.Column="2" Content="冻结图层" Style="{DynamicResource PrimaryButton}" Click="FreezeClick"/>
+   <Button x:Name="LockButton" Grid.Row="2" Grid.Column="0" Content="锁定图层" Style="{DynamicResource PrimaryButton}" Click="LockClick"/>
+   <Button Grid.Row="2" Grid.Column="2" Content="合并到其他图层" Style="{DynamicResource SecondaryButton}" Click="MergeClick"/>
+  </Grid>
+  <StackPanel Grid.Row="5" Margin="0,18,0,0">
+   <TextBlock Text="合并目标图层" Style="{DynamicResource LabelText}"/>
+   <ComboBox x:Name="TargetLayer" Margin="0,7,0,10" MinHeight="34" IsEditable="True" IsTextSearchEnabled="True" Style="{DynamicResource ParameterComboBox}"/>
+   <TextBlock Text="合并会移动模型、布局和本地块定义中的对象；外参源文件不会被修改。操作可用 Ctrl+Z 撤销。" TextWrapping="Wrap" Style="{DynamicResource MutedText}"/>
+  </StackPanel>
+ </Grid>
+</Window>

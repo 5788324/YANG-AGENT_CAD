@@ -1,0 +1,44 @@
+name: YangCAD 静态验证
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+      - 'release/**'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: yangcad-static-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-policy:
+    name: Python / Source / Contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact commit
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Verify source manifest (hashes)
+        run: python tools/verify_source_manifest.py --complete
+      - name: Run all repository static tests
+        run: python tools/run_static_checks.py --output artifacts/ci-static-report.json
+      - name: Upload static diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yangcad-static-${{ github.run_id }}
+          path: artifacts/ci-static-report.json
+          if-no-files-found: warn
+          retention-days: 14

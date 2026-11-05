@@ -1,4 +1,4 @@
-param(
+﻿param(
   [Parameter(Mandatory=$true)][ValidateSet(2021,2022,2023,2024,2025,2026,2027)][int[]]$Years,
   [ValidateSet('Debug','Release')][string]$Configuration='Release',
   [ValidateSet('Quick','Signed')][string]$Mode='Quick',
@@ -20,7 +20,7 @@ $bundle=Join-Path $root 'artifacts\YangCADAgent.bundle'
 $setupExe=Join-Path $root 'artifacts\bin\Setup\YangCADAgent_Setup.exe'
 if(-not(Test-Path $setupExe)){throw "缺少 Setup 构建产物：$setupExe"}
 
-$releaseDir=Join-Path $root 'artifacts\release\YangCADAgent_0.9.0_release'
+$releaseDir=Join-Path $root 'artifacts\release\YangCADAgent_0.10.0_release'
 if(Test-Path $releaseDir){Remove-Item $releaseDir -Recurse -Force}
 New-Item -ItemType Directory -Force -Path $releaseDir|Out-Null
 Copy-Item $bundle (Join-Path $releaseDir 'YangCADAgent.bundle') -Recurse -Force
@@ -58,9 +58,9 @@ Get-ChildItem $releaseDir -Recurse -File | Where-Object {$_.Name -ne 'release-ma
 $manifest=@{
   schema=3
   product='YangCAD Agent'
-  version='0.9.0'
+  version='0.10.0'
   years=$years
-  contract=@{stdio=68;plain=31;civil=61}
+  contract=@{stdio=74;plain=37;civil=67}
   installer=@{
     file='YangCADAgent_Setup.exe';scope_default='User';requires_admin=$false;ui_language='zh-CN';
     mode=$installerMode;trust_strategy=$trustStrategy;secureload_change=$false
@@ -72,7 +72,7 @@ $manifest=@{
 $manifest | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $releaseDir 'release-manifest.json') -Encoding UTF8
 & (Join-Path $releaseDir 'Verify-Release.ps1') -PackageRoot $releaseDir
 
-$zip=Join-Path $root 'artifacts\release\YangCADAgent_0.9.0_release.zip'
+$zip=Join-Path $root 'artifacts\release\YangCADAgent_0.10.0_release.zip'
 if(Test-Path $zip){Remove-Item $zip -Force}
 Compress-Archive -Path (Join-Path $releaseDir '*') -DestinationPath $zip -CompressionLevel Optimal
 $sha=(Get-FileHash $zip -Algorithm SHA256).Hash

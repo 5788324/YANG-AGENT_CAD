@@ -15,7 +15,19 @@
   <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
   <StackPanel>
    <TextBlock Text="YangCAD 工具箱" Style="{StaticResource TitleText}"/>
-   <TextBlock Text="当前仅保留两个生产功能" Style="{StaticResource MutedText}" Margin="0,3,0,0"/>
+   <TextBlock Text="高频工具随手用 · 图纸处理一键完成" Style="{StaticResource MutedText}" Margin="0,3,0,0"/>
+   <Border Style="{StaticResource Card}" Margin="0,10,0,0" Padding="10,8">
+    <StackPanel>
+     <TextBlock Text="常用操作" FontWeight="SemiBold" Margin="0,0,0,6"/>
+     <WrapPanel>
+      <Button Content="图层管理" Tag="YGLAYER" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
+      <Button Content="提取大样" Tag="YGDETAIL" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
+      <Button Content="比例转换" Tag="YGSCALE" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
+      <Button Content="引线修复" Tag="YGLEADERFIX" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
+      <Button Content="快捷键" Tag="YGKEYS" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,0,6"/>
+     </WrapPanel>
+    </StackPanel>
+   </Border>
   </StackPanel>
 
   <Grid Grid.Row="2">
@@ -53,19 +65,32 @@
         <Border Grid.Column="1" Style="{StaticResource StatusPill}" VerticalAlignment="Top"><TextBlock x:Name="DetailStatusText" FontSize="11"/></Border>
        </Grid>
        <TextBlock x:Name="DetailDescriptionText" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,10,0,0"/>
-       <TextBlock x:Name="AvailabilityText" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,8,0,0"/>
+       <TextBlock x:Name="AvailabilityText" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,8,0,0" Visibility="Collapsed"/>
        <Separator Margin="0,14,0,14"/>
-       <TextBlock Text="参数" Style="{StaticResource SectionTitle}" Margin="0,0,0,10"/>
-       <local:ToolboxParameterPanel x:Name="ParameterPanel"/>
-       <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-        <Button x:Name="PreviewButton" Content="预览" Click="PreviewSelectedTool" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Visibility="Collapsed"/>
-        <Button x:Name="ExecuteButton" Content="执行" Click="ExecuteSelectedTool" Style="{StaticResource PrimaryButton}"/>
+       <StackPanel x:Name="RevitQuickActions" Visibility="Collapsed" Margin="0,0,0,14">
+        <Button Content="一键预处理当前图纸" Click="QuickRevitPrepareClick" Style="{StaticResource PrimaryButton}" Margin="0,0,0,10"/>
+        <TextBlock Text="引线与文字分开了？" Style="{StaticResource MutedText}" Margin="0,0,0,6"/>
+        <Button Content="修复引线 / 关联文字" Click="QuickLeaderRepairClick" Style="{StaticResource SecondaryButton}"/>
        </StackPanel>
+       <StackPanel x:Name="ImageQuickActions" Visibility="Collapsed" Margin="0,0,0,12">
+        <TextBlock Text="快速操作 · 原文件不覆盖，输出到 *_Embedded" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+        <Button Content="当前图纸一键内嵌" Click="QuickEmbedCurrentClick" Style="{StaticResource PrimaryButton}" Margin="0,0,0,8"/>
+        <Button Content="选择文件夹 · 批量内嵌" Click="QuickEmbedFolderClick" Style="{StaticResource SecondaryButton}"/>
+       </StackPanel>
+       <Expander Header="高级设置" IsExpanded="False" Margin="0,0,0,8">
+        <StackPanel Margin="0,8,0,0">
+         <local:ToolboxParameterPanel x:Name="ParameterPanel"/>
+         <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+          <Button x:Name="PreviewButton" Content="预览" Click="PreviewSelectedTool" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Visibility="Collapsed"/>
+          <Button x:Name="ExecuteButton" Content="按高级设置执行" Click="ExecuteSelectedTool" Style="{StaticResource PrimaryButton}"/>
+         </StackPanel>
+        </StackPanel>
+       </Expander>
       </StackPanel>
      </Border>
      <Border x:Name="ResultBorder" Style="{StaticResource AccentCard}" Visibility="Collapsed" Margin="0,10,0,0">
       <StackPanel>
-       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="ResultTitleText" FontWeight="SemiBold"/><Button Grid.Column="1" x:Name="CopyResultButton" Content="复制结果" Click="CopyResultClick" Style="{StaticResource SecondaryButton}" Padding="10,5"/></Grid>
+       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="ResultTitleText" FontWeight="SemiBold"/><StackPanel Grid.Column="1" Orientation="Horizontal"><Button x:Name="OpenEmbedOutputButton" Content="打开输出目录" Click="OpenEmbedOutputClick" Style="{StaticResource SecondaryButton}" Padding="10,5" Visibility="Collapsed" Margin="0,0,8,0"/><Button x:Name="CopyResultButton" Content="复制结果" Click="CopyResultClick" Style="{StaticResource SecondaryButton}" Padding="10,5"/></StackPanel></Grid>
        <TextBox x:Name="ResultText" TextWrapping="Wrap" Style="{StaticResource ResultTextBox}" Margin="0,8,0,0" MaxHeight="280" VerticalScrollBarVisibility="Auto"/>
       </StackPanel>
      </Border>
@@ -73,6 +98,6 @@
    </ScrollViewer>
   </Grid>
 
-  <Border Grid.Row="3" Style="{StaticResource AccentCard}" Margin="0,12,0,0"><TextBlock Text="Revit 图纸预处理已可用；批量图片内嵌仍需 AutoCAD 2024 Windows Smoke 完成最终 OLE 验收。" Style="{StaticResource MutedText}" TextWrapping="Wrap"/></Border>
+  <Border Grid.Row="3" Style="{StaticResource AccentCard}" Margin="0,12,0,0"><TextBlock Text="默认保留原图；转换详情可在执行结果中查看。" Style="{StaticResource MutedText}" TextWrapping="Wrap"/></Border>
  </Grid>
 </UserControl>

@@ -1,52 +1,23 @@
-# CURRENT TASK
+# 当前任务 — YangCAD 0.10.0 RC1 集成审查（2026-11-05）
 
-更新时间：2026-09-07
+## 唯一范围
 
-## Formal stable baseline
+将 PR #4–#10 的已验收代码由一个 **docs-only RC 集成分支**向 `main` 发起 Draft PR。实际运行内容继承受测 `b6ff137` + Release 修复 `d5200c5`，不重新编译 DLL、不扩展 Civil/Revit/其他年份的 GO。
 
-- YangCAD: `YangCAD_0.9_RVT_EXCHANGE_YANGTOOLS_3136_ALIGN_STATIC_20260901.zip`
-- SHA-256: `B452D326510DE664094A7B0C7170D4F07C88DAD9B59503D077DC008A3B599EB7`
-- YangTools Reader baseline: 3.1.36 FINAL_E2E / `D126F1A65F0DD4A74A1F97AD6F1CD3302309F77212E30BD7752666DE740CDBA4`
-- Exchange schema: `yangcad-rvt-exchange/1.0`（不升级）
+## 本轮 DoD
 
-## Current candidate
+- [x] 已完成 G5 AutoCAD 2024 指定范围审查：`https://github.com/5788324/YANG-AGENT_CAD/issues/9#issuecomment-6646760886`。
+- [x] Release Contract 74/37/67、19/19 SHA、PS5.1 正向/负向证据核验。
+- [x] RC 源码基点为 `d5200c57a75b1fd228713dc67b606126a5c04924`；不重新实现 PR #4–#10 的代码。
+- [x] GitHub 建立 `release/autocad2024-0.10.0-rc1` 和 [Draft 集成 PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) → `main`，完整 PR 107 个变更文件、无冲突。
+- [x] GitHub CI [41948088165](https://github.com/5788324/YANG-AGENT_CAD/actions/runs/41948088165) SUCCESS；SHA manifest 267/267；RC 与 d520 **Runtime 源码 0 差异**。
+- [ ] 等待对 PR #11 的合并决定；未获新明确指令前不合并 `main`、不打跨宿主 stable 标签。
+- [ ] 在集成完成后逐项整理堆叠 PR，避免重复合并/重复发布。
 
-### YANGCAD-0.9-SCALE-CONVERTER-MCP-ALIGN-20260907
+## 源码及交接
 
-当前候选在正式 YangCAD 0.9 基线上合并两组尚未实机封版的增量：
+文档：`docs/RC_AUTOCAD2024_0.10.0.md`、`docs/RC_MERGE_PLAN.md`、`docs/CURRENT_STATE.md`、`docs/AI_START_HERE.md`、`docs/RUNTIME_TEST_MATRIX.md`。CI：`python tools/verify_source_manifest.py --complete` / `python tools/run_static_checks.py`。
 
-1. CADTool ↔ YangTools 业务对齐：
-   - `project.revit.prepare` / `project.image.embed` 增加产品级 MCP；
-   - GUI/MCP 共用 Request/Service/Result；
-   - Exchange 1.0 保留 `DxfType`、LWPOLYLINE `point+bulge`、MLeader/Hatch/Dimension 语义；
-   - controlled 11-object contract fixture。
-2. 急用 `图纸比例转换 / YGSCALE / cad.scale.convert`：
-   - `standard_1to1`：真实几何不变，注释倍率 `New/Old`；
-   - `scaled_drawing`：几何倍率 `Old/New`，纸面文字/标注/引线/Hatch/线型尽量保持；
-   - Annotative/Xref/Underlay/Civil/AEC/Proxy fail-closed。
+## NOT_TESTED / NOT_IMPLEMENTED
 
-当前 additive MCP contract：
-
-- stdio: **68**
-- AutoCAD live: **31**
-- Civil 3D live: **61**
-
-状态：`IMPLEMENTED / STATIC PASS / WINDOWS BUILD+RUNTIME REQUIRED`。
-
-## Windows execution order
-
-1. clean build / deploy / loaded SHA；
-2. YGSCALE `1:5 → 1:10` 与 `1:10 → 1:5`；
-3. standard_1to1 几何不变 / annotation scale；
-4. 一次 Ctrl+Z 完整恢复；
-5. `cad.scale.convert` dry-run + real；
-6. MCP 68/31/61 对账；
-7. MCP self-heal；
-8. Image Embed OLE；
-9. Revit Exchange GUI↔MCP + YangTools Reader 11/11 E2E。
-
-Windows 任务：
-- `tasks/SCALE_CONVERTER_V1_WINDOWS_SMOKE_20260907.md`
-- `tasks/CADTOOL_YANGTOOLS_ALIGNMENT_20260907_WINDOWS_E2E.md`
-
-Gemini 只负责执行并回传原始证据，不能自行宣布 FINAL GO。
+Civil 3D live 67 / Revit Native E2E / 其他 AutoCAD 年份均 **NOT_TESTED_CURRENT_RC**。未实现：任意闭合多段线提取、跨界复杂对象可选裁切、删除边界外、直线 Z 折断线。

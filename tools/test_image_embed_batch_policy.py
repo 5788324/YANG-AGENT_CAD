@@ -13,7 +13,7 @@ checks = []
 def ok(name, cond): checks.append((name, bool(cond)))
 
 segment = REGISTRY[REGISTRY.find('Id = "project.image.embed"'):]
-ok("single image embed toolbox tool", 'Id = "project.image.embed"' in REGISTRY and 'Name = "批量图片内嵌"' in REGISTRY)
+ok("single image embed toolbox tool", 'Id = "project.image.embed"' in REGISTRY and 'Name = "引用内嵌（当前图纸 / 批量）"' in REGISTRY)
 ok("tool is preview batch output-copy", 'IsWrite = true' in segment and 'SupportsDryRun = true' in segment and 'SupportsBatch = true' in segment)
 ok("tool has product MCP coverage", 'SupportsMcp = true' in segment and 'project.image.embed' in (ROOT/'mcp/yangcad_mcp/server.py').read_text(encoding='utf-8-sig'))
 ok("service exposes stable shared Request/Result", 'public sealed class Request' in SERVICE and 'public sealed class Result' in SERVICE and 'public static Result Preview' in SERVICE and 'public static Result Start' in SERVICE)
@@ -34,7 +34,7 @@ ok("new ole is identified by delta and stray delta is cleaned", "Get-CollectionH
 ok("source raster deletes only after new ole normalized", '$ole.Width' in WORKER and '$ole.Height' in WORKER and '$ole.Rotation' in WORKER and '$raster.Delete()' in WORKER)
 ok("unsafe raster visuals are refused", all(x in WORKER for x in ['clipped_image_not_supported_v1','visual_adjustments_not_supported_v1','raster_transparency_not_supported_v1']))
 ok("nested block raster is not falsely claimed embedded", 'nestedRasterCount' in WORKER and 'nested block image(s) are unsupported' in WORKER)
-ok("drawings without raster images are skipped without output copy", "no_top_level_raster_images" in WORKER and "$rasters.Count -eq 0 -and $snapshotFailures.Count -eq 0 -and $nestedRasterCount -eq 0" in WORKER)
+ok("drawings without convertible references are skipped without output copy", "no_convertible_references" in WORKER and "$rasters.Count -eq 0 -and $snapshotFailures.Count -eq 0" in WORKER)
 ok("xref presence is reported separately", "xrefBlockCount" in WORKER and "xref_block_count" in WORKER)
 ok("require all images discards partial dwg", 'Image embedding incomplete' in WORKER and 'Remove-Item -LiteralPath $workPath' in WORKER)
 ok("release bundle packages worker", 'Contents\\ImageEmbed' in PACKAGE and 'Start-YangCAD-ImageEmbed.ps1' in PACKAGE)

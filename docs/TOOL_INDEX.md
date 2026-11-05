@@ -1,3 +1,13 @@
+# 当前功能索引说明（2026-11-03）
+
+**用户可见的最新工具/状态**：`docs/FEATURE_CATALOG.md`。
+
+**完整 MCP Tool 与业务对照**：`docs/MCP_COVERAGE_MATRIX.md`。
+
+本页下面是历史工具明细，保留旧阶段背景。旧的 68/31/61 等历史数字**不得**当作当前版本事实；当前开发树预期为 **74/37/67**，待 Windows 真机验收。
+
+---
+
 > **2026-09-07 急用功能：图纸比例转换 V1（STATIC DEVELOPMENT）**：新增 Ribbon `比例转换` / 命令 `YGSCALE` / MCP `cad.scale.convert`。支持 `standard_1to1`（真实 1:1，几何不变、注释倍率 New/Old）与 `scaled_drawing`（非 1:1，几何倍率 Old/New、纸面注释恢复）两种模式。第一版对 Annotative/Xref/Underlay/Civil/AEC/Proxy 安全跳过；标准模式普通块因无法判定几何块/注释块而先跳过。当前 MCP additive contract 变为 stdio **68** / AutoCAD **31** / Civil 3D **61**。尚未 Windows Build/Runtime/Undo 实机证明。
 
 > **2026-09-07 CADTool ↔ YangTools 业务对齐**：`project.revit.prepare` 与 `project.image.embed` 已补产品级 MCP Adapter，GUI/MCP 共用业务 Service/Request/Result；当前静态合同调整为 stdio **67** / AutoCAD live **30** / Civil 3D live **60**。Exchange 继续锁定 `yangcad-rvt-exchange/1.0`，`LWPOLYLINE vertices[].point + bulge` 不回退。Windows Build/Runtime/真实 11/11 E2E 尚需独立验收。

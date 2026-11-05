@@ -4,10 +4,10 @@ ROOT=Path(__file__).resolve().parents[1]
 errors=[]
 def text(rel): return (ROOT/rel).read_text(encoding='utf-8-sig')
 checks={
- 'Directory.Build.props':'<Version>0.9.0</Version>',
- 'mcp/pyproject.toml':'version = "0.9.0"',
- 'mcp/yangcad_mcp/__init__.py':'__version__ = "0.9.0"',
- 'bundle/PackageContents.template.xml':'AppVersion="0.9.0"',
+ 'Directory.Build.props':'<Version>0.10.0</Version>',
+ 'mcp/pyproject.toml':'version = "0.10.0"',
+ 'mcp/yangcad_mcp/__init__.py':'__version__ = "0.10.0"',
+ 'bundle/PackageContents.template.xml':'AppVersion="0.10.0"',
 }
 for rel,needle in checks.items():
     if needle not in text(rel): errors.append(f'version mismatch: {rel}')
@@ -29,7 +29,7 @@ for y,s in {2021:'R24.0',2022:'R24.1',2023:'R24.2',2024:'R24.3',2025:'R25.0',202
     if f'{y}="{s}"' not in pb: errors.append(f'missing series mapping {y}->{s}')
 
 vs=text('STATIC_VALIDATION.txt') if (ROOT/'STATIC_VALIDATION.txt').exists() else ''
-if 'tools=68' not in vs: errors.append('current product contract tools=68 missing')
+if 'tools=74' not in vs: errors.append('current product contract tools=74 missing')
 
 for rel in ['src/YangCAD.AutoCAD/YangCAD.AutoCAD.csproj','src/YangCAD.Civil3D/YangCAD.Civil3D.csproj','src/YangCAD.BatchWorker/YangCAD.BatchWorker.csproj']:
     s=text(rel)
@@ -59,6 +59,18 @@ for forbidden in ['SECURELOAD=0','SECURELOAD", 0','requestedExecutionLevel level
         errors.append(f'setup must not weaken security/elevate: {forbidden}')
 
 package=text('tools/Package-Release.ps1')
+# A stale release manifest must fail G1 before a Windows package is generated.
+if 'contract=@{stdio=74;plain=37;civil=67}' not in package:
+    errors.append('release package MCP contract must be current 74/37/67')
+release_verify=text('tools/Verify-Release.ps1')
+for token in [
+    '$expectedContract=@{stdio=74;plain=37;civil=67}',
+    '$serverToolMatches=[regex]::Matches',
+    '$serverToolMatches.Count -ne [int]$m.contract.stdio',
+    '$uniqueServerToolNames.Count -ne $serverToolNames.Count',
+]:
+    if token not in release_verify:
+        errors.append('release verifier MCP contract/packaged runtime guard missing: '+token)
 for needle in [
     'Build-Setup.ps1','YangCADAgent_Setup.exe',"[ValidateSet('Quick','Signed')]", "[string]$Mode='Quick'",
     "mode='unsigned-quick'","installerMode='quick-trusted-path'", "trustStrategy='user-profile-trustedpaths+appautoload'",
