@@ -23,7 +23,7 @@ namespace YangCAD.AutoCADHost.Commands
         [CommandMethod("YGDETAIL", CommandFlags.Modal)]
         public void ExtractDetail()
         {
-            var doc = Application.DocumentManager.MdiActiveDocument;
+            var doc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
             if (doc == null) return;
             var ed = doc.Editor;
             try
@@ -121,7 +121,7 @@ namespace YangCAD.AutoCADHost.Commands
             foreach (var warning in result.warnings) ed.WriteMessage("  - " + warning + "\n");
         }
 
-        private static PolygonInput SelectBoundary(Document doc)
+        private static PolygonInput? SelectBoundary(Document doc)
         {
             var ed = doc.Editor;
             var opts = new PromptEntityOptions("\n选择已闭合的二维多段线（仅直线边界）：");
@@ -154,7 +154,7 @@ namespace YangCAD.AutoCADHost.Commands
             });
         }
 
-        private static PolygonInput DrawBoundary(Editor ed)
+        private static PolygonInput? DrawBoundary(Editor ed)
         {
             ed.WriteMessage("\n[YangCAD] 逐点指定闭合直边区域，至少三点，回车结束；不会在原位置绘制边界。\n");
             var first = ed.GetPoint("\n第一个顶点：");
