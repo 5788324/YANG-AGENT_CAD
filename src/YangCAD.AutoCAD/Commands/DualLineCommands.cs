@@ -58,6 +58,13 @@ namespace YangCAD.AutoCADHost.Commands
             var ed = doc.Editor;
             try
             {
+                // GetPoint returns WCS. V1 creates WCS XY polylines only.
+                // Reject tilted UCS instead of silently projecting cursor points.
+                var ucsNormal = Vector3d.ZAxis.TransformBy(ed.CurrentUserCoordinateSystem);
+                if (ucsNormal.Length < 1e-8 ||
+                    Math.Abs(ucsNormal.GetNormal().DotProduct(Vector3d.ZAxis)) < 0.999999)
+                    throw new NotSupportedException(
+                        "当前 UCS 与世界 XY 平面不平行。YGDL V1 为防止错位已取消；请先切换到水平 UCS。");
                 var settings = UserSettings.Load();
                 var multiplier = DualLineService.MillimetersPerDrawingUnit(doc.Database);
                 if (Convert.ToInt32(doc.Database.Insunits) == 0)
@@ -148,6 +155,12 @@ namespace YangCAD.AutoCADHost.Commands
                         var result = CadTransactionRunner.WriteContext(doc, false,
                             ctx => DualLineService.Draw(ctx, req));
                         total++;
+                        try { ed.Regen(); } // refresh after commit, not cursor-time preview
+                        catch (System.Exception regenEx)
+                        {
+                            RuntimeLogger.Error("YGDL display regeneration failed.", regenEx);
+                            ed.WriteMessage("\n[YGDL] 已创建图元，但视图刷新失败；可手动 REGEN。\n");
+                        }
                         ed.WriteMessage("\n[YGDL] 完成 " + total +
                             " 组，宽度 " + width.Value.ToString("0.###") +
                             " mm；图元为原生可编辑对象，后续可用 YGDLW 对称修改。\n");
@@ -236,6 +249,12 @@ namespace YangCAD.AutoCADHost.Commands
                     result = CadTransactionRunner.WriteContext(doc, false,
                         ctx => DualLineService.ChangeLegacyLinePair(
                             ctx, first.ObjectId, secondId, newWidth));
+                try { ed.Regen(); }
+                catch (System.Exception regenEx)
+                {
+                    RuntimeLogger.Error("YGDLW display regeneration failed.", regenEx);
+                    ed.WriteMessage("\n[YGDLW] 已完成修改，但视图刷新失败；可手动 REGEN。\n");
+                }
                 settings.DoubleLineWidthMm = updated.Value;
                 try { settings.Save(); }
                 catch (System.Exception saveEx)

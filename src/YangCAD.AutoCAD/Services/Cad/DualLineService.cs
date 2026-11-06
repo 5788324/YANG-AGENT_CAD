@@ -433,6 +433,10 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var tr = ctx.Transaction;
             var space = (BlockTableRecord)tr.GetObject(ctx.Database.CurrentSpaceId, OpenMode.ForWrite);
             if (!space.IsLayout) throw new InvalidOperationException("仅支持当前模型或布局空间。");
+            var currentLayer = (LayerTableRecord)tr.GetObject(ctx.Database.Clayer, OpenMode.ForRead);
+            if (currentLayer.IsLocked || currentLayer.IsFrozen || currentLayer.IsOff)
+                throw new InvalidOperationException(
+                    "当前图层已锁定、冻结或关闭；为避免生成不可见双线，本次操作已取消。");
             EnsureRegApp(ctx);
             var sides = BuildSides(centerPath, request.Width, request.Elevation);
             var group = Guid.NewGuid().ToString("N");

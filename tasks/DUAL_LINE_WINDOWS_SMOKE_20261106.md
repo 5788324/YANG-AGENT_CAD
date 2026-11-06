@@ -21,3 +21,10 @@
 Provide at least: 3 DWG fixture before/after/undo, zoomed screenshots, exact object-level before/after/undo JSON, AutoCAD real command logs and any test driver .cs/scripts, Build binlog exit code and loaded DLL path/PID/SHA.
 Label each PASS/FAIL/BLOCKED/NOT_TESTED; do not substitute Transaction.Abort for _.U. Keep PR Draft; do not merge.
 READY_FOR_CHATGPT_REVIEW — git=<40-hex> — BUILD=<...> LOADED=<...> NATIVE_UNDO=<...> evidence=<url>
+
+## UCS, current layer, view and command collision
+- Test WCS and rotated/origin-shifted UCS 30/90 degrees: inspect WCS coordinate readback for exact placement.
+- Test tilted UCS: command must reject before writing any entity, with explicit Chinese error, instead of flattening points.
+- Test current off/locked/frozen layer: no new objects and explicit failure; visible writeable layer creates objects in correct CurrentSpaceId.
+- Confirm that one completed YGDL group and one YGDLW width edit trigger screen refresh; dynamic vertex preview is NOT_IMPLEMENTED, do not claim it as PASS.
+- Do not load the uploaded LISP c:YGDL and the .NET YGDL in one AutoCAD process. Isolate them or rename one for comparative tests.

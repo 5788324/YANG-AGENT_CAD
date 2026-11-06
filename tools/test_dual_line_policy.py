@@ -20,6 +20,14 @@ check("persist existing shared settings", "settings.Save();" in cmd and "setting
 check("mm conversion", "MillimetersPerDrawingUnit" in src and "db.Insunits" in src and "case 6: return 1000" in src)
 check("reject unsupported drawing units", "当前 INSUNITS 不是受支持" in src)
 check("WCS Z elevation", "Elevation = first.Value.Z" in cmd and "drawable.Elevation = record.Elevation" in src)
+check("tilted UCS explicitly rejected", "ed.CurrentUserCoordinateSystem" in cmd
+      and "ucsNormal.GetNormal().DotProduct(Vector3d.ZAxis)" in cmd
+      and "当前 UCS 与世界 XY 平面不平行" in cmd)
+check("invisible/locked current layer rejected before append",
+      "ctx.Database.Clayer" in src and "currentLayer.IsLocked" in src
+      and "currentLayer.IsFrozen" in src and "currentLayer.IsOff" in src)
+check("refresh after committed draw and edit", cmd.count("ed.Regen();") == 2
+      and "CadTransactionRunner.WriteContext(doc, false" in cmd)
 check("double pipe centerline", '"Pipe"' in src and '"Double"' in src and 'record.Role = "C"' in src)
 check("left center right", all(x in cmd for x in ['"Center", "Left", "Right"', 'Alignment = alignment']) and "choosePlus ? plus : minus" in src)
 check("Miter Bevel Round", all(x in src for x in ['corner == "Miter"', 'corner == "Bevel"', 'corner == "Round"', 'Math.Tan(turns[i] * 0.25)']))
