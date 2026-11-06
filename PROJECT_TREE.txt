@@ -10,6 +10,7 @@ Directory.Build.props
 PROJECT.md
 PROJECT_TREE.txt
 README.md
+SHA256SUMS.txt
 STATIC_VALIDATION.txt
 WORKLOG.md
 YangCADAgent.sln
@@ -42,6 +43,7 @@ docs/CURRENT_STATE.md
 docs/DECISIONS.md
 docs/DEVELOPMENT_ROUNDS.md
 docs/DOCUMENT_AUTHORITY.md
+docs/DUAL_LINE_V1_20261106.md
 docs/FEATURE_BACKLOG.md
 docs/FEATURE_CATALOG.md
 docs/FEATURE_LIBRARY_YQARCH_JRCAD_20261103.md
@@ -106,6 +108,7 @@ references/manifest.json
 references/yqarch/README.md
 src/YangCAD.AutoCAD/Commands/ControlCenterCommands.cs
 src/YangCAD.AutoCAD/Commands/DetailExtractCommands.cs
+src/YangCAD.AutoCAD/Commands/DualLineCommands.cs
 src/YangCAD.AutoCAD/Commands/LayerQuickCommands.cs
 src/YangCAD.AutoCAD/Commands/LeaderRepairCommands.cs
 src/YangCAD.AutoCAD/Commands/ScaleConvertCommands.cs
@@ -143,6 +146,7 @@ src/YangCAD.AutoCAD/Mcp/Tools/ToolJson.cs
 src/YangCAD.AutoCAD/RuntimeHost.cs
 src/YangCAD.AutoCAD/Services/Cad/DetailExtractService.cs
 src/YangCAD.AutoCAD/Services/Cad/DrawingAuditService.cs
+src/YangCAD.AutoCAD/Services/Cad/DualLineService.cs
 src/YangCAD.AutoCAD/Services/Cad/ImageEmbedBatchService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerAuditService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerCleanupService.cs
@@ -203,6 +207,7 @@ src/YangCAD.Setup/YangCAD.Setup.csproj
 src/YangCAD.Setup/app.manifest
 tasks/CADTOOL_YANGTOOLS_ALIGNMENT_20260907_WINDOWS_E2E.md
 tasks/CURRENT_TASK.md
+tasks/DUAL_LINE_WINDOWS_SMOKE_20261106.md
 tasks/FEATURE_CAD_REVIT_PREP_001.md
 tasks/FEATURE_CAD_REVIT_PREP_001_REVIT_TARGETED_RETEST.md
 tasks/FEATURE_CAD_REVIT_PREP_001_WINDOWS_REVIT_SMOKE.md
@@ -242,6 +247,7 @@ tools/fixtures/RVT_EXCHANGE_V1_CONTROLLED_11.json
 tools/fixtures/RVT_EXCHANGE_V1_YANGTOOLS_FIXTURE.json
 tools/run_static_checks.py
 tools/test_civil_api_compat_policy.py
+tools/test_dual_line_policy.py
 tools/test_extension_policy.py
 tools/test_governance_policy.py
 tools/test_image_embed_batch_policy.py

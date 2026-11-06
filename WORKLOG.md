@@ -1,3 +1,13 @@
+## 2026-11-06 — YGDL/YGDLW 双线管道 + 中轴固定改宽（源码候选）
+
+- 独立分支 feature/dual-line-width-v1-20261106，基于已验收 RC1 main@2f0980d4acd08b087d924b5c1f5a5bb18e8668a8；与尚待 G5 的 PR #13/#14/#15 没有依赖，主线未改。
+- 新命令 YGDL：双线/管道三线绘制，首次 1000 mm，成功后记忆宽度，Center/Left/Right，Miter/Bevel/Round，连续多组，W 调整下一组。YGDLW：选本插件边线或中心线按保存中轴对称改宽；旧插件两条匹配 LINE 可人工配对改宽。示例 600→1000，左右各外移 200 mm。
+- 限制：WCS XY、同 Z、开放路径；旧插件复杂 Polyline/Arc 暂不自动配对。中心线及双线成组 XData 保存/读回。保守拒绝不能安全偏移的路径。
+- 文档 docs/DUAL_LINE_V1_20261106.md；静态检查 tools/test_dual_line_policy.py；Gemini Windows tasks/DUAL_LINE_WINDOWS_SMOKE_20261106.md。
+- 状态：STATIC ONLY，AutoCAD 2024 实际 Build/NETLOAD/绘图/原生 _.U 均 WINDOWS_NOT_TESTED，不得继承其他 PR 的 DLL/验证结果；不合并 Draft PR。
+
+---
+
 ## 2026-11-05 — AutoCAD 2024 Quick 0.10.0 RC1 集成（仅管理文档）
 
 - ChatGPT G5 独立审核 Issue #9：已验收源码 b6ff137，Release 修复 d5200c5，Quick ZIP ACA88A...，DLL 880329CF...，AutoCAD 2024 指定范围 GO；Civil/Revit Native NOT_TESTED。
