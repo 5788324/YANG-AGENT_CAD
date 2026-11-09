@@ -1,3 +1,14 @@
+## 2026-11-09 — 新增标注文字工具三功能（独立源码候选）
+
+- 独立分支 feature/annotation-utilities-v1-20261109 基于 main@2f0980d4acd08b087d924b5c1f5a5bb18e8668a8，与 Gemini 测试中的 Draft PR #16 完全独立。
+- YGDIMTXT：只选择当前模型/布局空间 Dimension.DimensionText 存在覆盖内容的标注（非默认空白/仅 <>），不修改标注测量或文字。
+- YGSLOPE：Section=|ΔY|/|ΔX| 或 Plan3D=|ΔZ|/XY 水平距离，两点/LINE，Percent、Degrees、Ratio 三种文字，独立短坡度指示线+低端箭头+原生 MText。
+- YGTBOX：针对 TEXT/MTEXT 文字显示范围，生成原生矩形 Polyline 或 Circle，按 mm 设置偏移留白；文字不变。源自用户参考贱人工具箱/源泉，附件 column_mark / beam_mark (实际 CMK+CMKD 柱标注) / 双线 LISP 不直接包含上述功能，不改现有命令。
+- 新增 tests/tools/test_annotation_utilities_policy.py（实际路径 tools/test_annotation_utilities_policy.py）、docs/ANNOTATION_UTILITIES_V1_20261109.md、tasks/ANNOTATION_UTILITIES_WINDOWS_SMOKE_20261109.md；存储用户上次参数并提供中文 Toolbox/PGP 入口。
+- STATUS=STATIC_ONLY / Windows AutoCAD 2024 Build, NETLOAD, RealDWG, Native _.U 均 NOT_TESTED。不得合并/发布，待 G1 CI、Gemini G2–G4 和 ChatGPT G5 独立审核。
+
+---
+
 # YangCAD 功能目录与证据范围（2026-11-05）
 
 版本：`0.10.0-rc.1`（**RC 文档标记**；实际 Assembly/MCP 仍 `0.10.0-dev`）；范围：AutoCAD 2024 Quick 特定样例 G5 GO。
