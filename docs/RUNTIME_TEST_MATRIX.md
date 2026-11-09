@@ -25,7 +25,8 @@
 - **Civil 3D live 67**：NOT_TESTED（Object Enabler 不等于 Civil 宿主）。
 - **Revit Native E2E**：NOT_TESTED（不曾证明加载 Revit Addin 并返回 ElementId）。
 - 其他 AutoCAD 年份：NOT_TESTED_CURRENT_RC。
-- 闭合多段线任意边界、删除边界外、Z 折断线：NOT_IMPLEMENTED。
+- 闭合多段线任意边界、删除边界外：NOT_IMPLEMENTED。
+- 新分支 `YGBREAKLINE` Z 折断线：STATIC_ONLY / WINDOWS_NOT_TESTED（不属于既有 R00–R10 PASS）。
 
 ## 对新变更的要求
 

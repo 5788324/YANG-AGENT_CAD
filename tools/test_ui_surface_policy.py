@@ -28,7 +28,7 @@ layer_x=text('src/YangCAD.AutoCAD/UI/LayerQuickWindow.xaml')
 layer_c=text('src/YangCAD.AutoCAD/UI/LayerQuickWindow.xaml.cs')
 
 buttons=re.findall(r'Button\("([^"]+)",\s*"([^"]+)"', ribbon)
-ok('ribbon groups primary CAD tools before MCP/settings', [x[0] for x in buttons] == ['工具箱','比例转换','图层工具','提取大样','MCP','控制中心'])
+ok('ribbon groups primary CAD tools before MCP/settings', [x[0] for x in buttons] == ['工具箱','比例转换','图层工具','提取大样','直线折断','MCP','控制中心'])
 ok('ribbon commands have command methods', all(cmd.strip() in commands for _,cmd in buttons))
 ok('control center has no visible MCP controls', all(x not in cc_x for x in ['MCP 状态','复制 MCP 配置','允许 MCP 修改当前 DWG','Tag="MCP"']))
 ok('mcp window has no duplicate theme selector', all(x not in mcp_x for x in ['墨曜 · Obsidian','月瓷 · Porcelain','雾蓝 · Mist']))
