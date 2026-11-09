@@ -12,6 +12,17 @@ namespace YangCAD.AutoCADHost.Infrastructure
         public bool AllowCommandExecution { get; set; } = false;
         public bool AllowExtensionInvoke { get; set; } = false;
         public int RequestTimeoutSeconds { get; set; } = 30;
+        public double DoubleLineWidthMm { get; set; } = 1000;
+        public string DoubleLineMode { get; set; } = "Pipe";
+        public string DoubleLineAlignment { get; set; } = "Center";
+        public string DoubleLineCorner { get; set; } = "Miter";
+        public double DoubleLineCenterExtensionMm { get; set; } = 0;
+        public string SlopeBasis { get; set; } = "Section";
+        public string SlopeFormat { get; set; } = "Percent";
+        public double SlopeTextHeightMm { get; set; } = 250;
+        public double SlopeOffsetMm { get; set; } = 100;
+        public string TextFrameShape { get; set; } = "Rectangle";
+        public double TextFrameMarginMm { get; set; } = 50;
         public string[] ToolboxFavorites { get; set; } = Array.Empty<string>();
         public string[] ToolboxRecent { get; set; } = Array.Empty<string>();
 
@@ -66,6 +77,30 @@ namespace YangCAD.AutoCADHost.Infrastructure
             }
             if (RequestTimeoutSeconds < 5) RequestTimeoutSeconds = 5;
             if (RequestTimeoutSeconds > 300) RequestTimeoutSeconds = 300;
+            if (double.IsNaN(DoubleLineWidthMm) || double.IsInfinity(DoubleLineWidthMm) ||
+                DoubleLineWidthMm <= 0 || DoubleLineWidthMm > 1e7)
+                DoubleLineWidthMm = 1000;
+            if (DoubleLineMode != "Pipe" && DoubleLineMode != "Double")
+                DoubleLineMode = "Pipe";
+            if (DoubleLineAlignment != "Center" && DoubleLineAlignment != "Left" &&
+                DoubleLineAlignment != "Right") DoubleLineAlignment = "Center";
+            if (DoubleLineCorner != "Miter" && DoubleLineCorner != "Bevel" &&
+                DoubleLineCorner != "Round") DoubleLineCorner = "Miter";
+            if (double.IsNaN(DoubleLineCenterExtensionMm) ||
+                double.IsInfinity(DoubleLineCenterExtensionMm) ||
+                DoubleLineCenterExtensionMm < 0 || DoubleLineCenterExtensionMm > 1e7)
+                DoubleLineCenterExtensionMm = 0;
+            if (SlopeBasis != "Section" && SlopeBasis != "Plan3D") SlopeBasis = "Section";
+            if (SlopeFormat != "Percent" && SlopeFormat != "Degrees" &&
+                SlopeFormat != "Ratio") SlopeFormat = "Percent";
+            if (double.IsNaN(SlopeTextHeightMm) || double.IsInfinity(SlopeTextHeightMm) ||
+                SlopeTextHeightMm <= 0 || SlopeTextHeightMm > 1e7) SlopeTextHeightMm = 250;
+            if (double.IsNaN(SlopeOffsetMm) || double.IsInfinity(SlopeOffsetMm) ||
+                SlopeOffsetMm < 0 || SlopeOffsetMm > 1e7) SlopeOffsetMm = 100;
+            if (TextFrameShape != "Circle" && TextFrameShape != "Rectangle")
+                TextFrameShape = "Rectangle";
+            if (double.IsNaN(TextFrameMarginMm) || double.IsInfinity(TextFrameMarginMm) ||
+                TextFrameMarginMm < 0 || TextFrameMarginMm > 1e7) TextFrameMarginMm = 50;
             ToolboxFavorites = NormalizeToolIds(ToolboxFavorites, 200);
             ToolboxRecent = NormalizeToolIds(ToolboxRecent, 10);
         }
