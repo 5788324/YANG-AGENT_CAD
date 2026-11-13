@@ -29,6 +29,7 @@ bundle/README.md
 docs/AGENT_RULES.md
 docs/AI_FEATURE_DEVELOPMENT_STANDARD.md
 docs/AI_START_HERE.md
+docs/ANNOTATION_UTILITIES_V1_20261109.md
 docs/ARCHITECTURE.md
 docs/BRANCH_DEPENDENCIES.md
 docs/BUILD_DEPLOY.md
@@ -53,6 +54,7 @@ docs/GIT_WORKFLOW.md
 docs/GOOGLE_DRIVE_AI_WORKFLOW_20260907.md
 docs/HANDOFF.md
 docs/IMAGE_EMBED_V1.md
+docs/INTEGRATION_PR16_PR17_20261113.md
 docs/LAYER_TOOLS_QG_DETAIL_V1_20261103.md
 docs/MCP_ARCHITECTURE.md
 docs/MCP_CONNECTION_HANDOFF.md
@@ -106,6 +108,7 @@ references/README.md
 references/jianren-toolbox/README.md
 references/manifest.json
 references/yqarch/README.md
+src/YangCAD.AutoCAD/Commands/AnnotationUtilitiesCommands.cs
 src/YangCAD.AutoCAD/Commands/ControlCenterCommands.cs
 src/YangCAD.AutoCAD/Commands/DetailExtractCommands.cs
 src/YangCAD.AutoCAD/Commands/DualLineCommands.cs
@@ -144,6 +147,7 @@ src/YangCAD.AutoCAD/Mcp/Tools/CadWriteTools.cs
 src/YangCAD.AutoCAD/Mcp/Tools/ProjectProductTools.cs
 src/YangCAD.AutoCAD/Mcp/Tools/ToolJson.cs
 src/YangCAD.AutoCAD/RuntimeHost.cs
+src/YangCAD.AutoCAD/Services/Cad/AnnotationUtilitiesService.cs
 src/YangCAD.AutoCAD/Services/Cad/DetailExtractService.cs
 src/YangCAD.AutoCAD/Services/Cad/DrawingAuditService.cs
 src/YangCAD.AutoCAD/Services/Cad/DualLineService.cs
@@ -205,6 +209,7 @@ src/YangCAD.Setup/ReleaseManifest.cs
 src/YangCAD.Setup/WinTrust.cs
 src/YangCAD.Setup/YangCAD.Setup.csproj
 src/YangCAD.Setup/app.manifest
+tasks/ANNOTATION_UTILITIES_WINDOWS_SMOKE_20261109.md
 tasks/CADTOOL_YANGTOOLS_ALIGNMENT_20260907_WINDOWS_E2E.md
 tasks/CURRENT_TASK.md
 tasks/DUAL_LINE_WINDOWS_SMOKE_20261106.md
@@ -246,6 +251,7 @@ tools/Verify-Release.ps1
 tools/fixtures/RVT_EXCHANGE_V1_CONTROLLED_11.json
 tools/fixtures/RVT_EXCHANGE_V1_YANGTOOLS_FIXTURE.json
 tools/run_static_checks.py
+tools/test_annotation_utilities_policy.py
 tools/test_civil_api_compat_policy.py
 tools/test_dual_line_policy.py
 tools/test_extension_policy.py

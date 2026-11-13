@@ -18,6 +18,12 @@ namespace YangCAD.AutoCADHost.Infrastructure
         public string DoubleLineAlignment { get; set; } = "Center";
         public string DoubleLineCorner { get; set; } = "Miter";
         public double DoubleLineCenterExtensionMm { get; set; } = 0;
+        public string SlopeBasis { get; set; } = "Section";
+        public string SlopeFormat { get; set; } = "Percent";
+        public double SlopeTextHeightMm { get; set; } = 250;
+        public double SlopeOffsetMm { get; set; } = 100;
+        public string TextFrameShape { get; set; } = "Rectangle";
+        public double TextFrameMarginMm { get; set; } = 50;
         public string[] ToolboxFavorites { get; set; } = Array.Empty<string>();
         public string[] ToolboxRecent { get; set; } = Array.Empty<string>();
 
@@ -85,6 +91,17 @@ namespace YangCAD.AutoCADHost.Infrastructure
                 double.IsInfinity(DoubleLineCenterExtensionMm) ||
                 DoubleLineCenterExtensionMm < 0 || DoubleLineCenterExtensionMm > 1e7)
                 DoubleLineCenterExtensionMm = 0;
+            if (SlopeBasis != "Section" && SlopeBasis != "Plan3D") SlopeBasis = "Section";
+            if (SlopeFormat != "Percent" && SlopeFormat != "Degrees" &&
+                SlopeFormat != "Ratio") SlopeFormat = "Percent";
+            if (double.IsNaN(SlopeTextHeightMm) || double.IsInfinity(SlopeTextHeightMm) ||
+                SlopeTextHeightMm <= 0 || SlopeTextHeightMm > 1e7) SlopeTextHeightMm = 250;
+            if (double.IsNaN(SlopeOffsetMm) || double.IsInfinity(SlopeOffsetMm) ||
+                SlopeOffsetMm < 0 || SlopeOffsetMm > 1e7) SlopeOffsetMm = 100;
+            if (TextFrameShape != "Circle" && TextFrameShape != "Rectangle")
+                TextFrameShape = "Rectangle";
+            if (double.IsNaN(TextFrameMarginMm) || double.IsInfinity(TextFrameMarginMm) ||
+                TextFrameMarginMm < 0 || TextFrameMarginMm > 1e7) TextFrameMarginMm = 50;
             ToolboxFavorites = NormalizeToolIds(ToolboxFavorites, 200);
             ToolboxRecent = NormalizeToolIds(ToolboxRecent, 10);
         }
