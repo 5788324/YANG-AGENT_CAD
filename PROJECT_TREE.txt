@@ -44,6 +44,7 @@ docs/CURRENT_STATE.md
 docs/DECISIONS.md
 docs/DEVELOPMENT_ROUNDS.md
 docs/DOCUMENT_AUTHORITY.md
+docs/DUAL_LINE_V1_20261106.md
 docs/FEATURE_BACKLOG.md
 docs/FEATURE_CATALOG.md
 docs/FEATURE_LIBRARY_YQARCH_JRCAD_20261103.md
@@ -53,6 +54,7 @@ docs/GIT_WORKFLOW.md
 docs/GOOGLE_DRIVE_AI_WORKFLOW_20260907.md
 docs/HANDOFF.md
 docs/IMAGE_EMBED_V1.md
+docs/INTEGRATION_PR16_PR17_20261113.md
 docs/LAYER_TOOLS_QG_DETAIL_V1_20261103.md
 docs/MCP_ARCHITECTURE.md
 docs/MCP_CONNECTION_HANDOFF.md
@@ -109,6 +111,7 @@ references/yqarch/README.md
 src/YangCAD.AutoCAD/Commands/AnnotationUtilitiesCommands.cs
 src/YangCAD.AutoCAD/Commands/ControlCenterCommands.cs
 src/YangCAD.AutoCAD/Commands/DetailExtractCommands.cs
+src/YangCAD.AutoCAD/Commands/DualLineCommands.cs
 src/YangCAD.AutoCAD/Commands/LayerQuickCommands.cs
 src/YangCAD.AutoCAD/Commands/LeaderRepairCommands.cs
 src/YangCAD.AutoCAD/Commands/ScaleConvertCommands.cs
@@ -147,6 +150,7 @@ src/YangCAD.AutoCAD/RuntimeHost.cs
 src/YangCAD.AutoCAD/Services/Cad/AnnotationUtilitiesService.cs
 src/YangCAD.AutoCAD/Services/Cad/DetailExtractService.cs
 src/YangCAD.AutoCAD/Services/Cad/DrawingAuditService.cs
+src/YangCAD.AutoCAD/Services/Cad/DualLineService.cs
 src/YangCAD.AutoCAD/Services/Cad/ImageEmbedBatchService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerAuditService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerCleanupService.cs
@@ -208,6 +212,7 @@ src/YangCAD.Setup/app.manifest
 tasks/ANNOTATION_UTILITIES_WINDOWS_SMOKE_20261109.md
 tasks/CADTOOL_YANGTOOLS_ALIGNMENT_20260907_WINDOWS_E2E.md
 tasks/CURRENT_TASK.md
+tasks/DUAL_LINE_WINDOWS_SMOKE_20261106.md
 tasks/FEATURE_CAD_REVIT_PREP_001.md
 tasks/FEATURE_CAD_REVIT_PREP_001_REVIT_TARGETED_RETEST.md
 tasks/FEATURE_CAD_REVIT_PREP_001_WINDOWS_REVIT_SMOKE.md
@@ -248,6 +253,7 @@ tools/fixtures/RVT_EXCHANGE_V1_YANGTOOLS_FIXTURE.json
 tools/run_static_checks.py
 tools/test_annotation_utilities_policy.py
 tools/test_civil_api_compat_policy.py
+tools/test_dual_line_policy.py
 tools/test_extension_policy.py
 tools/test_governance_policy.py
 tools/test_image_embed_batch_policy.py

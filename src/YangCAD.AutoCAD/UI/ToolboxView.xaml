@@ -22,6 +22,8 @@
      <WrapPanel>
       <Button Content="图层管理" Tag="YGLAYER" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
       <Button Content="提取大样" Tag="YGDETAIL" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
+      <Button Content="双线/管道" Tag="YGDL" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
+      <Button Content="改双线宽度" Tag="YGDLW" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
       <Button Content="找文字覆盖标注" Tag="YGDIMTXT" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
       <Button Content="标注坡度" Tag="YGSLOPE" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
       <Button Content="文字加框" Tag="YGTBOX" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>

@@ -39,6 +39,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
             new Feature("图层冻结", "YGLFREEZE"),
             new Feature("图层锁定", "YGLLOCK"),
             new Feature("切割提取大样", "YGDETAIL"),
+            new Feature("智能双线/管道", "YGDL"),
+            new Feature("修正双线宽度", "YGDLW"),
             new Feature("选改过文字的标注", "YGDIMTXT"),
             new Feature("标注坡度", "YGSLOPE"),
             new Feature("文字加矩形圆框", "YGTBOX"),

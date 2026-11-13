@@ -1,12 +1,5 @@
-# 当前任务 2026-11-09：标注与文字工具 V1
-- 仓库：5788324/YANG-AGENT_CAD；目标分支 feature/annotation-utilities-v1-20261109
-- 基线 main@2f0980d4acd08b087d924b5c1f5a5bb18e8668a8 AutoCAD 2024 RC1。PR #13/#14/#15/#16 仍独立 Draft；Gemini 正在测试双线 PR #16，不要求中断。
-- 实际新增：YGDIMTXT（筛选 Dimension.DimensionText 覆盖）、YGSLOPE（度数/百分比/1:X 的双定义坡度标记）、YGTBOX（旋转 TEXT/MTEXT 的矩形/圆形外框及偏移）。
-- [ ] G1 static + source manifest verification
-- [ ] G2 Windows .NET48 / Autodesk API Build + binlog + dll SHA
-- [ ] G3 AutoCAD 2024 Loaded DLL SHA + PID
-- [ ] G4 真实 DWG 对象读回/原生 _.U；支持中文 TEXT/MTEXT/旋转/长编辑宽、斜率 XY 与 Z、覆盖文字选择
-- [ ] G5 ChatGPT 独立核对再合并
-- 文档 docs/ANNOTATION_UTILITIES_V1_20261109.md
-- Windows tasks/ANNOTATION_UTILITIES_WINDOWS_SMOKE_20261109.md
-- 状态：SOURCE CANDIDATE / WINDOWS_NOT_TESTED，不能宣称静态 CI 等于 Windows 功能通过。
+# 当前任务 — 主线集成后 Windows GUI 验收（2026-11-13）
+
+此次源码范围：PR #16（YGDL、YGDLW） + PR #17（YGDIMTXT、YGSLOPE、YGTBOX）。独立 Core Console G5 PASS；同 DLL Windows Build、NETLOAD、Toolbox 中文按钮、鼠标取点、原生 GUI 和交叉功能回归 NOT_TESTED。
+下一步：使用集成后 main 的 40 位 SHA，在 Windows AutoCAD 2024 重新构建、加载及测五个命令。无用户另行授权不要修改 PR #13/#14/#15 或审查 PR #18。
+详细说明：docs/INTEGRATION_PR16_PR17_20261113.md

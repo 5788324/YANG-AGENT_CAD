@@ -85,7 +85,7 @@ namespace YangCAD.AutoCADHost.UI
         private void QuickNativeCommandClick(object sender, RoutedEventArgs e)
         {
             if (!((sender as Button)?.Tag is string command)) return;
-            var allowed = new[] { "YGLAYER", "YGDETAIL", "YGDIMTXT", "YGSLOPE", "YGTBOX", "YGSCALE", "YGLEADERFIX", "YGKEYS" };
+            var allowed = new[] { "YGLAYER", "YGDETAIL", "YGDL", "YGDLW", "YGDIMTXT", "YGSLOPE", "YGTBOX", "YGSCALE", "YGLEADERFIX", "YGKEYS" };
             if (!allowed.Contains(command, StringComparer.OrdinalIgnoreCase)) return;
             var document = AcApp.DocumentManager.MdiActiveDocument;
             if (document == null)
