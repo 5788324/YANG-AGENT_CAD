@@ -1,10 +1,6 @@
-## 2026-11-06 — YGDL/YGDLW 双线管道 + 中轴固定改宽（源码候选）
+## 2026-11-13 — YangCAD 双线 + 标注工具整合
 
-- 独立分支 feature/dual-line-width-v1-20261106，基于已验收 RC1 main@2f0980d4acd08b087d924b5c1f5a5bb18e8668a8；与尚待 G5 的 PR #13/#14/#15 没有依赖，主线未改。
-- 新命令 YGDL：双线/管道三线绘制，首次 1000 mm，成功后记忆宽度，Center/Left/Right，Miter/Bevel/Round，连续多组，W 调整下一组。YGDLW：选本插件边线或中心线按保存中轴对称改宽；旧插件两条匹配 LINE 可人工配对改宽。示例 600→1000，左右各外移 200 mm。
-- 限制：WCS XY、同 Z、开放路径；旧插件复杂 Polyline/Arc 暂不自动配对。中心线及双线成组 XData 保存/读回。保守拒绝不能安全偏移的路径。
-- 文档 docs/DUAL_LINE_V1_20261106.md；静态检查 tools/test_dual_line_policy.py；Gemini Windows tasks/DUAL_LINE_WINDOWS_SMOKE_20261106.md。
-- 状态：STATIC ONLY，AutoCAD 2024 实际 Build/NETLOAD/绘图/原生 _.U 均 WINDOWS_NOT_TESTED，不得继承其他 PR 的 DLL/验证结果；不合并 Draft PR。
+按用户确认，整理已单独通过 AutoCAD 2024 Core Console G5 的 PR #16 和 PR #17：`YGDL`、`YGDLW`、`YGDIMTXT`、`YGSLOPE`、`YGTBOX`。保留双线/坡度/文字框全部个人设置、Toolbox 按钮、快捷键。**GUI 及联合程序集 Windows Build 未验收**，不代表已安装发布。PR #13/#14/#15 与综合审查 PR #18 不包含在本次主线合并中。完整说明 `docs/INTEGRATION_PR16_PR17_20261113.md`。
 
 ---
 

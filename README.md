@@ -1,5 +1,7 @@
 # YangCAD
 
+> **2026-11-13**：新增双线/管道绘制和对称改宽（YGDL / YGDLW）、修改文字尺寸筛选（YGDIMTXT）、坡度标注（YGSLOPE）、文字矩形/圆形框（YGTBOX）。两组功能各自 Core Console G5 已通过；合并后的程序集及 AutoCAD 图形界面仍待验收。详见 [整合说明](docs/INTEGRATION_PR16_PR17_20261113.md)。
+
 **面向个人工程图纸的 AutoCAD / Civil 3D 可定制工具箱，支持本地 MCP / AI 自动化。**
 
 > **AutoCAD 2024 Quick：`0.10.0-rc.1` 验收范围已通过（2026-11-05）**。这是 **RC 发行管理标识**；当前 DLL / Python MCP / PackageContents 内实际产品版本仍为 **`0.10.0` / `0.10.0-dev`**，为保留已验收 DLL 的字节一致性，本次不修改编译版本或运行时代码。**Civil 3D、Revit 原生重建、其他 AutoCAD 年份未获得本轮运行验收，绝非通用稳定发布。**
