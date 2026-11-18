@@ -103,8 +103,9 @@ def project_revit_prepare(
     output_folder: str | None = None,
     output_suffix: str = "_RVT",
     scan_blocks: bool = True,
-    include_paperspace: bool = True,
+    include_paperspace: bool = False,
     normalize_geometry: bool = True,
+    coordinate_origin_mode: str = "local",
     dry_run: bool = True,
 ) -> dict[str, Any]:
     """Revit 图纸预处理。GUI/MCP 共用 RevitExchangeService；默认 dry_run，real 输出 RVT DWG/MAP/REPORT。"""
@@ -114,6 +115,7 @@ def project_revit_prepare(
         "scan_blocks": scan_blocks,
         "include_paperspace": include_paperspace,
         "normalize_geometry": normalize_geometry,
+        "coordinate_origin_mode": coordinate_origin_mode,
         "dry_run": dry_run,
     })
 

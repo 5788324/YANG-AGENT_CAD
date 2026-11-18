@@ -95,7 +95,10 @@ MAP 根节点固定/推荐：
 - `ExchangeLayer` 表达 CAD 预处理后的稳定类型键，例如 `#0.25 Continuous White`、`RVT-T H100 romans.shx`；最终 Revit 类型由 YangTools 映射，不在 CAD 端硬编码。
 - `Traits` 只放样式/显示信息；`Data` 放几何、文字、引线、标注语义。
 - `units` 按 drawing INSUNITS 输出 `mm/cm/m/in/ft`；INSUNITS 未指定时当前个人工作流回退 `mm` 并写 warning。
-- `origin` V1 固定 `[0,0,0]`，保持源 WCS 数值不平移；YangTools 仍按协议字段支持未来非零 origin。
+- 原始 V1 `origin=[0,0,0]` 表示保留 WCS。2026-10-21 的兼容扩展允许 `coordinate_origin_mode=local`：对已选单一空间求有效几何范围的最小 XY 点写入 MAP `origin`，**Data 仍存原始 WCS 坐标、不移动 DWG 几何**。YangTools 用 `Data坐标 - origin` 计算局部 Revit 视图坐标。旧文件 origin=0 原样支持。
+- `normalize_geometry` 始终只表示几何外观属性的 ByLayer 归一化，**绝不是**坐标平移参数。
+- 默认 MAP 仅发布 ModelSpace 对象；显式 `include_paperspace=true` 是兼容旧调用的危险混合模式，MAP 写明 `mixed_spaces`、模型/图纸计数和告警，混合时禁用局部基点平移。新 Revit 工程不能将混合文件视为单一平面图。
+- `*_RVT.dwg` 仍是整张源 DWG 的克隆：`include_paperspace=false` **只筛选 MAP 分类对象，不过滤克隆 DWG 里的布局实体**。纯模型空间的 DWG 输出裁剪和纯 PaperSpace 模式须经单独实现和 AutoCAD 实测；不要误报已实现。
 
 YangTools 3.1.36 V1 原生重建范围：
 
