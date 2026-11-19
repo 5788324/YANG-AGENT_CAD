@@ -39,7 +39,7 @@
 python tools/run_slab_core_console_smoke.py --core-console "C:/Program Files/Autodesk/AutoCAD 2024/accoreconsole.exe" --dll "artifacts/bin/2024/AutoCAD/YangCAD.AutoCAD.dll" --dwg "D:/CAD-Test/SLB_SUPPORT_DIRECTIONS.dwg"
 ```
 
-脚本检查九个板格、输入图元、符号总数、零支承移除、一次撤销、减一侧箭头和普通块保留。第一阶段在布置前重命名梁线图层并保存测试副本，第二阶段用独立 Core Console 进程重开并直接布置。退出码 0 需要两阶段共 17 项全部通过。运行目录在 artifacts/slab-smoke-*，包含输入文件哈希、测试图副本、实际 SCR 和原始输出。若使用自定义板跨设置，须允许测试图的 4000–6000 mm 板跨。
+脚本检查九个板格、输入图元、符号总数、零支承移除、一次撤销、减一侧箭头和普通块保留。第一阶段在布置前重命名梁线图层并保存测试副本，第二阶段用独立 Core Console 进程重开并直接布置。在重开阶段还会创建 02 内板，先布置内板，再重布外板并批量修正，核对两块可同时保留、方向正确且 Handle 不变。退出码 0 需要两阶段共 20 项全部通过。运行目录在 artifacts/slab-smoke-*，包含输入文件哈希、测试图副本、实际 SCR 和原始输出。若使用自定义板跨设置，须允许测试图的 4000–6000 mm 板跨。
 
 Core Console 检查命令和 DWG 结果。Ribbon、工具箱、鼠标拾点和预览显示继续按上述 GUI 步骤验收。
 

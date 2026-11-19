@@ -28,6 +28,7 @@ CHECKS = {
     "fixture", "symbol-count", "zero-support", "undo", "trim", "marker",
     *(f"case-{number}" for number, *_ in CASES),
 }
+REOPEN_CHECKS = {"reopen-input", "reopen-case", "nested-inner", "nested-outer", "nested-handles"}
 LISP = """
 (defun ys-check (name passed)
   (prompt (strcat "\\nYANGCAD_SLAB_CHECK " (if passed "PASS " "FAIL ") name "\\n"))
@@ -131,6 +132,16 @@ def build_reopen_script(dll: Path) -> str:
         '(ys-check "reopen-input" (and (= 21 (ys-count (ys-set "LINE" "BEAM_SMOKE"))) (= 0 (ys-count (ys-set "INSERT" "SLB_SYMBOL")))))',
         """(command "SLB" '(15000 23000 0) "")""",
         symbol_check("reopen-case", 15000, 23000, 9, 0),
+        """(setq ys-outer (ys-at '(15000 23000 0)))""",
+        """(entmake '((0 . "LWPOLYLINE") (100 . "AcDbEntity") (8 . "SLAB_OUTLINE") (100 . "AcDbPolyline") (90 . 4) (70 . 1) (10 13100.0 21800.0) (10 14500.0 21800.0) (10 14500.0 23400.0) (10 13100.0 23400.0)))""",
+        """(entmake '((0 . "LINE") (8 . "BEAM_SMOKE") (10 13100.0 23400.0 0.0) (11 14500.0 23400.0 0.0)))""",
+        """(command "SLB" '(13800 22600 0) "")""",
+        """(setq ys-inner (ys-at '(13800 22600 0)))""",
+        """(command "SLB" '(15000 23000 0) "")""",
+        '(command "SLBFIX" ys-inner ys-outer "" "Y")',
+        symbol_check("nested-inner", 13800, 22600, 2, 0),
+        symbol_check("nested-outer", 15000, 23000, 9, 0),
+        """(ys-check "nested-handles" (and ys-inner ys-outer (equal ys-inner (ys-at '(13800 22600 0))) (equal ys-outer (ys-at '(15000 23000 0))) (= 2 (ys-count (ys-set "INSERT" "SLB_SYMBOL")))))""",
         '(prompt "\\nYANGCAD_SLAB_SMOKE_DONE\\n")',
         '_.QUIT',
         '_No',
@@ -185,7 +196,7 @@ def main() -> int:
     print(description + f"Output: {run_dir}", flush=True)
     stages = (
         ("smoke", build_script(dll), CHECKS),
-        ("reopen", build_reopen_script(dll), {"reopen-input", "reopen-case"}),
+        ("reopen", build_reopen_script(dll), REOPEN_CHECKS),
     )
     for stage, text, checks in stages:
         script = run_dir / f"{stage}.scr"
