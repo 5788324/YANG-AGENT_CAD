@@ -1,3 +1,9 @@
+## 2026-11-19 — 排版、填充与结构候选的界面整理
+
+截图对应 `feature/annotation-utilities-v1-20261109@057171c86a0c47331e58d0d252e36535e2af59f5`。本轮从该候选单独开发 Ribbon 与工具箱。原有功能均保留，修正板格预览标签、CAD 命令执行期间的按钮行为以及填充拆分的部分失败路径。已有 RC1 和 PR #16/#17 的测试记录对应各自受测版本。当前候选 Windows AutoCAD 2024 Build、NETLOAD 与 DWG 结果待验。见 [复测步骤](../tasks/CURRENT_TASK.md)。
+
+---
+
 ## 2026-11-13 — YangCAD 双线 + 标注工具整合
 
 按用户确认，整理已单独通过 AutoCAD 2024 Core Console G5 的 PR #16 和 PR #17：`YGDL`、`YGDLW`、`YGDIMTXT`、`YGSLOPE`、`YGTBOX`。保留双线/坡度/文字框全部个人设置、Toolbox 按钮、快捷键。**GUI 及联合程序集 Windows Build 未验收**，不代表已安装发布。PR #13/#14/#15 与综合审查 PR #18 不包含在本次主线合并中。完整说明 `docs/INTEGRATION_PR16_PR17_20261113.md`。

@@ -594,32 +594,37 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         using var insideReg = (Region)hatchRegion.Clone();
                         using var cReg1 = (Region)clipRegion.Clone();
                         using var cReg2 = (Region)clipRegion.Clone();
+                        var regionsReady = true;
                         try
                         {
                             outsideReg.BooleanOperation(BooleanOperationType.BoolSubtract, cReg1);
                             insideReg.BooleanOperation(BooleanOperationType.BoolIntersect, cReg2);
+                        }
+                        catch (Autodesk.AutoCAD.Runtime.Exception)
+                        {
+                            regionsReady = false;
+                        }
 
+                        if (regionsReady)
+                        {
                             if (insideReg.Area < AreaTol) return false;
-
                             if (outsideReg.Area < AreaTol)
                             {
                                 return TryPopulateHatchFromRegion(tr, space, hatch, insideReg, localOrigin,
                                     groupIntoSingleHatch: true, updateInPlace: hatch, out _);
                             }
 
-                            var outOk = TryPopulateHatchFromRegion(tr, space, hatch, outsideReg, localOrigin,
-                                groupIntoSingleHatch: true, updateInPlace: hatch, out _);
-                            if (outOk)
+                            if (TryPopulateHatchFromRegion(tr, space, hatch, outsideReg, localOrigin,
+                                groupIntoSingleHatch: true, updateInPlace: hatch, out _))
                             {
-                                if (TryPopulateHatchFromRegion(tr, space, hatch, insideReg, localOrigin,
+                                if (!TryPopulateHatchFromRegion(tr, space, hatch, insideReg, localOrigin,
                                     groupIntoSingleHatch: false, updateInPlace: null, out var splitPieces))
-                                {
-                                    extraCreated += splitPieces.Count;
-                                }
+                                    throw new InvalidOperationException("无法生成挖出的独立填充，本次剪裁已取消。");
+
+                                extraCreated = splitPieces.Count;
                                 return true;
                             }
                         }
-                        catch { }
                     }
                 }
             }

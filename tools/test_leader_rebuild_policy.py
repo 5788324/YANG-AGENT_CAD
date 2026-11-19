@@ -20,7 +20,7 @@ ok('revit advanced defaults still available', 'Id = "project.revit.prepare"' in 
 ok('one click reuses current Revit product service', '_registry.Execute("project.revit.prepare"' in code)
 ok('gui source not overwritten', '原图未修改' in code and 'RevitExchangeService.Export' in registry)
 ok('leader repair UI button', '修复引线 / 关联文字' in view and 'QuickLeaderRepairClick' in code)
-ok('editor command is issued outside WPF prompt', 'SendStringToExecute("YGLEADERFIX' in code)
+ok('editor command is issued outside WPF prompt', 'TryStartNativeCommand("YGLEADERFIX")' in code and 'document.SendStringToExecute(command + " "' in code)
 ok('native command registered', '[CommandMethod("YGLEADERFIX", CommandFlags.Modal)]' in command)
 ok('command explicitly asks for geometry + optional text', 'GetSelection' in command and 'GetEntity' in command and 'AllowNone = true' in command)
 ok('command uses shared leader repair service', command.count('LeaderRepairService.Rebuild')==2 and 'WriteContext(doc, false' in command)

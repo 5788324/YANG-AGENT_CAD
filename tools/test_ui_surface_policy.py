@@ -27,9 +27,17 @@ scale_c=text('src/YangCAD.AutoCAD/UI/ScaleConvertWindow.xaml.cs')
 layer_x=text('src/YangCAD.AutoCAD/UI/LayerQuickWindow.xaml')
 layer_c=text('src/YangCAD.AutoCAD/UI/LayerQuickWindow.xaml.cs')
 
-buttons=re.findall(r'Button\("([^"]+)",\s*"([^"]+)"', ribbon)
-ok('ribbon groups primary CAD tools before MCP/settings', [x[0] for x in buttons] == ['工具箱','比例转换','图层工具','提取大样','MCP','控制中心'])
-ok('ribbon commands have command methods', all(cmd.strip() in commands for _,cmd in buttons))
+buttons=re.findall(r'(?:Button|MenuItem)\("([^"]+)",\s*"([^"]+)"', ribbon)
+registered_commands = set(re.findall(r'CommandMethod\("([^"]+)"', commands))
+ok('ribbon panels put drawing before project and settings',
+   re.findall(r'AddPanel\(newTab, "([^"]+)"', ribbon) == [
+       '常用工具', '图层与填充', '文字与标注', '结构绘图', '图纸与引用', '连接与设置'])
+ok('ribbon commands have command methods', bool(buttons) and all(cmd.strip() in registered_commands for _,cmd in buttons))
+ok('ribbon menus keep their category labels', 'IsSplit = false' in ribbon and 'IsSynchronizedWithCurrentItem = false' in ribbon)
+ok('ribbon labels slab preview according to its actual command', ('预览板格', 'SLBP ') in buttons)
+ok('ribbon and toolbox preserve active CAD commands', all(r'\x03' not in ui for ui in [ribbon, tb_c]))
+ok('toolbox command buttons all route to registered commands',
+   set(re.findall(r'Tag="([A-Z][A-Z0-9_]+)"', tb_x)) <= registered_commands)
 ok('control center has no visible MCP controls', all(x not in cc_x for x in ['MCP 状态','复制 MCP 配置','允许 MCP 修改当前 DWG','Tag="MCP"']))
 ok('mcp window has no duplicate theme selector', all(x not in mcp_x for x in ['墨曜 · Obsidian','月瓷 · Porcelain','雾蓝 · Mist']))
 ok('toolbox registry is exactly two descriptors', re.findall(r'Id\s*=\s*"([^"]+)"', registry) == ['project.revit.prepare','project.image.embed'])

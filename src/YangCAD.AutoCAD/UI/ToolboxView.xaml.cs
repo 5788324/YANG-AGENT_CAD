@@ -62,8 +62,7 @@ namespace YangCAD.AutoCADHost.UI
             InitializeComponent();
             ThemeManager.Apply(Resources, UserSettings.Load().Theme);
             RefreshTools();
-            RefreshQuickButtonLabels();
-            Loaded += (_, __) => RefreshQuickButtonLabels();
+            Loaded += (_, __) => SetQuickButtonTooltips();
             Unloaded += (_, __) => StopEmbedStatusMonitor();
         }
 
@@ -72,7 +71,6 @@ namespace YangCAD.AutoCADHost.UI
         public void RefreshContext()
         {
             RefreshTools();
-            RefreshQuickButtonLabels();
             if (_selected != null) UpdateSelectedState();
         }
 
@@ -85,20 +83,16 @@ namespace YangCAD.AutoCADHost.UI
                 .ToList();
         }
 
-        private void RefreshQuickButtonLabels()
+        private void SetQuickButtonTooltips()
         {
             if (ToolListPane == null) return;
-            var pgpPath = TryFindActivePgpPath();
             foreach (var button in FindVisualChildren<Button>(ToolListPane))
             {
                 if (!(button.Tag is string cmd)) continue;
                 var item = CadToolCatalog.All.FirstOrDefault(x =>
                     string.Equals(x.Command, cmd, StringComparison.OrdinalIgnoreCase));
                 if (item == null) continue;
-                var active = !string.IsNullOrEmpty(pgpPath) ? TryGetCurrentAlias(pgpPath!, cmd) : null;
-                button.Content = string.IsNullOrEmpty(active) ? item.Name : $"{item.Name} [{active}]";
-                button.ToolTip = $"{item.Description}\n命令：{item.Command}" +
-                    (string.IsNullOrEmpty(active) ? $"（推荐缩写：{item.DefaultAliasHint}）" : $"（当前缩写：{active}）");
+                button.ToolTip = $"{item.Description}\n命令：{item.Command}（推荐缩写：{item.DefaultAliasHint}）";
             }
         }
 
@@ -149,27 +143,41 @@ namespace YangCAD.AutoCADHost.UI
             var allowed = AllowedQuickCommands.Contains(command, StringComparer.OrdinalIgnoreCase) ||
                           CadToolCatalog.All.Any(x => string.Equals(x.Command, command, StringComparison.OrdinalIgnoreCase));
             if (!allowed) return;
+            if (TryStartNativeCommand(command))
+                SetQuickStatus("");
+        }
+
+        private bool TryStartNativeCommand(string command)
+        {
             var document = AcApp.DocumentManager.MdiActiveDocument;
             if (document == null)
             {
-                QuickAliasStatus.Text = "请先打开图纸后使用命令。";
-                return;
+                SetQuickStatus("请先打开图纸后使用命令。");
+                return false;
             }
+
             try
             {
-                var prefix = "";
-                try
+                if (!string.IsNullOrWhiteSpace(Convert.ToString(AcApp.GetSystemVariable("CMDNAMES"))))
                 {
-                    var activeCommands = Convert.ToString(AcApp.GetSystemVariable("CMDNAMES"));
-                    if (!string.IsNullOrWhiteSpace(activeCommands)) prefix = "\x03\x03";
+                    SetQuickStatus("请先结束当前 CAD 命令。");
+                    return false;
                 }
-                catch { }
-                document.SendStringToExecute(prefix + command + " ", true, false, false);
+
+                document.SendStringToExecute(command + " ", true, false, false);
+                return true;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
-                QuickAliasStatus.Text = "无法启动命令：" + ex.Message;
+                SetQuickStatus("无法启动命令：" + ex.Message);
+                return false;
             }
+        }
+
+        private void SetQuickStatus(string message)
+        {
+            QuickAliasStatus.Text = message;
+            QuickAliasStatus.Visibility = string.IsNullOrEmpty(message) ? Visibility.Collapsed : Visibility.Visible;
         }
 
         private void QuickToolRightClick(object sender, MouseButtonEventArgs e)
@@ -177,6 +185,7 @@ namespace YangCAD.AutoCADHost.UI
             if (!((sender as Button)?.Tag is string command)) return;
             e.Handled = true;
             _selectedAliasCommand = command;
+            QuickAliasEditor.Visibility = Visibility.Visible;
             var item = CadToolCatalog.All.FirstOrDefault(x =>
                 string.Equals(x.Command, command, StringComparison.OrdinalIgnoreCase));
             var name = item?.Name ?? command;
@@ -185,30 +194,29 @@ namespace YangCAD.AutoCADHost.UI
             var pgpPath = TryFindActivePgpPath();
             var existing = !string.IsNullOrEmpty(pgpPath) ? TryGetCurrentAlias(pgpPath!, command) : null;
             QuickAliasInput.Text = existing ?? "";
-            QuickAliasStatus.Text = string.IsNullOrEmpty(existing)
-                ? $"未设缩写（建议：{item?.DefaultAliasHint ?? "Y" + command.Substring(0, 1)}），输入字母后点保存。"
-                : $"当前绑定：{existing} → {command}";
+            SetQuickStatus(string.IsNullOrEmpty(existing) ? $"建议缩写：{item?.DefaultAliasHint ?? command}" : "");
             QuickAliasInput.Focus();
             QuickAliasInput.SelectAll();
         }
 
-        private void RefreshAliasesClick(object sender, RoutedEventArgs e)
+        private void CloseAliasEditorClick(object sender, RoutedEventArgs e)
         {
-            RefreshQuickButtonLabels();
-            QuickAliasStatus.Text = "已刷新工具按钮的快捷键显示。";
+            QuickAliasEditor.Visibility = Visibility.Collapsed;
+            _selectedAliasCommand = "";
+            SetQuickStatus("");
         }
 
         private void QuickAliasSaveClick(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(_selectedAliasCommand))
             {
-                QuickAliasStatus.Text = "请先右键点击上方任意工具按钮，再输入快捷键。";
+                SetQuickStatus("请先右键点击上方任意工具按钮，再输入快捷键。");
                 return;
             }
             var pgpPath = TryFindActivePgpPath();
             if (string.IsNullOrEmpty(pgpPath))
             {
-                QuickAliasStatus.Text = "请先打开一张图纸再修改快捷键。";
+                SetQuickStatus("请先打开一张图纸再修改快捷键。");
                 return;
             }
             try
@@ -217,31 +225,24 @@ namespace YangCAD.AutoCADHost.UI
                 if (string.IsNullOrEmpty(alias))
                 {
                     var removed = ShortcutAliasService.Remove(pgpPath!, _selectedAliasCommand);
-                    QuickAliasStatus.Text = removed ? "已清除快捷键，点“应用”生效。" : "该命令暂无自定义快捷键。";
+                    SetQuickStatus(removed ? "已清除快捷键，点“应用”生效。" : "该命令暂无自定义快捷键。");
                 }
                 else
                 {
                     var saved = ShortcutAliasService.Save(pgpPath!, _selectedAliasCommand, alias, allowExistingOverride: false);
-                    QuickAliasStatus.Text = $"已保存 {saved} → {_selectedAliasCommand}，点“应用”在当前图纸生效。";
+                    SetQuickStatus($"已保存 {saved} → {_selectedAliasCommand}，点“应用”在当前图纸生效。");
                 }
-                RefreshQuickButtonLabels();
             }
             catch (Exception ex)
             {
-                QuickAliasStatus.Text = ex.Message;
+                SetQuickStatus(ex.Message);
             }
         }
 
         private void QuickAliasApplyClick(object sender, RoutedEventArgs e)
         {
-            var doc = AcApp.DocumentManager.MdiActiveDocument;
-            if (doc == null)
-            {
-                QuickAliasStatus.Text = "请先打开图纸。";
-                return;
-            }
-            MessageBox.Show("接下来会打开 CAD 的“重新初始化”窗口，勾选“PGP 文件”后点击确定即可生效。", "应用快捷键", MessageBoxButton.OK, MessageBoxImage.Information);
-            doc.SendStringToExecute("_.REINIT ", true, false, false);
+            if (TryStartNativeCommand("_.REINIT"))
+                SetQuickStatus("在“重新初始化”窗口中勾选“PGP 文件”并确定。");
         }
 
         private void ToolClick(object sender, RoutedEventArgs e)
@@ -250,6 +251,8 @@ namespace YangCAD.AutoCADHost.UI
             _selected = _registry.Descriptors.FirstOrDefault(x => string.Equals(x.Id, id, StringComparison.OrdinalIgnoreCase));
             if (_selected == null) return;
 
+            QuickAliasEditor.Visibility = Visibility.Collapsed;
+            SetQuickStatus("");
             DetailNameText.Text = _selected.Name;
             DetailCategoryText.Text = _selected.CategoryPath;
             DetailDescriptionText.Text = _selected.Description;
@@ -324,6 +327,11 @@ namespace YangCAD.AutoCADHost.UI
 
             try
             {
+                if (_selected.Id == "project.image.embed" &&
+                    (!values.TryGetValue("input_path", out var input) || string.IsNullOrWhiteSpace(input as string)) &&
+                    GetSavedCurrentDrawing() == null)
+                    return;
+
                 RuntimeLogger.Info("Toolbox GUI execute begin tool=" + _selected.Id);
                 var result = _registry.Execute(_selected.Id, values);
                 RuntimeLogger.Info("Toolbox GUI execute completed tool=" + _selected.Id);
@@ -375,32 +383,31 @@ namespace YangCAD.AutoCADHost.UI
 
         private void QuickLeaderRepairClick(object sender, RoutedEventArgs e)
         {
-            var doc = AcApp.DocumentManager.MdiActiveDocument;
-            if (doc == null)
-            {
-                ShowResult(false, "请先打开图纸", "需要在 CAD 绘图区选择要修复的引线。");
-                return;
-            }
-            // Send a native modal command to the CAD editor. Selection must not run inside a WPF callback.
-            // This reports only that the command was queued, NOT that the repair succeeded.
-            doc.SendStringToExecute("YGLEADERFIX\n", true, false, false);
+            if (!TryStartNativeCommand("YGLEADERFIX")) return;
+            SetQuickStatus("");
             ShowResult(true, "请在绘图区框选引线与文字", "直接框选炸开的引线线段和旁边文字，回车即可合成原生 MLeader。");
         }
 
         private void QuickEmbedCurrentClick(object sender, RoutedEventArgs e)
         {
+            var path = GetSavedCurrentDrawing();
+            if (path != null) RunImageQuickAction(path, "当前图纸");
+        }
+
+        private string? GetSavedCurrentDrawing()
+        {
             var doc = AcApp.DocumentManager.MdiActiveDocument;
             if (doc == null || string.IsNullOrWhiteSpace(doc.Name) || !File.Exists(doc.Name))
             {
                 ShowResult(false, "请先保存图纸", "请先将当前 DWG 保存到磁盘。为避免把未保存更改误作最终结果，请保存后再执行一键内嵌。");
-                return;
+                return null;
             }
             if (System.Convert.ToInt32(AcApp.GetSystemVariable("DBMOD")) != 0)
             {
                 ShowResult(false, "请先保存更改", "当前图纸有未保存修改。请 Ctrl+S 后再运行，避免输出副本缺少当前更改。");
-                return;
+                return null;
             }
-            RunImageQuickAction(doc.Name, "当前图纸");
+            return doc.Name;
         }
 
         private void QuickEmbedFolderClick(object sender, RoutedEventArgs e)

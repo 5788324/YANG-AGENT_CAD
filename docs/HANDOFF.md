@@ -1,3 +1,9 @@
+## 2026-11-19 — 截图版本的后续开发
+
+排版、填充、梁柱板 Ribbon 沿用截图对应的候选，基线为 `057171c86a0c47331e58d0d252e36535e2af59f5`。当前改动与基于主线的 PR #19 独立。先看 [复测步骤](../tasks/CURRENT_TASK.md) 和 [当前状态](CURRENT_STATE.md)。
+
+---
+
 ## 2026-11-13 — YangCAD 双线 + 标注工具整合
 
 按用户确认，整理已单独通过 AutoCAD 2024 Core Console G5 的 PR #16 和 PR #17：`YGDL`、`YGDLW`、`YGDIMTXT`、`YGSLOPE`、`YGTBOX`。保留双线/坡度/文字框全部个人设置、Toolbox 按钮、快捷键。**GUI 及联合程序集 Windows Build 未验收**，不代表已安装发布。PR #13/#14/#15 与综合审查 PR #18 不包含在本次主线合并中。完整说明 `docs/INTEGRATION_PR16_PR17_20261113.md`。
