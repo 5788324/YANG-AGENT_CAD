@@ -69,7 +69,7 @@
         <Button Content="板受力符号" Tag="SLB" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>
         <Button Content="板符号修正" Tag="SLBFIX" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>
         <Button Content="板格预览" Tag="SLBP" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>
-        <Button Content="板梁图层" Tag="SLBLAYER" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>
+        <Button Content="板轮廓与梁线" Tag="SLBLAYER" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>
        </UniformGrid>
       </StackPanel>
      </Border>

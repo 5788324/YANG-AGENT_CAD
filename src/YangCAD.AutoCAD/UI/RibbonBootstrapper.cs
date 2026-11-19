@@ -125,7 +125,7 @@ namespace YangCAD.AutoCADHost.UI
                     MenuItem("布置板受力符号", "SLB ", "slab_sym"),
                     MenuItem("预览板格", "SLBP ", "slab_sym"),
                     MenuItem("修正板受力符号", "SLBFIX ", "slab_fix"),
-                    MenuItem("设置板格边界图层", "SLBLAYER ", "slab_layer"),
+                    MenuItem("设置板轮廓与梁线", "SLBLAYER ", "slab_layer"),
                     MenuItem("板符号设置", "SLBSET ", "slab_sym")));
 
             AddPanel(newTab, "图纸与引用",

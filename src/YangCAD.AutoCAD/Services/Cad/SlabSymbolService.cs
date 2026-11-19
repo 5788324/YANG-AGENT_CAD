@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
@@ -15,7 +16,16 @@ namespace YangCAD.AutoCADHost.Services.Cad
         private static readonly string[] KnownSymbolBlocks =
             { "SLB_ONE", "SLB_TWO", "YB5_ARM_X", "YB5_ARM_Y", "YB5_ARM_B", "YB4_ARM" };
 
-        private static List<string>? _beamLayers;
+        private const string DirectionalBlockPrefix = "SLB_DIR_";
+        private const double SideTolerance = 1.0;
+        private static readonly ConditionalWeakTable<Database, SlabLayers> DrawingLayers =
+            new ConditionalWeakTable<Database, SlabLayers>();
+
+        private sealed class SlabLayers
+        {
+            public List<string> Beams = new List<string>();
+            public string? Outline;
+        }
         private static string _lastWhy = "未找到封闭板格";
 
         private readonly struct Seg2D
@@ -40,9 +50,18 @@ namespace YangCAD.AutoCADHost.Services.Cad
             public double Ratio;
             public double Span1;
             public double Span2;
+            public int DirectionMask;
+            public double? Elevation;
+            public string BlockName => DirectionMask != 0 ? DirectionalBlockPrefix + DirectionMask.ToString("D2")
+                : Type == "ONE" ? "SLB_ONE" : "SLB_TWO";
 
-            public string Describe() =>
-                $"{(Type == "ONE" ? "单向板" : "双向板")} 长短比={Ratio:0.00} 板格={Span1:0}x{Span2:0} 旋转={Rotation * 180.0 / Math.PI:0.0}°";
+            public string Describe()
+            {
+                var label = DirectionMask != 0
+                    ? $"识别到 {Enumerable.Range(0, 4).Count(i => (DirectionMask & (1 << i)) != 0)} 侧支承"
+                    : Type == "ONE" ? "单向板" : "双向板";
+                return $"{label} 长短比={Ratio:0.00} 板格={Span1:0}x{Span2:0} 旋转={Rotation * 180.0 / Math.PI:0.0}°";
+            }
         }
 
         public static void RunSlabLayerSelect(Document doc)
@@ -50,32 +69,53 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (doc == null) return;
             var ed = doc.Editor;
             var db = doc.Database;
-            ed.WriteMessage("\n选择几个梁边线(直线/多段线/圆弧)，其所在图层将作为板格边界；直接回车=使用全部非符号图层：");
             var filter = new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "LINE,LWPOLYLINE,ARC") });
-            var sel = ed.GetSelection(filter);
-            if (sel.Status == PromptStatus.OK && sel.Value != null && sel.Value.Count > 0)
+            var options = new PromptSelectionOptions
             {
-                var layers = new List<string>();
-                using (var tr = db.TransactionManager.StartTransaction())
+                MessageForAdding = "\n选择梁线样本以指定支承图层 [回车：使用旧板格识别]："
+            };
+            var sel = ed.GetSelection(options, filter);
+            if (sel.Status == PromptStatus.Cancel) return;
+            if (sel.Status != PromptStatus.OK || sel.Value == null || sel.Value.Count == 0)
+            {
+                DrawingLayers.Remove(db);
+                ed.WriteMessage("\n[SLBLAYER] 将使用所有非符号图层的线识别封闭板格。");
+                return;
+            }
+
+            var layers = new SlabLayers();
+            using (var tr = db.TransactionManager.StartTransaction())
+            {
+                foreach (var id in sel.Value.GetObjectIds())
                 {
-                    foreach (ObjectId id in sel.Value.GetObjectIds())
-                    {
-                        if (tr.GetObject(id, OpenMode.ForRead) is Entity ent &&
-                            !layers.Contains(ent.Layer, StringComparer.OrdinalIgnoreCase))
-                        {
-                            layers.Add(ent.Layer);
-                        }
-                    }
-                    tr.Commit();
+                    var layer = ((Entity)tr.GetObject(id, OpenMode.ForRead)).Layer;
+                    if (!layers.Beams.Contains(layer, StringComparer.OrdinalIgnoreCase)) layers.Beams.Add(layer);
                 }
-                _beamLayers = layers.Count > 0 ? layers : null;
-                ed.WriteMessage($"\n[SLBLAYER] 板格边界图层: {string.Join(", ", layers)}");
             }
-            else
+
+            var outlineOptions = new PromptEntityOptions("\n选择闭合矩形板轮廓样本 [回车：仅用梁线识别封闭板格]：")
             {
-                _beamLayers = null;
-                ed.WriteMessage("\n[SLBLAYER] 将使用所有非符号图层的线。");
+                AllowNone = true
+            };
+            outlineOptions.SetRejectMessage("\n请选择闭合矩形多段线。");
+            outlineOptions.AddAllowedClass(typeof(Polyline), true);
+            var outline = ed.GetEntity(outlineOptions);
+            if (outline.Status == PromptStatus.Cancel) return;
+            if (outline.Status == PromptStatus.OK)
+            {
+                using var tr = db.TransactionManager.StartTransaction();
+                var pl = (Polyline)tr.GetObject(outline.ObjectId, OpenMode.ForRead);
+                if (GetRectangle(pl) == null || layers.Beams.Contains(pl.Layer, StringComparer.OrdinalIgnoreCase))
+                {
+                    ed.WriteMessage("\n[SLBLAYER] 板轮廓必须是闭合矩形，且位于独立于梁线的图层。");
+                    return;
+                }
+                layers.Outline = pl.Layer;
             }
+
+            DrawingLayers.Remove(db);
+            DrawingLayers.Add(db, layers);
+            ed.WriteMessage($"\n[SLBLAYER] 梁线图层：{string.Join(", ", layers.Beams)}；板轮廓：{layers.Outline ?? "仅用梁线识别封闭板格"}。");
         }
 
         public static void RunSlabSettings(Document doc)
@@ -101,7 +141,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var settings = UserSettings.Load();
             int n = 0, bad = 0;
 
-            ed.WriteMessage($"\n[SLB] 点击封闭板格内部放置受力符号 | 延伸={settings.SlabExtend:0} 单向板比>={settings.SlabOneWayRatio:0.#} 系数={settings.SlabFactor:0.##}");
+            ed.WriteMessage($"\n[SLB] 点击板格内部放置受力符号 | 延伸={settings.SlabExtend:0} 单向板比>={settings.SlabOneWayRatio:0.#} 系数={settings.SlabFactor:0.##}");
 
             while (true)
             {
@@ -130,7 +170,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
                 if (res.Status != PromptStatus.OK) continue;
                 var wcs = res.Value.TransformBy(ed.CurrentUserCoordinateSystem);
-                var analysis = AnalyzePoint(doc.Database, new Point2d(wcs.X, wcs.Y), settings, null);
+                var analysis = AnalyzePoint(doc.Database, new Point2d(wcs.X, wcs.Y), settings, null, wcs.Z);
                 if (analysis == null)
                 {
                     bad++;
@@ -147,6 +187,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 else
                 {
                     bad++;
+                    ed.WriteMessage($"\n未布置：{_lastWhy}");
                 }
             }
 
@@ -162,7 +203,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (pr.Status != PromptStatus.OK) return;
 
             var wcs = pr.Value.TransformBy(ed.CurrentUserCoordinateSystem);
-            var analysis = AnalyzePoint(doc.Database, new Point2d(wcs.X, wcs.Y), settings, null);
+            var analysis = AnalyzePoint(doc.Database, new Point2d(wcs.X, wcs.Y), settings, null, wcs.Z);
             if (analysis == null)
             {
                 ed.WriteMessage($"\n预览失败: {_lastWhy}");
@@ -176,25 +217,20 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 var a = pts[i];
                 var b = pts[(i + 1) % pts.Count];
                 ed.DrawVector(
-                    new Point3d(a.X, a.Y, 0).TransformBy(wcsToUcs),
-                    new Point3d(b.X, b.Y, 0).TransformBy(wcsToUcs),
+                    new Point3d(a.X, a.Y, analysis.Elevation ?? 0).TransformBy(wcsToUcs),
+                    new Point3d(b.X, b.Y, analysis.Elevation ?? 0).TransformBy(wcsToUcs),
                     3, false);
             }
 
-            var c = analysis.Center;
-            var d = analysis.Size * 0.5;
-            var ang = analysis.Rotation;
-            ed.DrawVector(
-                new Point3d(c.X - d * Math.Cos(ang), c.Y - d * Math.Sin(ang), 0).TransformBy(wcsToUcs),
-                new Point3d(c.X + d * Math.Cos(ang), c.Y + d * Math.Sin(ang), 0).TransformBy(wcsToUcs),
-                1, false);
-            if (analysis.Type == "TWO")
-            {
-                ed.DrawVector(
-                    new Point3d(c.X + d * Math.Sin(ang), c.Y - d * Math.Cos(ang), 0).TransformBy(wcsToUcs),
-                    new Point3d(c.X - d * Math.Sin(ang), c.Y + d * Math.Cos(ang), 0).TransformBy(wcsToUcs),
-                    1, false);
-            }
+            var z = analysis.Elevation ?? 0.0;
+            var cos = Math.Cos(analysis.Rotation);
+            var sin = Math.Sin(analysis.Rotation);
+            Point3d ToUcs(double x, double y) => new Point3d(
+                analysis.Center.X + analysis.Size * (x * cos - y * sin),
+                analysis.Center.Y + analysis.Size * (x * sin + y * cos), z).TransformBy(wcsToUcs);
+
+            foreach (var (x1, y1, x2, y2) in SymbolLines(analysis))
+                ed.DrawVector(ToUcs(x1, y1), ToUcs(x2, y2), 1, false);
 
             ed.WriteMessage($"\n预览: {analysis.Describe()}");
             ed.GetString("\n检查后按回车清除预览：");
@@ -234,7 +270,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var keepOld = !string.Equals(kr.StringResult, "N", StringComparison.OrdinalIgnoreCase);
 
             int fixedCount = 0, dup = 0, skipped = 0, bad = 0;
-            var doneCenters = new List<Point2d>();
+            var doneCenters = new List<Point3d>();
 
             using (var tr = db.TransactionManager.StartTransaction())
             {
@@ -247,7 +283,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     }
 
                     var blockName = GetBlockName(tr, br);
-                    if (!KnownSymbolBlocks.Contains(blockName, StringComparer.OrdinalIgnoreCase))
+                    if (!IsSymbolBlock(blockName))
                     {
                         skipped++;
                         continue;
@@ -255,7 +291,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
                     var pt = new Point2d(br.Position.X, br.Position.Y);
                     var forcedType = keepOld ? InferOldType(blockName) : null;
-                    var analysis = AnalyzePoint(db, pt, settings, forcedType);
+                    var analysis = AnalyzePoint(db, pt, settings, forcedType, br.Position.Z);
                     if (analysis == null)
                     {
                         bad++;
@@ -263,7 +299,15 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         continue;
                     }
 
-                    if (doneCenters.Any(c => c.GetDistanceTo(analysis.Center) < 1.0))
+                    if (blockName.StartsWith(DirectionalBlockPrefix, StringComparison.OrdinalIgnoreCase) && analysis.DirectionMask == 0)
+                    {
+                        bad++;
+                        ed.WriteMessage("\n方向板符号需要已配置的板轮廓和梁线图层；原符号保留。");
+                        continue;
+                    }
+
+                    var center = new Point3d(analysis.Center.X, analysis.Center.Y, analysis.Elevation ?? br.Position.Z);
+                    if (doneCenters.Any(c => c.DistanceTo(center) < SideTolerance))
                     {
                         br.UpgradeOpen();
                         br.Erase();
@@ -271,10 +315,10 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         continue;
                     }
 
-                    if (fixedCount == 0) EnsureLayerAndBlocks(db, tr);
+                    EnsureSymbolBlock(db, tr, analysis);
                     br.UpgradeOpen();
                     UpdateBlockReference(db, tr, br, analysis);
-                    doneCenters.Add(analysis.Center);
+                    doneCenters.Add(center);
                     fixedCount++;
                 }
 
@@ -288,20 +332,26 @@ namespace YangCAD.AutoCADHost.Services.Cad
         {
             using (var tr = db.TransactionManager.StartTransaction())
             {
-                EnsureLayerAndBlocks(db, tr);
-                var space = (BlockTableRecord)tr.GetObject(db.CurrentSpaceId, OpenMode.ForWrite);
-                var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                var space = (BlockTableRecord)tr.GetObject(db.CurrentSpaceId, OpenMode.ForRead);
 
                 var existing = new List<BlockReference>();
                 foreach (ObjectId id in space)
                 {
                     if (!(tr.GetObject(id, OpenMode.ForRead) is BlockReference br)) continue;
                     var bname = GetBlockName(tr, br);
-                    if (!KnownSymbolBlocks.Contains(bname, StringComparer.OrdinalIgnoreCase)) continue;
-                    if (IsInsidePolygon(br.Position.X, br.Position.Y, res.Polygon))
-                        existing.Add(br);
+                    if (!IsSymbolBlock(bname)) continue;
+                    if (res.Elevation.HasValue && Math.Abs(br.Position.Z - res.Elevation.Value) > SideTolerance) continue;
+                    if (!IsInsidePolygon(br.Position.X, br.Position.Y, res.Polygon)) continue;
+
+                    if (res.DirectionMask == 0 && bname.StartsWith(DirectionalBlockPrefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _lastWhy = "板格已有方向符号，请先恢复板轮廓和梁线图层设置。";
+                        return null;
+                    }
+                    existing.Add(br);
                 }
 
+                EnsureSymbolBlock(db, tr, res);
                 if (existing.Count > 0)
                 {
                     var keep = existing[0];
@@ -316,14 +366,9 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     return "更新";
                 }
 
-                var targetBlockName = res.Type == "ONE" ? "SLB_ONE" : "SLB_TWO";
-                if (!bt.Has(targetBlockName))
-                {
-                    tr.Commit();
-                    return null;
-                }
-
-                var newBr = new BlockReference(new Point3d(res.Center.X, res.Center.Y, 0), bt[targetBlockName])
+                var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                space.UpgradeOpen();
+                var newBr = new BlockReference(new Point3d(res.Center.X, res.Center.Y, res.Elevation ?? 0.0), bt[res.BlockName])
                 {
                     Layer = SymbolLayerName,
                     ScaleFactors = new Scale3d(res.Size, res.Size, res.Size),
@@ -339,10 +384,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
         private static void UpdateBlockReference(Database db, Transaction tr, BlockReference br, SlabResult res)
         {
             var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
-            var targetBlockName = res.Type == "ONE" ? "SLB_ONE" : "SLB_TWO";
-            if (bt.Has(targetBlockName))
-                br.BlockTableRecord = bt[targetBlockName];
-            br.Position = new Point3d(res.Center.X, res.Center.Y, br.Position.Z);
+            br.BlockTableRecord = bt[res.BlockName];
+            br.Position = new Point3d(res.Center.X, res.Center.Y, res.Elevation ?? br.Position.Z);
             br.ScaleFactors = new Scale3d(res.Size, res.Size, res.Size);
             br.Rotation = res.Rotation;
         }
@@ -353,6 +396,15 @@ namespace YangCAD.AutoCADHost.Services.Cad
             return tr.GetObject(id, OpenMode.ForRead) is BlockTableRecord btr ? btr.Name : "";
         }
 
+        private static bool IsSymbolBlock(string name)
+        {
+            if (KnownSymbolBlocks.Contains(name, StringComparer.OrdinalIgnoreCase)) return true;
+            return name.Length == DirectionalBlockPrefix.Length + 2 &&
+                name.StartsWith(DirectionalBlockPrefix, StringComparison.OrdinalIgnoreCase) &&
+                int.TryParse(name.Substring(DirectionalBlockPrefix.Length), out var mask) &&
+                mask >= 1 && mask <= 15 && name.EndsWith(mask.ToString("D2"), StringComparison.Ordinal);
+        }
+
         private static string? InferOldType(string blockName)
         {
             var n = (blockName ?? "").ToUpperInvariant();
@@ -361,7 +413,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             return null;
         }
 
-        private static void EnsureLayerAndBlocks(Database db, Transaction tr)
+        private static void EnsureSymbolBlock(Database db, Transaction tr, SlabResult result)
         {
             var lt = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
             if (!lt.Has(SymbolLayerName))
@@ -376,40 +428,37 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 tr.AddNewlyCreatedDBObject(ltr, true);
             }
 
-            EnsureSymbolBlock(db, tr, "SLB_ONE", false);
-            EnsureSymbolBlock(db, tr, "SLB_TWO", true);
-        }
-
-        private static void EnsureSymbolBlock(Database db, Transaction tr, string name, bool twoArms)
-        {
             var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
-            if (bt.Has(name)) return;
+            if (bt.Has(result.BlockName)) return;
             bt.UpgradeOpen();
-            var btr = new BlockTableRecord { Name = name };
+            var btr = new BlockTableRecord { Name = result.BlockName };
             bt.Add(btr);
             tr.AddNewlyCreatedDBObject(btr, true);
 
-            AddBlockArm(btr, tr, false);
-            if (twoArms) AddBlockArm(btr, tr, true);
+            foreach (var (x1, y1, x2, y2) in SymbolLines(result))
+                AddBlockLine(btr, tr, x1, y1, x2, y2);
         }
 
-        private static void AddBlockArm(BlockTableRecord btr, Transaction tr, bool vertical)
+        private static IEnumerable<(double X1, double Y1, double X2, double Y2)> SymbolLines(SlabResult result)
         {
-            if (vertical)
+            var mask = result.DirectionMask;
+            if (mask == 0)
             {
-                AddBlockLine(btr, tr, 0.0, -0.5, 0.0, 0.5);
-                AddBlockLine(btr, tr, 0.0, -0.5, -0.08, -0.36);
-                AddBlockLine(btr, tr, 0.0, -0.5, 0.08, -0.36);
-                AddBlockLine(btr, tr, 0.0, 0.5, -0.08, 0.36);
-                AddBlockLine(btr, tr, 0.0, 0.5, 0.08, 0.36);
+                yield return (-0.5, 0, 0.5, 0);
+                if (result.Type == "TWO") yield return (0, -0.5, 0, 0.5);
+                mask = result.Type == "ONE" ? 5 : 15;
             }
-            else
+
+            var axes = new[] { (X: 1, Y: 0), (X: 0, Y: 1), (X: -1, Y: 0), (X: 0, Y: -1) };
+            for (var i = 0; i < axes.Length; i++)
             {
-                AddBlockLine(btr, tr, -0.5, 0.0, 0.5, 0.0);
-                AddBlockLine(btr, tr, -0.5, 0.0, -0.36, -0.08);
-                AddBlockLine(btr, tr, -0.5, 0.0, -0.36, 0.08);
-                AddBlockLine(btr, tr, 0.5, 0.0, 0.36, -0.08);
-                AddBlockLine(btr, tr, 0.5, 0.0, 0.36, 0.08);
+                if ((mask & (1 << i)) == 0) continue;
+                var (x, y) = axes[i];
+                var tipX = 0.5 * x;
+                var tipY = 0.5 * y;
+                if (result.DirectionMask != 0) yield return (0, 0, tipX, tipY);
+                yield return (tipX, tipY, 0.36 * x - 0.08 * y, 0.36 * y + 0.08 * x);
+                yield return (tipX, tipY, 0.36 * x + 0.08 * y, 0.36 * y - 0.08 * x);
             }
         }
 
@@ -420,9 +469,22 @@ namespace YangCAD.AutoCADHost.Services.Cad
             tr.AddNewlyCreatedDBObject(ln, true);
         }
 
-        private static SlabResult? AnalyzePoint(Database db, Point2d clickPt, UserSettings settings, string? forcedType)
+        private static SlabResult? AnalyzePoint(Database db, Point2d clickPt, UserSettings settings, string? forcedType,
+            double? elevation = null)
         {
             _lastWhy = "未找到封闭板格";
+            DrawingLayers.TryGetValue(db, out var layers);
+            if (layers?.Outline != null)
+            {
+                var outline = FindOutline(db, clickPt, layers.Outline, elevation);
+                if (!outline.HasValue)
+                {
+                    _lastWhy = "在已配置的板轮廓图层中没有找到包含所选点的同标高矩形板。";
+                    return null;
+                }
+                return AnalyzeSupportedOutline(db, clickPt, outline.Value.Points, outline.Value.Elevation, settings);
+            }
+
             var radii = new[] { 4000.0, 9000.0, Math.Max(9000.0, settings.SlabMaxSpan) };
 
             foreach (var r in radii)
@@ -481,8 +543,132 @@ namespace YangCAD.AutoCADHost.Services.Cad
             return null;
         }
 
-        private static List<Seg2D> CollectSegments(Database db, double ox, double oy, double radius)
+        private static List<Point2d>? GetRectangle(Polyline pl)
         {
+            if (!pl.Closed || pl.NumberOfVertices != 4 || Math.Abs(pl.Normal.Z - 1.0) > 1e-8) return null;
+            var points = new List<Point2d>(4);
+            for (var i = 0; i < 4; i++)
+            {
+                if (Math.Abs(pl.GetBulgeAt(i)) > 1e-9) return null;
+                var p = pl.GetPoint3dAt(i);
+                points.Add(new Point2d(p.X, p.Y));
+            }
+
+            for (var i = 0; i < 4; i++)
+            {
+                var edge = points[(i + 1) % 4] - points[i];
+                var next = points[(i + 2) % 4] - points[(i + 1) % 4];
+                if (edge.Length <= SideTolerance || next.Length <= SideTolerance ||
+                    Math.Abs(edge.DotProduct(next)) > SideTolerance * Math.Min(edge.Length, next.Length))
+                    return null;
+            }
+            return points;
+        }
+
+        private static (List<Point2d> Points, double Elevation)? FindOutline(
+            Database db, Point2d clickPt, string layer, double? elevation)
+        {
+            (List<Point2d> Points, double Elevation)? best = null;
+            var bestArea = double.MaxValue;
+            using var tr = db.TransactionManager.StartTransaction();
+            var space = (BlockTableRecord)tr.GetObject(db.CurrentSpaceId, OpenMode.ForRead);
+            foreach (ObjectId id in space)
+            {
+                if (!(tr.GetObject(id, OpenMode.ForRead) is Polyline pl) ||
+                    !string.Equals(pl.Layer, layer, StringComparison.OrdinalIgnoreCase) ||
+                    (elevation.HasValue && Math.Abs(pl.Elevation - elevation.Value) > SideTolerance)) continue;
+
+                var points = GetRectangle(pl);
+                if (points == null || !IsInsidePolygon(clickPt.X, clickPt.Y, points)) continue;
+                var area = points[0].GetDistanceTo(points[1]) * points[1].GetDistanceTo(points[2]);
+                if (area >= bestArea) continue;
+
+                bestArea = area;
+                best = (points, pl.Elevation);
+            }
+            return best;
+        }
+
+        private static SlabResult? AnalyzeSupportedOutline(
+            Database db, Point2d clickPt, List<Point2d> points, double elevation, UserSettings settings)
+        {
+            var span1 = points[0].GetDistanceTo(points[1]);
+            var span2 = points[1].GetDistanceTo(points[2]);
+            var shortSpan = Math.Min(span1, span2);
+            var longSpan = Math.Max(span1, span2);
+            if (shortSpan < settings.SlabMinSpan || longSpan > settings.SlabMaxSpan)
+            {
+                _lastWhy = $"识别到的板格尺寸({span1:0} x {span2:0})超出设定范围";
+                return null;
+            }
+
+            var local = points.Select(p => new Point2d(p.X - clickPt.X, p.Y - clickPt.Y)).ToList();
+            var beams = CollectSegments(db, clickPt.X, clickPt.Y, span1 + span2 + SideTolerance, elevation);
+            var directions = SignedArea(local) > 0 ? new[] { 3, 0, 1, 2 } : new[] { 1, 0, 3, 2 };
+            var mask = 0;
+            for (var i = 0; i < 4; i++)
+            {
+                if (HasSideSupport(local[i], local[(i + 1) % 4], beams))
+                    mask |= 1 << directions[i];
+            }
+            if (mask == 0)
+            {
+                _lastWhy = "板轮廓四侧均未找到符合条件的梁线";
+                return null;
+            }
+
+            return new SlabResult
+            {
+                Center = new Point2d((points[0].X + points[2].X) * 0.5, (points[0].Y + points[2].Y) * 0.5),
+                Polygon = points,
+                Rotation = Math.Atan2(local[1].Y - local[0].Y, local[1].X - local[0].X),
+                Size = Math.Min(settings.SlabMaxSize, Math.Max(settings.SlabMinSize, settings.SlabFactor * shortSpan)),
+                Ratio = longSpan / shortSpan,
+                Span1 = span1,
+                Span2 = span2,
+                DirectionMask = mask,
+                Elevation = elevation
+            };
+        }
+
+        private static bool HasSideSupport(Point2d a, Point2d b, List<Seg2D> beams)
+        {
+            var dx = b.X - a.X;
+            var dy = b.Y - a.Y;
+            var length = Math.Sqrt(dx * dx + dy * dy);
+            var ux = dx / length;
+            var uy = dy / length;
+            var intervals = new List<(double Start, double End)>();
+            foreach (var beam in beams)
+            {
+                var ax = beam.X1 - a.X;
+                var ay = beam.Y1 - a.Y;
+                var bx = beam.X2 - a.X;
+                var by = beam.Y2 - a.Y;
+                if (Math.Abs(ax * uy - ay * ux) > SideTolerance || Math.Abs(bx * uy - by * ux) > SideTolerance)
+                    continue;
+
+                var p = ax * ux + ay * uy;
+                var q = bx * ux + by * uy;
+                var start = Math.Max(0, Math.Min(p, q));
+                var end = Math.Min(length, Math.Max(p, q));
+                if (end > start) intervals.Add((start, end));
+            }
+
+            var covered = 0.0;
+            var lastEnd = 0.0;
+            foreach (var (start, end) in intervals.OrderBy(x => x.Start))
+            {
+                covered += Math.Max(0.0, end - Math.Max(start, lastEnd));
+                lastEnd = Math.Max(lastEnd, end);
+            }
+            return covered >= length * 0.5;
+        }
+
+        private static List<Seg2D> CollectSegments(Database db, double ox, double oy, double radius, double? elevation = null)
+        {
+            DrawingLayers.TryGetValue(db, out var layers);
+            var beamLayers = layers?.Beams;
             var result = new List<Seg2D>();
             var minSeg = 20.0;
             using (var tr = db.TransactionManager.StartTransaction())
@@ -491,9 +677,9 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 foreach (ObjectId id in space)
                 {
                     if (!(tr.GetObject(id, OpenMode.ForRead) is Entity ent)) continue;
-                    if (_beamLayers != null && _beamLayers.Count > 0)
+                    if (beamLayers != null && beamLayers.Count > 0)
                     {
-                        if (!_beamLayers.Contains(ent.Layer, StringComparer.OrdinalIgnoreCase)) continue;
+                        if (!beamLayers.Contains(ent.Layer, StringComparer.OrdinalIgnoreCase)) continue;
                     }
                     else if (string.Equals(ent.Layer, SymbolLayerName, StringComparison.OrdinalIgnoreCase))
                     {
@@ -513,10 +699,13 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
                     if (ent is Line ln)
                     {
+                        if (elevation.HasValue && (Math.Abs(ln.StartPoint.Z - elevation.Value) > SideTolerance ||
+                            Math.Abs(ln.EndPoint.Z - elevation.Value) > SideTolerance)) continue;
                         AddSeg(result, ln.StartPoint.X - ox, ln.StartPoint.Y - oy, ln.EndPoint.X - ox, ln.EndPoint.Y - oy, minSeg);
                     }
                     else if (ent is Arc arc)
                     {
+                        if (elevation.HasValue) continue;
                         var sw = arc.EndAngle - arc.StartAngle;
                         if (sw <= 0) sw += 2.0 * Math.PI;
                         var pts = DiscretizeArc(arc.Center.X, arc.Center.Y, arc.Radius, arc.StartAngle, sw);
@@ -524,6 +713,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     }
                     else if (ent is Polyline pl)
                     {
+                        if (elevation.HasValue && (Math.Abs(pl.Normal.Z - 1.0) > 1e-8 ||
+                            Math.Abs(pl.Elevation - elevation.Value) > SideTolerance)) continue;
                         var n = pl.NumberOfVertices;
                         var segCount = pl.Closed ? n : n - 1;
                         for (var i = 0; i < segCount; i++)
@@ -535,7 +726,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                             {
                                 AddSeg(result, p1.X - ox, p1.Y - oy, p2.X - ox, p2.Y - oy, minSeg);
                             }
-                            else
+                            else if (!elevation.HasValue)
                             {
                                 var pts = DiscretizeBulge(p1.X, p1.Y, p2.X, p2.Y, b);
                                 AddPtsSegs(result, pts, ox, oy, minSeg);

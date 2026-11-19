@@ -53,7 +53,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             new Feature("点板格放受力符号", "SLB"),
             new Feature("板受力符号预览", "SLBP"),
             new Feature("板受力符号修正", "SLBFIX"),
-            new Feature("设置板梁边界图层", "SLBLAYER"),
+            new Feature("设置板轮廓与梁线", "SLBLAYER"),
             new Feature("选尾数非0/5标注", "DIMCHK"),
             new Feature("标注尾数取整", "DIMFIX"),
             new Feature("标注恢复原值", "DIMRE"),
