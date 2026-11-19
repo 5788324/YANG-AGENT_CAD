@@ -11,57 +11,170 @@
    </ResourceDictionary.MergedDictionaries>
   </ResourceDictionary>
  </UserControl.Resources>
- <Grid Margin="16">
-  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="12"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+ <Grid Margin="14">
+  <Grid.RowDefinitions>
+   <RowDefinition Height="Auto"/>
+   <RowDefinition Height="10"/>
+   <RowDefinition Height="*"/>
+   <RowDefinition Height="Auto"/>
+  </Grid.RowDefinitions>
+
   <StackPanel>
-   <TextBlock Text="YangCAD 工具箱" Style="{StaticResource TitleText}"/>
-   <TextBlock Text="高频工具随手用 · 图纸处理一键完成" Style="{StaticResource MutedText}" Margin="0,3,0,0"/>
-   <Border Style="{StaticResource Card}" Margin="0,10,0,0" Padding="10,8">
+   <Grid>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <StackPanel>
-     <TextBlock Text="常用操作" FontWeight="SemiBold" Margin="0,0,0,6"/>
-     <WrapPanel>
-      <Button Content="图层管理" Tag="YGLAYER" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
-      <Button Content="提取大样" Tag="YGDETAIL" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
-      <Button Content="双线/管道" Tag="YGDL" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
-      <Button Content="改双线宽度" Tag="YGDLW" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
-      <Button Content="找文字覆盖标注" Tag="YGDIMTXT" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
-      <Button Content="标注坡度" Tag="YGSLOPE" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
-      <Button Content="文字加框" Tag="YGTBOX" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
-      <Button Content="比例转换" Tag="YGSCALE" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
-      <Button Content="引线修复" Tag="YGLEADERFIX" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,7,6"/>
-      <Button Content="快捷键" Tag="YGKEYS" Click="QuickNativeCommandClick" Style="{StaticResource SecondaryButton}" Margin="0,0,0,6"/>
-     </WrapPanel>
+     <TextBlock Text="YangCAD 工具箱" FontSize="19" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+     <TextBlock Text="左键直接执行 · 右键选中按钮可改下方快捷键" Style="{StaticResource MutedText}" Margin="0,2,0,0"/>
     </StackPanel>
-   </Border>
+    <Button Grid.Column="1" Content="刷新缩写" Click="RefreshAliasesClick" Style="{StaticResource ScalePillButton}" VerticalAlignment="Center"/>
+   </Grid>
   </StackPanel>
 
   <Grid Grid.Row="2">
    <ScrollViewer x:Name="ToolListPane" VerticalScrollBarVisibility="Auto">
     <StackPanel>
-     <TextBlock Text="生产工具" Style="{StaticResource SectionTitle}" Margin="0,0,0,10"/>
-     <ItemsControl x:Name="ToolItems">
-      <ItemsControl.ItemTemplate>
-       <DataTemplate>
-        <Button Style="{StaticResource ToolCardButton}" Tag="{Binding Id}" Click="ToolClick">
-         <Grid>
-          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-          <StackPanel>
-           <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
-           <TextBlock Text="{Binding Description}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,5,10,0"/>
-           <TextBlock Text="{Binding CategoryPath}" Style="{StaticResource MicroText}" Margin="0,8,0,0"/>
-          </StackPanel>
-          <Border Grid.Column="1" Style="{StaticResource StatusPill}" VerticalAlignment="Top"><TextBlock Text="{Binding DisplayStatus}" FontSize="11"/></Border>
-         </Grid>
-        </Button>
-       </DataTemplate>
-      </ItemsControl.ItemTemplate>
-     </ItemsControl>
+     <Border Style="{StaticResource Card}" Padding="10,8" Margin="0,0,0,8">
+      <StackPanel>
+       <TextBlock Text="图层工具" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,6"/>
+       <WrapPanel>
+        <Button Content="图层工具" Tag="YGLAYER" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="图层开关" Tag="YGLONOFF" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="合并图层" Tag="YGLMERGE" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="图层冻结" Tag="YGLFREEZE" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="图层锁定" Tag="YGLLOCK" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+       </WrapPanel>
+      </StackPanel>
+     </Border>
+
+     <Border Style="{StaticResource Card}" Padding="10,8" Margin="0,0,0,8">
+      <StackPanel>
+       <TextBlock Text="修改与详图" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,6"/>
+       <WrapPanel>
+        <Button Content="提取大样" Tag="YGDETAIL" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="比例转换" Tag="YGSCALE" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="智能双线" Tag="YGDL" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="改双线宽度" Tag="YGDLW" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+       </WrapPanel>
+      </StackPanel>
+     </Border>
+
+     <Border Style="{StaticResource Card}" Padding="10,8" Margin="0,0,0,8">
+      <StackPanel>
+       <TextBlock Text="结构标注与板符号" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,6"/>
+       <WrapPanel>
+        <Button Content="梁尺寸标注" Tag="BMK" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="柱尺寸标注" Tag="CMK" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="板受力符号" Tag="SLB" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="板符号修正" Tag="SLBFIX" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="板格预览" Tag="SLBP" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="板梁图层" Tag="SLBLAYER" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+       </WrapPanel>
+      </StackPanel>
+     </Border>
+
+     <Border Style="{StaticResource Card}" Padding="10,8" Margin="0,0,0,8">
+      <StackPanel>
+       <TextBlock Text="文字与标注" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,6"/>
+       <WrapPanel>
+        <Button Content="引线修复" Tag="YGLEADERFIX" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="找改值标注" Tag="YGDIMTXT" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="标注坡度" Tag="YGSLOPE" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="文字加框" Tag="YGTBOX" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="尾数检查" Tag="DIMCHK" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="标注取整" Tag="DIMFIX" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="恢复原值" Tag="DIMRE" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="翻转标注" Tag="DIMFZ" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="文字向上" Tag="TXTUP" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="段落对齐" Tag="TXAL" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+       </WrapPanel>
+      </StackPanel>
+     </Border>
+
+     <Border Style="{StaticResource Card}" Padding="10,8" Margin="0,0,0,10">
+      <StackPanel>
+       <TextBlock Text="文字排版与快改" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,6"/>
+       <WrapPanel>
+        <Button Content="左对齐" Tag="YGTL" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="水平居中" Tag="YGTC" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="右对齐" Tag="YGTR" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="顶对齐" Tag="YGTT" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="底对齐" Tag="YGTB" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="垂直居中" Tag="YGTV" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="按线对齐" Tag="YGTLINE" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="按弧环绕" Tag="YGTARC" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="递增复制" Tag="YGINC" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="连接文字" Tag="YGTJOIN" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="单转多" Tag="YGTS2M" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="多转单" Tag="YGTM2S" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="文字炸碎" Tag="YGTEXP" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="去空格/行" Tag="YGTSPACE" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="大小写/驼峰" Tag="YGTCASE" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="中英标点" Tag="YGTPUNC" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="前后缀" Tag="YGTAFFIX" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="刷内容" Tag="YGTBRUSH" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="换内容" Tag="YGTSWAP" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="改特性" Tag="YGTPROP" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="跑道框" Tag="YGTBOXSLOT" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="遮罩框" Tag="YGTBOXMASK" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="文字设置" Tag="YGTSET" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+       </WrapPanel>
+      </StackPanel>
+     </Border>
+
+     <Border Style="{StaticResource Card}" Padding="10,8" Margin="0,0,0,10">
+      <StackPanel>
+       <TextBlock Text="填充图案工具" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,6"/>
+       <WrapPanel>
+        <Button Content="剪裁填充" Tag="YGHCLIP" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="挖出保留" Tag="YGHCLIPSPLIT" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="仅留框内" Tag="YGHCLIPINT" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="拆分填充" Tag="YGHSPLIT" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="合并填充" Tag="YGHUNION" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="去关联" Tag="YGHDIS" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="重建边界" Tag="YGHBOUND" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="改基点" Tag="YGHBASE" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+       </WrapPanel>
+      </StackPanel>
+     </Border>
+
+     <Border Style="{StaticResource Card}" Padding="10,8" Margin="0,0,0,10">
+      <StackPanel>
+       <TextBlock Text="专项与设置" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,6"/>
+       <WrapPanel>
+        <Button Content="Revit预处理" Tag="YGREVIT" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="当前图内嵌" Tag="YGEMBED" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="批量内嵌" Tag="YGEMBEDBATCH" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="快捷键" Tag="YGKEYS" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+        <Button Content="控制中心" Tag="YANGCAD" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource CompactGridButton}"/>
+       </WrapPanel>
+      </StackPanel>
+     </Border>
+
+     <Expander Header="高级专项面板（Revit / 图片外参详情）" IsExpanded="False" Foreground="{DynamicResource TextSecondaryBrush}">
+      <ItemsControl x:Name="ToolItems" Margin="0,8,0,0">
+       <ItemsControl.ItemTemplate>
+        <DataTemplate>
+         <Button Style="{StaticResource ToolCardButton}" Tag="{Binding Id}" Click="ToolClick" Padding="10">
+          <Grid>
+           <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+           <StackPanel>
+            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+            <TextBlock Text="{Binding Description}" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,4,8,0"/>
+            <TextBlock Text="{Binding CategoryPath}" Style="{StaticResource MicroText}" Margin="0,5,0,0"/>
+           </StackPanel>
+           <Border Grid.Column="1" Style="{StaticResource StatusPill}" VerticalAlignment="Top"><TextBlock Text="{Binding DisplayStatus}" FontSize="11"/></Border>
+          </Grid>
+         </Button>
+        </DataTemplate>
+       </ItemsControl.ItemTemplate>
+      </ItemsControl>
+     </Expander>
     </StackPanel>
    </ScrollViewer>
 
    <ScrollViewer x:Name="ToolDetailPane" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
     <StackPanel>
-     <Button Content="← 返回工具列表" Click="BackToList" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Margin="0,0,0,12"/>
+     <Button Content="← 返回工具列表" Click="BackToList" Style="{StaticResource SecondaryButton}" HorizontalAlignment="Left" Margin="0,0,0,10"/>
      <Border Style="{StaticResource Card}">
       <StackPanel>
        <Grid>
@@ -69,25 +182,24 @@
         <StackPanel><TextBlock x:Name="DetailNameText" Style="{StaticResource SectionTitle}"/><TextBlock x:Name="DetailCategoryText" Style="{StaticResource MicroText}" Margin="0,4,0,0"/></StackPanel>
         <Border Grid.Column="1" Style="{StaticResource StatusPill}" VerticalAlignment="Top"><TextBlock x:Name="DetailStatusText" FontSize="11"/></Border>
        </Grid>
-       <TextBlock x:Name="DetailDescriptionText" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,10,0,0"/>
+       <TextBlock x:Name="DetailDescriptionText" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,8,0,0"/>
        <TextBlock x:Name="AvailabilityText" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,8,0,0" Visibility="Collapsed"/>
-       <Separator Margin="0,14,0,14"/>
-       <StackPanel x:Name="RevitQuickActions" Visibility="Collapsed" Margin="0,0,0,14">
-        <Button Content="一键预处理当前图纸" Click="QuickRevitPrepareClick" Style="{StaticResource PrimaryButton}" Margin="0,0,0,10"/>
-        <TextBlock Text="引线与文字分开了？" Style="{StaticResource MutedText}" Margin="0,0,0,6"/>
+       <Separator Margin="0,12,0,12"/>
+       <StackPanel x:Name="RevitQuickActions" Visibility="Collapsed" Margin="0,0,0,12">
+        <Button Content="一键预处理当前图纸" Click="QuickRevitPrepareClick" Style="{StaticResource PrimaryButton}" Margin="0,0,0,8"/>
         <Button Content="修复引线 / 关联文字" Click="QuickLeaderRepairClick" Style="{StaticResource SecondaryButton}"/>
        </StackPanel>
-       <StackPanel x:Name="ImageQuickActions" Visibility="Collapsed" Margin="0,0,0,12">
-        <TextBlock Text="快速操作 · 原文件不覆盖，输出到 *_Embedded" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+       <StackPanel x:Name="ImageQuickActions" Visibility="Collapsed" Margin="0,0,0,10">
+        <TextBlock Text="原图不会覆盖，自动导出到 *_Embedded 目录" Style="{StaticResource MutedText}" TextWrapping="Wrap" Margin="0,0,0,8"/>
         <Button Content="当前图纸一键内嵌" Click="QuickEmbedCurrentClick" Style="{StaticResource PrimaryButton}" Margin="0,0,0,8"/>
         <Button Content="选择文件夹 · 批量内嵌" Click="QuickEmbedFolderClick" Style="{StaticResource SecondaryButton}"/>
        </StackPanel>
-       <Expander Header="高级设置" IsExpanded="False" Margin="0,0,0,8">
+       <Expander Header="高级设置" IsExpanded="False" Margin="0,0,0,6">
         <StackPanel Margin="0,8,0,0">
          <local:ToolboxParameterPanel x:Name="ParameterPanel"/>
          <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
           <Button x:Name="PreviewButton" Content="预览" Click="PreviewSelectedTool" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0" Visibility="Collapsed"/>
-          <Button x:Name="ExecuteButton" Content="按高级设置执行" Click="ExecuteSelectedTool" Style="{StaticResource PrimaryButton}"/>
+          <Button x:Name="ExecuteButton" Content="执行" Click="ExecuteSelectedTool" Style="{StaticResource PrimaryButton}"/>
          </StackPanel>
         </StackPanel>
        </Expander>
@@ -96,13 +208,24 @@
      <Border x:Name="ResultBorder" Style="{StaticResource AccentCard}" Visibility="Collapsed" Margin="0,10,0,0">
       <StackPanel>
        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="ResultTitleText" FontWeight="SemiBold"/><StackPanel Grid.Column="1" Orientation="Horizontal"><Button x:Name="OpenEmbedOutputButton" Content="打开输出目录" Click="OpenEmbedOutputClick" Style="{StaticResource SecondaryButton}" Padding="10,5" Visibility="Collapsed" Margin="0,0,8,0"/><Button x:Name="CopyResultButton" Content="复制结果" Click="CopyResultClick" Style="{StaticResource SecondaryButton}" Padding="10,5"/></StackPanel></Grid>
-       <TextBox x:Name="ResultText" TextWrapping="Wrap" Style="{StaticResource ResultTextBox}" Margin="0,8,0,0" MaxHeight="280" VerticalScrollBarVisibility="Auto"/>
+       <TextBox x:Name="ResultText" TextWrapping="Wrap" Style="{StaticResource ResultTextBox}" Margin="0,8,0,0" MaxHeight="260" VerticalScrollBarVisibility="Auto"/>
       </StackPanel>
      </Border>
     </StackPanel>
    </ScrollViewer>
   </Grid>
 
-  <Border Grid.Row="3" Style="{StaticResource AccentCard}" Margin="0,12,0,0"><TextBlock Text="默认保留原图；转换详情可在执行结果中查看。" Style="{StaticResource MutedText}" TextWrapping="Wrap"/></Border>
+  <Border Grid.Row="3" Style="{StaticResource AccentCard}" Padding="10,8" Margin="0,10,0,0">
+   <StackPanel>
+    <Grid>
+     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="72"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+     <TextBlock x:Name="QuickAliasLabel" Text="右键上方按钮可改快捷键" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis"/>
+     <TextBox x:Name="QuickAliasInput" Grid.Column="1" Height="28" Margin="6,0,6,0" Padding="6,2" VerticalContentAlignment="Center" MaxLength="16" Background="{DynamicResource SurfaceBrush}" Foreground="{DynamicResource TextPrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
+     <Button Grid.Column="2" Content="保存" Click="QuickAliasSaveClick" Style="{StaticResource ScalePillButton}" Height="28" Margin="0,0,4,0"/>
+     <Button Grid.Column="3" Content="应用" Click="QuickAliasApplyClick" Style="{StaticResource ScalePillButton}" Height="28" Margin="0"/>
+    </Grid>
+    <TextBlock x:Name="QuickAliasStatus" Text="提示：所有修改均支持 Ctrl+Z 一步撤销" Style="{StaticResource MicroText}" Margin="0,5,0,0" TextWrapping="Wrap"/>
+   </StackPanel>
+  </Border>
  </Grid>
 </UserControl>

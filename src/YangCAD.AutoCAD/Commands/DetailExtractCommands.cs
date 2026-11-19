@@ -17,7 +17,10 @@ namespace YangCAD.AutoCADHost.Commands
             var ed = doc.Editor;
             try
             {
-                ed.WriteMessage("\n[YangCAD] 框出需要提取的大样范围，原图保留不动。\n");
+                var settings = UserSettings.Load();
+                var defaultFactor = settings.DetailScaleFactor > 0 ? settings.DetailScaleFactor : 1.0;
+
+                ed.WriteMessage("\n[YangCAD] 框出需要提取的大样范围（原图保留不动）。\n");
                 var first = ed.GetPoint("\n大样裁切框第一个角点：");
                 if (first.Status != PromptStatus.OK) return;
                 var secondOpt = new PromptCornerOptions("\n对角点：", first.Value);
@@ -25,23 +28,30 @@ namespace YangCAD.AutoCADHost.Commands
                 if (second.Status != PromptStatus.OK) return;
                 var destination = ed.GetPoint("\n在图中点一下大样放置位置：");
                 if (destination.Status != PromptStatus.OK) return;
-                var multiplier = new PromptDoubleOptions("\n大样放大倍数 <1>（回车不放大）：")
+                var multiplier = new PromptDoubleOptions($"\n大样放大倍数 <{defaultFactor:0.####}>（回车直接沿用）：")
                 {
-                    DefaultValue = 1, UseDefaultValue = true, AllowZero = false, AllowNegative = false
+                    DefaultValue = defaultFactor, UseDefaultValue = true, AllowZero = false, AllowNegative = false
                 };
                 var factor = ed.GetDouble(multiplier);
                 if (factor.Status != PromptStatus.OK && factor.Status != PromptStatus.None) return;
+                var chosenFactor = factor.Status == PromptStatus.None ? defaultFactor : factor.Value;
+
                 var request = new DetailExtractService.Request
                 {
                     FirstCorner = first.Value, OppositeCorner = second.Value,
                     Destination = destination.Value,
-                    Factor = factor.Status == PromptStatus.None ? 1 : factor.Value,
+                    Factor = chosenFactor,
                     KeepDimensionsAndLeaders = true, DrawFrame = true
                 };
                 var result = CadTransactionRunner.WriteContext(doc, false, ctx =>
                     DetailExtractService.Extract(ctx, request, false));
-                ed.WriteMessage($"\n[YangCAD] 大样已提取：{result.copied_entities} 个图元；" +
-                    $"精确裁切 {result.clipped_sources} 个来源；跳过 {result.skipped_sources} 个；原图未删除。\n");
+
+                settings.DetailScaleFactor = chosenFactor;
+                try { settings.Save(); } catch { }
+
+                ed.WriteMessage($"\n[YangCAD] 大样已提取：{result.copied_entities} 个图元（放大 {chosenFactor:0.####} 倍" +
+                    (result.skipped_sources > 0 ? $"，跳过 {result.skipped_sources} 个无法裁切对象" : "") +
+                    "）。\n");
                 foreach (var warning in result.warnings) ed.WriteMessage("  - " + warning + "\n");
             }
             catch (System.Exception ex)

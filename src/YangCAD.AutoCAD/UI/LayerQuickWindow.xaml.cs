@@ -9,8 +9,16 @@ namespace YangCAD.AutoCADHost.UI
 {
     public partial class LayerQuickWindow : Window
     {
+        private sealed class LayerRow
+        {
+            public string Name { get; set; } = "";
+            public string DisplayName { get; set; } = "";
+            public string StatusBadge { get; set; } = "";
+        }
+
         private readonly LayerQuickService.LayerInfo[] _layers;
         private bool _ready;
+        private bool _syncing;
         public string Operation { get; private set; } = "";
         public string SourceName => SourceLayer.Text.Trim();
         public string TargetName => TargetLayer.Text.Trim();
@@ -28,23 +36,71 @@ namespace YangCAD.AutoCADHost.UI
                 ? layers.FirstOrDefault(x => x.current)?.name ?? names.FirstOrDefault() ?? "0" : selected;
             TargetLayer.Text = layers.FirstOrDefault(x => !string.Equals(x.name, SourceLayer.Text, StringComparison.OrdinalIgnoreCase) && !x.xref_dependent)?.name ?? "0";
             _ready = true;
+            RefreshLayerList();
             Refresh();
+        }
+
+        private void RefreshLayerList()
+        {
+            if (LayerListBox == null) return;
+            var keyword = (FilterBox?.Text ?? "").Trim();
+            var rows = _layers
+                .Where(x => string.IsNullOrEmpty(keyword) || x.name.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+                .Select(x => new LayerRow
+                {
+                    Name = x.name,
+                    DisplayName = (x.current ? "★ " : "") + x.name + (x.xref_dependent ? " [外参]" : ""),
+                    StatusBadge = $"{(x.off ? "关" : "开")} · {(x.frozen ? "冻结" : "正常")} · {(x.locked ? "锁定" : "未锁")}"
+                })
+                .ToArray();
+            _syncing = true;
+            LayerListBox.ItemsSource = rows;
+            LayerListBox.SelectedItem = rows.FirstOrDefault(r => string.Equals(r.Name, SourceName, StringComparison.OrdinalIgnoreCase));
+            _syncing = false;
         }
 
         private void Refresh()
         {
             if (!_ready) return;
             var item = _layers.FirstOrDefault(x => string.Equals(x.name, SourceName, StringComparison.OrdinalIgnoreCase));
-            LayerStatus.Text = item == null ? "图层不存在。可从下拉列表选择。" :
-                $"{(item.off ? "已关闭" : "已显示")} · {(item.frozen ? "已冻结" : "已解冻")} · {(item.locked ? "已锁定" : "未锁定")}" +
-                (item.xref_dependent ? " · 外参图层（当前文件内设置）" : "") +
-                (item.current ? " · 当前图层" : "");
+            LayerStatus.Text = item == null ? "图层不存在，请从列表选择。" :
+                $"已选：{item.name} · {(item.off ? "已关闭" : "已显示")} · {(item.frozen ? "已冻结" : "已解冻")} · {(item.locked ? "已锁定" : "未锁定")}" +
+                (item.xref_dependent ? " · 外参层" : "") +
+                (item.current ? " · 当前层" : "");
             VisibilityButton.Content = item?.off == true ? "显示图层" : "关闭图层";
             FreezeButton.Content = item?.frozen == true ? "解冻图层" : "冻结图层";
             LockButton.Content = item?.locked == true ? "解锁图层" : "锁定图层";
         }
 
-        private void LayerChanged(object sender, SelectionChangedEventArgs e) => Refresh();
+        private void FilterChanged(object sender, TextChangedEventArgs e)
+        {
+            if (_ready) RefreshLayerList();
+        }
+
+        private void LayerListSelected(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_ready || _syncing) return;
+            if (LayerListBox.SelectedItem is LayerRow row)
+            {
+                _syncing = true;
+                SourceLayer.Text = row.Name;
+                _syncing = false;
+                Refresh();
+            }
+        }
+
+        private void LayerChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_ready || _syncing) return;
+            Refresh();
+            if (LayerListBox.ItemsSource is LayerRow[] rows)
+            {
+                _syncing = true;
+                LayerListBox.SelectedItem = rows.FirstOrDefault(r => string.Equals(r.Name, SourceName, StringComparison.OrdinalIgnoreCase));
+                _syncing = false;
+            }
+        }
+
         private bool EnsureLayer() => _layers.Any(x => string.Equals(x.name, SourceName, StringComparison.OrdinalIgnoreCase))
             ? true : ShowError("请从列表中选择已有图层。");
         private bool ShowError(string message)

@@ -114,6 +114,7 @@ src/YangCAD.AutoCAD/Commands/DetailExtractCommands.cs
 src/YangCAD.AutoCAD/Commands/DualLineCommands.cs
 src/YangCAD.AutoCAD/Commands/LayerQuickCommands.cs
 src/YangCAD.AutoCAD/Commands/LeaderRepairCommands.cs
+src/YangCAD.AutoCAD/Commands/LspPortCommands.cs
 src/YangCAD.AutoCAD/Commands/ScaleConvertCommands.cs
 src/YangCAD.AutoCAD/Commands/ToolboxCommands.cs
 src/YangCAD.AutoCAD/ExtensionApplication.cs
@@ -149,9 +150,11 @@ src/YangCAD.AutoCAD/Mcp/Tools/ToolJson.cs
 src/YangCAD.AutoCAD/RuntimeHost.cs
 src/YangCAD.AutoCAD/Services/Cad/AnnotationUtilitiesService.cs
 src/YangCAD.AutoCAD/Services/Cad/DetailExtractService.cs
+src/YangCAD.AutoCAD/Services/Cad/DimTextToolsService.cs
 src/YangCAD.AutoCAD/Services/Cad/DrawingAuditService.cs
 src/YangCAD.AutoCAD/Services/Cad/DualLineService.cs
 src/YangCAD.AutoCAD/Services/Cad/ImageEmbedBatchService.cs
+src/YangCAD.AutoCAD/Services/Cad/JianrenTextService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerAuditService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerCleanupService.cs
 src/YangCAD.AutoCAD/Services/Cad/LayerQuickService.cs
@@ -161,6 +164,10 @@ src/YangCAD.AutoCAD/Services/Cad/PolylineInspectionService.cs
 src/YangCAD.AutoCAD/Services/Cad/RevitExchangeService.cs
 src/YangCAD.AutoCAD/Services/Cad/ScaleConversionService.cs
 src/YangCAD.AutoCAD/Services/Cad/ShortcutAliasService.cs
+src/YangCAD.AutoCAD/Services/Cad/SlabSymbolService.cs
+src/YangCAD.AutoCAD/Services/Cad/StructuralMarkService.cs
+src/YangCAD.AutoCAD/Services/Cad/YqHatchToolsService.cs
+src/YangCAD.AutoCAD/Toolbox/CadToolCatalog.cs
 src/YangCAD.AutoCAD/Toolbox/ToolboxContracts.cs
 src/YangCAD.AutoCAD/Toolbox/ToolboxRegistry.cs
 src/YangCAD.AutoCAD/UI/ControlCenterWindow.xaml
@@ -173,6 +180,7 @@ src/YangCAD.AutoCAD/UI/McpWindow.xaml
 src/YangCAD.AutoCAD/UI/McpWindow.xaml.cs
 src/YangCAD.AutoCAD/UI/McpWindowManager.cs
 src/YangCAD.AutoCAD/UI/RibbonBootstrapper.cs
+src/YangCAD.AutoCAD/UI/RibbonIcons.cs
 src/YangCAD.AutoCAD/UI/ScaleConvertWindow.xaml
 src/YangCAD.AutoCAD/UI/ScaleConvertWindow.xaml.cs
 src/YangCAD.AutoCAD/UI/ShortcutManagerWindow.xaml

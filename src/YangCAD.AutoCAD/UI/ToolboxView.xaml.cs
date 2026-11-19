@@ -1,14 +1,16 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using YangCAD.AutoCADHost.Infrastructure;
-using YangCAD.AutoCADHost.Toolbox;
-using YangCAD.AutoCADHost.Services.Cad;
-using System.IO;
-using System.Collections.Generic;
-using System.Diagnostics;
+using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
+using YangCAD.AutoCADHost.Infrastructure;
+using YangCAD.AutoCADHost.Services.Cad;
+using YangCAD.AutoCADHost.Toolbox;
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace YangCAD.AutoCADHost.UI
@@ -24,8 +26,20 @@ namespace YangCAD.AutoCADHost.UI
             public string DisplayStatus { get; set; } = "";
         }
 
+        private static readonly string[] AllowedQuickCommands =
+        {
+            "YGLAYER", "YGLONOFF", "YGLMERGE", "YGLFREEZE", "YGLLOCK",
+            "YGDETAIL", "YGSCALE", "YGDL", "YGDLW",
+            "BMK", "BMKFIX", "CMK", "SLB", "SLBFIX", "SLBP", "SLBLAYER", "SLBSET",
+            "YGLEADERFIX", "YGDIMTXT", "YGSLOPE", "YGTBOX",
+            "DIMCHK", "DIMFIX", "DIMRE", "DIMFZ", "TXTUP", "DFSET", "TXAL",
+            "YGREVIT", "YGEMBED", "YGEMBEDBATCH",
+            "YGKEYS", "YANGCAD"
+        };
+
         private readonly ToolboxRegistry _registry;
         private ToolboxToolDescriptor? _selected;
+        private string _selectedAliasCommand = "";
         private DispatcherTimer? _embedStatusTimer;
         private string _embedStatusFile = "";
         private string _embedOutputFolder = "";
@@ -48,6 +62,8 @@ namespace YangCAD.AutoCADHost.UI
             InitializeComponent();
             ThemeManager.Apply(Resources, UserSettings.Load().Theme);
             RefreshTools();
+            RefreshQuickButtonLabels();
+            Loaded += (_, __) => RefreshQuickButtonLabels();
             Unloaded += (_, __) => StopEmbedStatusMonitor();
         }
 
@@ -56,6 +72,7 @@ namespace YangCAD.AutoCADHost.UI
         public void RefreshContext()
         {
             RefreshTools();
+            RefreshQuickButtonLabels();
             if (_selected != null) UpdateSelectedState();
         }
 
@@ -66,6 +83,50 @@ namespace YangCAD.AutoCADHost.UI
                 .Where(x => x.DeclaredStatus != ToolboxDeclaredStatus.Hidden && x.DeclaredStatus != ToolboxDeclaredStatus.Planned)
                 .Select(ToCard)
                 .ToList();
+        }
+
+        private void RefreshQuickButtonLabels()
+        {
+            if (ToolListPane == null) return;
+            var pgpPath = TryFindActivePgpPath();
+            foreach (var button in FindVisualChildren<Button>(ToolListPane))
+            {
+                if (!(button.Tag is string cmd)) continue;
+                var item = CadToolCatalog.All.FirstOrDefault(x =>
+                    string.Equals(x.Command, cmd, StringComparison.OrdinalIgnoreCase));
+                if (item == null) continue;
+                var active = !string.IsNullOrEmpty(pgpPath) ? TryGetCurrentAlias(pgpPath!, cmd) : null;
+                button.Content = string.IsNullOrEmpty(active) ? item.Name : $"{item.Name} [{active}]";
+                button.ToolTip = $"{item.Description}\n命令：{item.Command}" +
+                    (string.IsNullOrEmpty(active) ? $"（推荐缩写：{item.DefaultAliasHint}）" : $"（当前缩写：{active}）");
+            }
+        }
+
+        private static string? TryFindActivePgpPath()
+        {
+            try
+            {
+                var doc = AcApp.DocumentManager.MdiActiveDocument;
+                return doc == null ? null : ShortcutAliasService.FindActivePgpPath(doc.Database);
+            }
+            catch { return null; }
+        }
+
+        private static string? TryGetCurrentAlias(string pgpPath, string command)
+        {
+            try { return ShortcutAliasService.CurrentAlias(pgpPath, command); }
+            catch { return null; }
+        }
+
+        private static IEnumerable<T> FindVisualChildren<T>(DependencyObject root) where T : DependencyObject
+        {
+            if (root == null) yield break;
+            for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+            {
+                var child = VisualTreeHelper.GetChild(root, i);
+                if (child is T typed) yield return typed;
+                foreach (var nested in FindVisualChildren<T>(child)) yield return nested;
+            }
         }
 
         private ToolCardItem ToCard(ToolboxToolDescriptor descriptor)
@@ -85,16 +146,102 @@ namespace YangCAD.AutoCADHost.UI
         private void QuickNativeCommandClick(object sender, RoutedEventArgs e)
         {
             if (!((sender as Button)?.Tag is string command)) return;
-            var allowed = new[] { "YGLAYER", "YGDETAIL", "YGDL", "YGDLW", "YGDIMTXT", "YGSLOPE", "YGTBOX", "YGSCALE", "YGLEADERFIX", "YGKEYS" };
-            if (!allowed.Contains(command, StringComparer.OrdinalIgnoreCase)) return;
+            var allowed = AllowedQuickCommands.Contains(command, StringComparer.OrdinalIgnoreCase) ||
+                          CadToolCatalog.All.Any(x => string.Equals(x.Command, command, StringComparison.OrdinalIgnoreCase));
+            if (!allowed) return;
             var document = AcApp.DocumentManager.MdiActiveDocument;
             if (document == null)
             {
-                ShowResult(false, "请先打开图纸", "打开 DWG 后即可使用这些工具。");
+                QuickAliasStatus.Text = "请先打开图纸后使用命令。";
                 return;
             }
-            try { document.SendStringToExecute(command + " ", true, false, false); }
-            catch (System.Exception ex) { ShowResult(false, "无法启动工具", ex.Message); }
+            try
+            {
+                var prefix = "";
+                try
+                {
+                    var activeCommands = Convert.ToString(AcApp.GetSystemVariable("CMDNAMES"));
+                    if (!string.IsNullOrWhiteSpace(activeCommands)) prefix = "\x03\x03";
+                }
+                catch { }
+                document.SendStringToExecute(prefix + command + " ", true, false, false);
+            }
+            catch (System.Exception ex)
+            {
+                QuickAliasStatus.Text = "无法启动命令：" + ex.Message;
+            }
+        }
+
+        private void QuickToolRightClick(object sender, MouseButtonEventArgs e)
+        {
+            if (!((sender as Button)?.Tag is string command)) return;
+            e.Handled = true;
+            _selectedAliasCommand = command;
+            var item = CadToolCatalog.All.FirstOrDefault(x =>
+                string.Equals(x.Command, command, StringComparison.OrdinalIgnoreCase));
+            var name = item?.Name ?? command;
+            QuickAliasLabel.Text = $"{name} ({command})";
+
+            var pgpPath = TryFindActivePgpPath();
+            var existing = !string.IsNullOrEmpty(pgpPath) ? TryGetCurrentAlias(pgpPath!, command) : null;
+            QuickAliasInput.Text = existing ?? "";
+            QuickAliasStatus.Text = string.IsNullOrEmpty(existing)
+                ? $"未设缩写（建议：{item?.DefaultAliasHint ?? "Y" + command.Substring(0, 1)}），输入字母后点保存。"
+                : $"当前绑定：{existing} → {command}";
+            QuickAliasInput.Focus();
+            QuickAliasInput.SelectAll();
+        }
+
+        private void RefreshAliasesClick(object sender, RoutedEventArgs e)
+        {
+            RefreshQuickButtonLabels();
+            QuickAliasStatus.Text = "已刷新工具按钮的快捷键显示。";
+        }
+
+        private void QuickAliasSaveClick(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(_selectedAliasCommand))
+            {
+                QuickAliasStatus.Text = "请先右键点击上方任意工具按钮，再输入快捷键。";
+                return;
+            }
+            var pgpPath = TryFindActivePgpPath();
+            if (string.IsNullOrEmpty(pgpPath))
+            {
+                QuickAliasStatus.Text = "请先打开一张图纸再修改快捷键。";
+                return;
+            }
+            try
+            {
+                var alias = QuickAliasInput.Text.Trim();
+                if (string.IsNullOrEmpty(alias))
+                {
+                    var removed = ShortcutAliasService.Remove(pgpPath!, _selectedAliasCommand);
+                    QuickAliasStatus.Text = removed ? "已清除快捷键，点“应用”生效。" : "该命令暂无自定义快捷键。";
+                }
+                else
+                {
+                    var saved = ShortcutAliasService.Save(pgpPath!, _selectedAliasCommand, alias, allowExistingOverride: false);
+                    QuickAliasStatus.Text = $"已保存 {saved} → {_selectedAliasCommand}，点“应用”在当前图纸生效。";
+                }
+                RefreshQuickButtonLabels();
+            }
+            catch (Exception ex)
+            {
+                QuickAliasStatus.Text = ex.Message;
+            }
+        }
+
+        private void QuickAliasApplyClick(object sender, RoutedEventArgs e)
+        {
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            if (doc == null)
+            {
+                QuickAliasStatus.Text = "请先打开图纸。";
+                return;
+            }
+            MessageBox.Show("接下来会打开 CAD 的“重新初始化”窗口，勾选“PGP 文件”后点击确定即可生效。", "应用快捷键", MessageBoxButton.OK, MessageBoxImage.Information);
+            doc.SendStringToExecute("_.REINIT ", true, false, false);
         }
 
         private void ToolClick(object sender, RoutedEventArgs e)
@@ -237,7 +384,7 @@ namespace YangCAD.AutoCADHost.UI
             // Send a native modal command to the CAD editor. Selection must not run inside a WPF callback.
             // This reports only that the command was queued, NOT that the repair succeeded.
             doc.SendStringToExecute("YGLEADERFIX\n", true, false, false);
-            ShowResult(true, "请在绘图区选择引线", "1. 选择旧引线或炸开的连续线段，回车。\n2. 选择旁边的文字；没有文字直接回车。\n3. 无文字时拾取箭头端点。\n原生 MLeader 创建成功后才会替换原对象。");
+            ShowResult(true, "请在绘图区框选引线与文字", "直接框选炸开的引线线段和旁边文字，回车即可合成原生 MLeader。");
         }
 
         private void QuickEmbedCurrentClick(object sender, RoutedEventArgs e)
