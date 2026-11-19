@@ -12,7 +12,7 @@
 
 ## 矩形板方向箭头
 
-打开 [SLB_SUPPORT_DIRECTIONS.dxf](../tools/fixtures/SLB_SUPPORT_DIRECTIONS.dxf)，切到世界坐标系和俯视图，图形单位为毫米。需要保存时另存为测试 DWG。青线是 SLAB_OUTLINE，红线是 BEAM。在 SLBLAYER 中分别用 01 的下边梁线与青色轮廓设置图层，重开图后重新设置。用 SLBP 与 SLB 点相同板内位置，核对下表。
+打开 [SLB_SUPPORT_DIRECTIONS.dxf](../tools/fixtures/SLB_SUPPORT_DIRECTIONS.dxf)，切到世界坐标系和俯视图，图形单位为毫米。需要保存时另存为测试 DWG。青线是 SLAB_OUTLINE，红线是 BEAM。在 SLBLAYER 中分别用 01 的下边梁线与青色轮廓设置图层，保存 DWG 后，重开可直接使用。用 SLBP 与 SLB 点相同板内位置，核对下表。
 
 | 编号 | 箭头预期 |
 |---|---|
@@ -28,7 +28,8 @@
 
 1. 在 01 放好方向符号，删除唯一的红色梁线，再框选符号和普通块执行 SLBFIX。方向符号应移除，普通块保留。原生撤销一次应恢复符号，红色梁线仍保持删除状态。再用 SLBP 预览，确认只显示轮廓。
 2. 02 删除一侧梁线并执行 SLBFIX，只去掉对应方向的箭头。取消图层配置后再修正，方向符号应保留。
-3. 梁线的原判定为距轮廓边不超过 1 个图纸单位且覆盖至少半边。未指定板轮廓时，复测旧闭合梁线识别和单向／双向板符号。
+3. 另存测试 DWG，关闭并重开，直接用 SLB 点击 02，确认仍为下、右两向。再重命名梁线图层和轮廓图层，确认仍可识别。另开一张从未配置过的图纸，应沿用原闭合板格识别。
+4. 梁线的原判定为距轮廓边不超过 1 个图纸单位且覆盖至少半边。未指定板轮廓时，复测旧闭合梁线识别和单向／双向板符号。
 
 ## Core Console 自动检查
 
@@ -38,7 +39,7 @@
 python tools/run_slab_core_console_smoke.py --core-console "C:/Program Files/Autodesk/AutoCAD 2024/accoreconsole.exe" --dll "artifacts/bin/2024/AutoCAD/YangCAD.AutoCAD.dll" --dwg "D:/CAD-Test/SLB_SUPPORT_DIRECTIONS.dwg"
 ```
 
-脚本检查九个板格、输入图元、符号总数、零支承移除、一次撤销、减一侧箭头和普通块保留。退出码 0 需全部 15 项及完成标记通过。运行目录在 artifacts/slab-smoke-*，包含输入文件哈希、测试图副本、实际 SCR 和原始输出。若使用自定义板跨设置，须允许测试图的 4000–6000 mm 板跨。
+脚本检查九个板格、输入图元、符号总数、零支承移除、一次撤销、减一侧箭头和普通块保留。第一阶段在布置前重命名梁线图层并保存测试副本，第二阶段用独立 Core Console 进程重开并直接布置。退出码 0 需要两阶段共 17 项全部通过。运行目录在 artifacts/slab-smoke-*，包含输入文件哈希、测试图副本、实际 SCR 和原始输出。若使用自定义板跨设置，须允许测试图的 4000–6000 mm 板跨。
 
 Core Console 检查命令和 DWG 结果。Ribbon、工具箱、鼠标拾点和预览显示继续按上述 GUI 步骤验收。
 

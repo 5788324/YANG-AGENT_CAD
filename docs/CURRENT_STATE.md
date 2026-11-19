@@ -1,3 +1,9 @@
+## 2026-11-19 — 板符号图层随 DWG 保存
+
+SLBLAYER 的梁线和板轮廓配置写入当前图纸。保存并重开后可直接使用 SLB；更名后按图层对象标识继续识别，图层失效时提示重新选择。自动测试增加重开检查，Windows AutoCAD 2024 尚待运行。见 [当前任务](../tasks/CURRENT_TASK.md)。
+
+---
+
 ## 2026-11-19 — 板符号 Core Console 实机执行器
 
 新增脚本调用提供的 AutoCAD 2024 Core Console 和候选 DLL，在板符号测试图副本上对照 15 项结果。Linux 已检查脚本生成和结果判定。Windows 宿主执行及 GUI 仍待验证。见 [当前任务](../tasks/CURRENT_TASK.md)。

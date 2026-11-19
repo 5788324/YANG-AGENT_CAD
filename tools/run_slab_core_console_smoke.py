@@ -80,14 +80,20 @@ def symbol_check(name: str, x: int, y: int, mask: int, rotation: float) -> str:
     return f'(ys-check "{name}" (ys-symbol \'({x} {y} 0) {block} {rotation} \'({tips})))'
 
 
-def build_script(dll: Path) -> str:
-    lines = [
+def setup_lines(dll: Path) -> list[str]:
+    return [
         f'(setvar "TRUSTEDPATHS" (strcat (getvar "TRUSTEDPATHS") ";{dll.parent.as_posix()}"))',
         f'(command "_.NETLOAD" "{dll.as_posix()}")',
         '(setvar "OSMODE" 0)',
         '(setvar "SNAPMODE" 0)',
         '(command "_.UCS" "_World")',
         *(' '.join(line.strip() for line in definition.splitlines()) for definition in LISP.split("\n\n")),
+    ]
+
+
+def build_script(dll: Path) -> str:
+    lines = [
+        *setup_lines(dll),
         '(setq ys-outlines (ys-set "LWPOLYLINE" "SLAB_OUTLINE"))',
         '(setq ys-markers (ys-set "INSERT" "TEST_MARKER"))',
         """(setq ys-south (ssname (ssget "_X" '((0 . "LINE") (8 . "BEAM") (10 2000.0 21000.0 0.0) (11 8000.0 21000.0 0.0))) 0))""",
@@ -95,6 +101,8 @@ def build_script(dll: Path) -> str:
         '(setq ys-marker (ssname ys-markers 0) ys-marker-before (entget ys-marker))',
         '(ys-check "fixture" (and (= 9 (ys-count ys-outlines)) (= 1 (ys-count ys-markers)) ys-south ys-east (= 0 (ys-count (ys-set "INSERT" "SLB_SYMBOL")))))',
         '(command "SLBLAYER" ys-south "" (ssname ys-outlines 0))',
+        '(command "_.-LAYER" "_Rename" "BEAM" "BEAM_SMOKE" "")',
+        '(command "_.QSAVE")',
         '(command "SLB" ' + ' '.join(f"'({x} {y} 0)" for _, x, y, _, _ in CASES) + ' "")',
         '(ys-check "symbol-count" (= 7 (ys-count (ys-set "INSERT" "SLB_SYMBOL"))))',
         *(symbol_check(f"case-{number}", x, y, mask, rotation) for number, x, y, mask, rotation in CASES),
@@ -117,17 +125,31 @@ def build_script(dll: Path) -> str:
     return '\r\n'.join(lines) + '\r\n'
 
 
-def check_results(raw: bytes, exit_code: int) -> list[str]:
+def build_reopen_script(dll: Path) -> str:
+    lines = [
+        *setup_lines(dll),
+        '(ys-check "reopen-input" (and (= 21 (ys-count (ys-set "LINE" "BEAM_SMOKE"))) (= 0 (ys-count (ys-set "INSERT" "SLB_SYMBOL")))))',
+        """(command "SLB" '(15000 23000 0) "")""",
+        symbol_check("reopen-case", 15000, 23000, 9, 0),
+        '(prompt "\\nYANGCAD_SLAB_SMOKE_DONE\\n")',
+        '_.QUIT',
+        '_No',
+        '',
+    ]
+    return '\r\n'.join(lines) + '\r\n'
+
+
+def check_results(raw: bytes, exit_code: int, expected: set[str] = CHECKS) -> list[str]:
     # Accept plain-text or UTF-16 console output. Markers themselves are ASCII.
     lines = [line.strip() for line in raw.replace(b'\0', b'').splitlines()]
     matches = [match.groups() for line in lines if
                (match := re.fullmatch(rb'YANGCAD_SLAB_CHECK (PASS|FAIL) ([a-z0-9-]+)', line))]
     checks = [name.decode("ascii") for _, name in matches]
     failures = [name.decode("ascii") for status, name in matches if status == b"FAIL"]
-    missing = sorted(CHECKS - set(checks))
+    missing = sorted(expected - set(checks))
     if missing:
         failures.append("missing: " + ", ".join(missing))
-    if len(checks) != len(set(checks)) or set(checks) - CHECKS:
+    if len(checks) != len(set(checks)) or set(checks) - expected:
         failures.append("duplicate or unexpected check marker")
     if lines.count(b'YANGCAD_SLAB_SMOKE_DONE') != 1:
         failures.append("missing or duplicate completion marker")
@@ -154,10 +176,6 @@ def main() -> int:
     profile.mkdir()
     drawing = run_dir / "fixture-copy.dwg"
     shutil.copyfile(dwg, drawing)
-    script = run_dir / "smoke.scr"
-    # SCR is saved in the workstation ANSI code page used by AutoCAD scripts.
-    script.write_bytes(build_script(dll).encode("mbcs"))
-    log = run_dir / "console.log"
     description = (
         f"DLL: {dll}\nDLL SHA-256: {hashlib.sha256(dll.read_bytes()).hexdigest()}\n"
         f"Core Console: {core}\nInput DWG: {dwg}\n"
@@ -165,22 +183,31 @@ def main() -> int:
     )
     (run_dir / "inputs.txt").write_text(description, encoding="utf-8")
     print(description + f"Output: {run_dir}", flush=True)
-    try:
-        process = subprocess.run(
-            [str(core), "/i", str(drawing), "/s", str(script), "/isolate", "YangCADSlabSmoke", str(profile)],
-            cwd=run_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=120, check=False,
-        )
-    except subprocess.TimeoutExpired as exc:
-        log.write_bytes(exc.output or b"")
-        print("FAIL: Core Console timed out; see console.log.")
-        return 1
+    stages = (
+        ("smoke", build_script(dll), CHECKS),
+        ("reopen", build_reopen_script(dll), {"reopen-input", "reopen-case"}),
+    )
+    for stage, text, checks in stages:
+        script = run_dir / f"{stage}.scr"
+        # SCR is saved in the workstation ANSI code page used by AutoCAD scripts.
+        script.write_bytes(text.encode("mbcs"))
+        log = run_dir / f"{stage}.log"
+        try:
+            process = subprocess.run(
+                [str(core), "/i", str(drawing), "/s", str(script), "/isolate", "YangCADSlabSmoke", str(profile)],
+                cwd=run_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=120, check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            log.write_bytes(exc.output or b"")
+            print(f"FAIL: {stage} timed out; see {log.name}.")
+            return 1
 
-    log.write_bytes(process.stdout)
-    failures = check_results(process.stdout, process.returncode)
-    if failures:
-        print("FAIL: " + "; ".join(failures))
-        return 1
-    print(f"PASS: {len(CHECKS)} Core Console drawing checks.")
+        log.write_bytes(process.stdout)
+        failures = check_results(process.stdout, process.returncode, checks)
+        if failures:
+            print(f"FAIL ({stage}): " + "; ".join(failures))
+            return 1
+        print(f"PASS ({stage}): {len(checks)} Core Console drawing checks.")
     return 0
 
 

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
@@ -18,13 +17,12 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
         private const string DirectionalBlockPrefix = "SLB_DIR_";
         private const double SideTolerance = 1.0;
-        private static readonly ConditionalWeakTable<Database, SlabLayers> DrawingLayers =
-            new ConditionalWeakTable<Database, SlabLayers>();
+        private const string SlabLayersKey = "YANGCAD_SLAB_LAYERS_V1";
 
         private sealed class SlabLayers
         {
-            public List<string> Beams = new List<string>();
-            public string? Outline;
+            public readonly HashSet<ObjectId> Beams = new HashSet<ObjectId>();
+            public ObjectId Outline = ObjectId.Null;
         }
         private static string _lastWhy = "未找到封闭板格";
 
@@ -79,18 +77,20 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (sel.Status == PromptStatus.Cancel) return;
             if (sel.Status != PromptStatus.OK || sel.Value == null || sel.Value.Count == 0)
             {
-                DrawingLayers.Remove(db);
-                ed.WriteMessage("\n[SLBLAYER] 将使用所有非符号图层的线识别封闭板格。");
+                SaveSlabLayers(db, null);
+                ed.WriteMessage("\n[SLBLAYER] 已清除图层配置，将沿用旧板格识别。保存 DWG 后生效于下次打开。");
                 return;
             }
 
             var layers = new SlabLayers();
+            var beamNames = new List<string>();
+            var outlineName = "仅用梁线识别封闭板格";
             using (var tr = db.TransactionManager.StartTransaction())
             {
                 foreach (var id in sel.Value.GetObjectIds())
                 {
-                    var layer = ((Entity)tr.GetObject(id, OpenMode.ForRead)).Layer;
-                    if (!layers.Beams.Contains(layer, StringComparer.OrdinalIgnoreCase)) layers.Beams.Add(layer);
+                    var sample = (Entity)tr.GetObject(id, OpenMode.ForRead);
+                    if (layers.Beams.Add(sample.LayerId)) beamNames.Add(sample.Layer);
                 }
             }
 
@@ -106,17 +106,78 @@ namespace YangCAD.AutoCADHost.Services.Cad
             {
                 using var tr = db.TransactionManager.StartTransaction();
                 var pl = (Polyline)tr.GetObject(outline.ObjectId, OpenMode.ForRead);
-                if (GetRectangle(pl) == null || layers.Beams.Contains(pl.Layer, StringComparer.OrdinalIgnoreCase))
+                if (GetRectangle(pl) == null || layers.Beams.Contains(pl.LayerId))
                 {
                     ed.WriteMessage("\n[SLBLAYER] 板轮廓必须是闭合矩形，且位于独立于梁线的图层。");
                     return;
                 }
-                layers.Outline = pl.Layer;
+                layers.Outline = pl.LayerId;
+                outlineName = pl.Layer;
             }
 
-            DrawingLayers.Remove(db);
-            DrawingLayers.Add(db, layers);
-            ed.WriteMessage($"\n[SLBLAYER] 梁线图层：{string.Join(", ", layers.Beams)}；板轮廓：{layers.Outline ?? "仅用梁线识别封闭板格"}。");
+            SaveSlabLayers(db, layers);
+            ed.WriteMessage($"\n[SLBLAYER] 梁线图层：{string.Join(", ", beamNames)}；板轮廓：{outlineName}。保存 DWG 后，下次打开可直接布置。");
+        }
+
+        private static void SaveSlabLayers(Database db, SlabLayers? layers)
+        {
+            using var tr = db.TransactionManager.StartTransaction();
+            var dictionary = (DBDictionary)tr.GetObject(db.NamedObjectsDictionaryId, OpenMode.ForRead);
+            var exists = dictionary.Contains(SlabLayersKey);
+            if (layers == null && !exists) return;
+
+            Xrecord record;
+            if (exists)
+            {
+                record = (Xrecord)tr.GetObject(dictionary.GetAt(SlabLayersKey), OpenMode.ForWrite);
+            }
+            else
+            {
+                dictionary.UpgradeOpen();
+                record = new Xrecord { XlateReferences = true };
+                dictionary.SetAt(SlabLayersKey, record);
+                tr.AddNewlyCreatedDBObject(record, true);
+            }
+
+            var mode = layers == null ? "DEFAULT" : layers.Outline.IsNull ? "BEAMS" : "OUTLINE";
+            var values = new List<TypedValue> { new TypedValue((int)DxfCode.Text, mode) };
+            if (layers != null)
+            {
+                if (!layers.Outline.IsNull) values.Add(new TypedValue((int)DxfCode.SoftPointerId, layers.Outline));
+                foreach (var beam in layers.Beams)
+                    values.Add(new TypedValue((int)DxfCode.SoftPointerId, beam));
+            }
+            using var data = new ResultBuffer(values.ToArray());
+            record.Data = data;
+            tr.Commit();
+        }
+
+        private static SlabLayers? LoadSlabLayers(Database db)
+        {
+            using var tr = db.TransactionManager.StartTransaction();
+            var dictionary = (DBDictionary)tr.GetObject(db.NamedObjectsDictionaryId, OpenMode.ForRead);
+            var layers = new SlabLayers();
+            if (!dictionary.Contains(SlabLayersKey)) return layers;
+
+            var record = (Xrecord)tr.GetObject(dictionary.GetAt(SlabLayersKey), OpenMode.ForRead);
+            using var data = record.Data;
+            if (data == null) return null;
+            var values = data.AsArray();
+            if (values.Length == 0 || values[0].TypeCode != (int)DxfCode.Text) return null;
+            var mode = values[0].Value as string;
+            if (mode == "DEFAULT") return layers;
+            if (mode != "BEAMS" && mode != "OUTLINE") return null;
+
+            for (var i = 1; i < values.Length; i++)
+            {
+                if (values[i].TypeCode != (int)DxfCode.SoftPointerId ||
+                    !(values[i].Value is ObjectId layer) || layer.IsNull || !layer.IsValid || layer.IsErased)
+                    return null;
+
+                if (mode == "OUTLINE" && i == 1) layers.Outline = layer;
+                else layers.Beams.Add(layer);
+            }
+            return layers.Beams.Count == 0 ? null : layers;
         }
 
         public static void RunSlabSettings(Document doc)
@@ -500,8 +561,13 @@ namespace YangCAD.AutoCADHost.Services.Cad
             double? elevation = null)
         {
             _lastWhy = "未找到封闭板格";
-            DrawingLayers.TryGetValue(db, out var layers);
-            if (layers?.Outline != null)
+            var layers = LoadSlabLayers(db);
+            if (layers == null)
+            {
+                _lastWhy = "保存的板轮廓或梁线图层已失效，请重新执行 SLBLAYER。";
+                return null;
+            }
+            if (!layers.Outline.IsNull)
             {
                 var outline = FindOutline(db, clickPt, layers.Outline, elevation);
                 if (!outline.HasValue)
@@ -509,14 +575,14 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     _lastWhy = "在已配置的板轮廓图层中没有找到包含所选点的同标高矩形板。";
                     return null;
                 }
-                return AnalyzeSupportedOutline(db, clickPt, outline.Value.Points, outline.Value.Elevation, settings);
+                return AnalyzeSupportedOutline(db, clickPt, outline.Value.Points, outline.Value.Elevation, settings, layers.Beams);
             }
 
             var radii = new[] { 4000.0, 9000.0, Math.Max(9000.0, settings.SlabMaxSpan) };
 
             foreach (var r in radii)
             {
-                var segs = CollectSegments(db, clickPt.X, clickPt.Y, r);
+                var segs = CollectSegments(db, clickPt.X, clickPt.Y, r, layers.Beams);
                 if (segs.Count < 3)
                 {
                     _lastWhy = $"窗口内梁线太少({segs.Count}段)；可用 SLBLAYER 指定梁线图层";
@@ -593,7 +659,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
         }
 
         private static (List<Point2d> Points, double Elevation)? FindOutline(
-            Database db, Point2d clickPt, string layer, double? elevation)
+            Database db, Point2d clickPt, ObjectId layer, double? elevation)
         {
             (List<Point2d> Points, double Elevation)? best = null;
             var bestArea = double.MaxValue;
@@ -602,7 +668,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             foreach (ObjectId id in space)
             {
                 if (!(tr.GetObject(id, OpenMode.ForRead) is Polyline pl) ||
-                    !string.Equals(pl.Layer, layer, StringComparison.OrdinalIgnoreCase) ||
+                    pl.LayerId != layer ||
                     (elevation.HasValue && Math.Abs(pl.Elevation - elevation.Value) > SideTolerance)) continue;
 
                 var points = GetRectangle(pl);
@@ -617,7 +683,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
         }
 
         private static SlabResult? AnalyzeSupportedOutline(
-            Database db, Point2d clickPt, List<Point2d> points, double elevation, UserSettings settings)
+            Database db, Point2d clickPt, List<Point2d> points, double elevation, UserSettings settings,
+            HashSet<ObjectId> beamLayers)
         {
             var span1 = points[0].GetDistanceTo(points[1]);
             var span2 = points[1].GetDistanceTo(points[2]);
@@ -630,7 +697,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             }
 
             var local = points.Select(p => new Point2d(p.X - clickPt.X, p.Y - clickPt.Y)).ToList();
-            var beams = CollectSegments(db, clickPt.X, clickPt.Y, span1 + span2 + SideTolerance, elevation);
+            var beams = CollectSegments(db, clickPt.X, clickPt.Y, span1 + span2 + SideTolerance, beamLayers, elevation);
             var directions = SignedArea(local) > 0 ? new[] { 3, 0, 1, 2 } : new[] { 1, 0, 3, 2 };
             var mask = 0;
             for (var i = 0; i < 4; i++)
@@ -686,10 +753,9 @@ namespace YangCAD.AutoCADHost.Services.Cad
             return covered >= length * 0.5;
         }
 
-        private static List<Seg2D> CollectSegments(Database db, double ox, double oy, double radius, double? elevation = null)
+        private static List<Seg2D> CollectSegments(Database db, double ox, double oy, double radius,
+            HashSet<ObjectId> beamLayers, double? elevation = null)
         {
-            DrawingLayers.TryGetValue(db, out var layers);
-            var beamLayers = layers?.Beams;
             var result = new List<Seg2D>();
             var minSeg = 20.0;
             using (var tr = db.TransactionManager.StartTransaction())
@@ -698,9 +764,9 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 foreach (ObjectId id in space)
                 {
                     if (!(tr.GetObject(id, OpenMode.ForRead) is Entity ent)) continue;
-                    if (beamLayers != null && beamLayers.Count > 0)
+                    if (beamLayers.Count > 0)
                     {
-                        if (!beamLayers.Contains(ent.Layer, StringComparer.OrdinalIgnoreCase)) continue;
+                        if (!beamLayers.Contains(ent.LayerId)) continue;
                     }
                     else if (string.Equals(ent.Layer, SymbolLayerName, StringComparison.OrdinalIgnoreCase))
                     {

@@ -1,3 +1,9 @@
+## 2026-11-19 — 板符号图层配置与重开
+
+方向模式的配置保存于 DWG。Core Console 脚本先存测试副本的图层设置，再从新进程验证可直接布置。见 [实机步骤](../tasks/CURRENT_TASK.md)。
+
+---
+
 ## 2026-11-19 — 板符号自动检查入口
 
 在安装 AutoCAD 2024 的 Windows 上，使用 [Core Console 执行器](../tools/run_slab_core_console_smoke.py) 和 DXF 转存的测试 DWG。启动方式及日志位置见 [当前任务](../tasks/CURRENT_TASK.md)。
