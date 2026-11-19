@@ -52,12 +52,13 @@ namespace YangCAD.AutoCADHost.Services.Cad
             public double Span2;
             public int DirectionMask;
             public double? Elevation;
+            public bool HasNoSupport => Elevation.HasValue && DirectionMask == 0;
             public string BlockName => DirectionMask != 0 ? DirectionalBlockPrefix + DirectionMask.ToString("D2")
                 : Type == "ONE" ? "SLB_ONE" : "SLB_TWO";
 
             public string Describe()
             {
-                var label = DirectionMask != 0
+                var label = Elevation.HasValue
                     ? $"识别到 {Enumerable.Range(0, 4).Count(i => (DirectionMask & (1 << i)) != 0)} 侧支承"
                     : Type == "ONE" ? "单向板" : "双向板";
                 return $"{label} 长短比={Ratio:0.00} 板格={Span1:0}x{Span2:0} 旋转={Rotation * 180.0 / Math.PI:0.0}°";
@@ -139,7 +140,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (doc == null) return;
             var ed = doc.Editor;
             var settings = UserSettings.Load();
-            int n = 0, bad = 0;
+            int n = 0, unsupported = 0, bad = 0;
 
             ed.WriteMessage($"\n[SLB] 点击板格内部放置受力符号 | 延伸={settings.SlabExtend:0} 单向板比>={settings.SlabOneWayRatio:0.#} 系数={settings.SlabFactor:0.##}");
 
@@ -178,6 +179,13 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     continue;
                 }
 
+                if (analysis.HasNoSupport)
+                {
+                    unsupported++;
+                    ed.WriteMessage("\n该板四侧均无符合条件的梁线，未插入受力符号。");
+                    continue;
+                }
+
                 var action = PlaceOrUpdateSymbol(doc.Database, analysis);
                 if (action != null)
                 {
@@ -191,7 +199,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 }
             }
 
-            ed.WriteMessage($"\n[SLB] 完成: 处理 {n} 个, 失败 {bad} 个。");
+            ed.WriteMessage($"\n[SLB] 完成: 处理 {n} 个, 无支承 {unsupported} 个, 失败 {bad} 个。");
         }
 
         public static void RunSlabPreview(Document doc)
@@ -269,7 +277,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (kr.Status == PromptStatus.Cancel) return;
             var keepOld = !string.Equals(kr.StringResult, "N", StringComparison.OrdinalIgnoreCase);
 
-            int fixedCount = 0, dup = 0, skipped = 0, bad = 0;
+            int fixedCount = 0, removedUnsupported = 0, dup = 0, skipped = 0, bad = 0;
             var doneCenters = new List<Point3d>();
 
             using (var tr = db.TransactionManager.StartTransaction())
@@ -299,7 +307,24 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         continue;
                     }
 
-                    if (blockName.StartsWith(DirectionalBlockPrefix, StringComparison.OrdinalIgnoreCase) && analysis.DirectionMask == 0)
+                    var directional = blockName.StartsWith(DirectionalBlockPrefix, StringComparison.OrdinalIgnoreCase);
+                    if (analysis.HasNoSupport)
+                    {
+                        if (directional)
+                        {
+                            br.UpgradeOpen();
+                            br.Erase();
+                            removedUnsupported++;
+                        }
+                        else
+                        {
+                            bad++;
+                            ed.WriteMessage("\n板格无支承，原有单向或双向符号保留。");
+                        }
+                        continue;
+                    }
+
+                    if (directional && !analysis.Elevation.HasValue)
                     {
                         bad++;
                         ed.WriteMessage("\n方向板符号需要已配置的板轮廓和梁线图层；原符号保留。");
@@ -325,7 +350,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 tr.Commit();
             }
 
-            ed.WriteMessage($"\n[SLBFIX] 完成: 修正 {fixedCount} 个, 删除同板格重复 {dup} 个, 跳过非板符号 {skipped} 个, 失败 {bad} 个。");
+            ed.WriteMessage($"\n[SLBFIX] 完成: 修正 {fixedCount} 个, 移除无支承方向符号 {removedUnsupported} 个, 删除同板格重复 {dup} 个, 跳过非板符号 {skipped} 个, 失败 {bad} 个。");
         }
 
         private static string? PlaceOrUpdateSymbol(Database db, SlabResult res)
@@ -441,6 +466,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
         private static IEnumerable<(double X1, double Y1, double X2, double Y2)> SymbolLines(SlabResult result)
         {
+            if (result.HasNoSupport) yield break;
+
             var mask = result.DirectionMask;
             if (mask == 0)
             {
@@ -611,12 +638,6 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 if (HasSideSupport(local[i], local[(i + 1) % 4], beams))
                     mask |= 1 << directions[i];
             }
-            if (mask == 0)
-            {
-                _lastWhy = "板轮廓四侧均未找到符合条件的梁线";
-                return null;
-            }
-
             return new SlabResult
             {
                 Center = new Point2d((points[0].X + points[2].X) * 0.5, (points[0].Y + points[2].Y) * 0.5),

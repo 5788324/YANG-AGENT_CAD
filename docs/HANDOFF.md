@@ -1,3 +1,9 @@
+## 2026-11-19 — 板符号回归样图
+
+可直接用 [板符号测试图](../tools/fixtures/SLB_SUPPORT_DIRECTIONS.dxf) 验证 0–4 侧方向和最后一侧梁线删除后的修正及撤销。[操作与预期结果](../tasks/CURRENT_TASK.md)。
+
+---
+
 ## 2026-11-19 — 板受力符号方向
 
 继续使用 PR #20 分支。SLBLAYER 设置图纸内的梁线和可选矩形轮廓图层，SLBP 可先预览，SLB 写入可编辑块。见 [复测步骤](../tasks/CURRENT_TASK.md)。
