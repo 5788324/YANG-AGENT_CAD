@@ -84,29 +84,42 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 var createdSplit = 0;
                 var erasedEmpty = 0;
                 var fallbackUsed = 0;
-
-                using (var tr = db.TransactionManager.StartTransaction())
+                var skipped = 0;
+                try
                 {
-                    var space = (BlockTableRecord)tr.GetObject(db.CurrentSpaceId, OpenMode.ForWrite);
-                    var lt = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
-
-                    foreach (var id in candidateIds)
+                    using (var tr = db.TransactionManager.StartTransaction())
                     {
-                        if (!(tr.GetObject(id, OpenMode.ForWrite) is Hatch hatch)) continue;
-                        if (IsLayerLocked(tr, lt, hatch.Layer)) continue;
-                        if (!ExtentsOverlap2d(hatch, clipPolyWcs)) continue;
+                        var space = (BlockTableRecord)tr.GetObject(db.CurrentSpaceId, OpenMode.ForWrite);
+                        var lt = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
 
-                        if (TryClipSingleHatch(tr, space, hatch, clipPolyWcs, chosenMode,
-                            out var addedCount, out var deleted, out var usedFallback))
+                        foreach (var id in candidateIds)
                         {
-                            processed++;
-                            createdSplit += addedCount;
-                            if (deleted) erasedEmpty++;
-                            if (usedFallback) fallbackUsed++;
-                        }
-                    }
+                            if (!(tr.GetObject(id, OpenMode.ForRead) is Hatch hatch)) continue;
+                            if (IsLayerLocked(tr, lt, hatch.Layer)) continue;
+                            if (!ExtentsOverlap2d(hatch, clipPolyWcs)) continue;
 
-                    tr.Commit();
+                            hatch.UpgradeOpen();
+                            if (TryClipSingleHatch(tr, space, hatch, clipPolyWcs, chosenMode,
+                                out var addedCount, out var deleted, out var usedFallback))
+                            {
+                                processed++;
+                                createdSplit += addedCount;
+                                if (deleted) erasedEmpty++;
+                                if (usedFallback) fallbackUsed++;
+                            }
+                            else
+                            {
+                                skipped++;
+                            }
+                        }
+
+                        tr.Commit();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ed.WriteMessage($"\n填充剪裁失败，本次修改已撤销：{ex.Message}");
+                    return;
                 }
 
                 if (chosenMode == "K")
@@ -121,6 +134,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         $"\n[剪裁填充:{DescribeClipMode(chosenMode)}] 已处理 {processed} 个填充" +
                         (erasedEmpty > 0 ? $"，其中 {erasedEmpty} 个已完全裁空移除。" : "。"));
                 }
+                if (skipped > 0)
+                    ed.WriteMessage($"\n已跳过 {skipped} 个未生成裁切结果的填充，原填充保留。");
             }
         }
 
@@ -543,86 +558,44 @@ namespace YangCAD.AutoCADHost.Services.Cad
             using var clipRegion = CreateRegionFromCurve(clipPolyOcs);
             if (clipRegion == null || clipRegion.Area < AreaTol) return false;
 
-            if (TryBuildHatchCompositeRegion(hatch, localOrigin, out var hatchRegion) && hatchRegion != null)
+            if (TryBuildHatchCompositeRegion(hatch, localOrigin, out var hatchRegion, requireAllLoops: true) && hatchRegion != null)
             {
                 using (hatchRegion)
                 {
-                    if (mode == "S")
+                    var operation = mode == "I" ? BooleanOperationType.BoolIntersect : BooleanOperationType.BoolSubtract;
+                    using var remaining = (Region)hatchRegion.Clone();
+                    if (TryApplyClipBoolean(remaining, operation, clipRegion))
                     {
-                        using var subReg = (Region)hatchRegion.Clone();
-                        using var cReg = (Region)clipRegion.Clone();
-                        try
+                        if (mode != "K")
                         {
-                            subReg.BooleanOperation(BooleanOperationType.BoolSubtract, cReg);
-                            if (subReg.Area < AreaTol)
+                            if (remaining.Area < AreaTol)
                             {
                                 hatch.Erase();
                                 erasedOriginal = true;
                                 return true;
                             }
 
-                            if (TryPopulateHatchFromRegion(tr, space, hatch, subReg, localOrigin,
-                                groupIntoSingleHatch: true, updateInPlace: hatch, out _))
+                            if (TryPopulateHatchFromRegion(tr, space, hatch, remaining, localOrigin,
+                                groupIntoSingleHatch: true, updateInPlace: hatch, out _, requireCompleteResult: true))
                                 return true;
                         }
-                        catch { }
-                    }
-                    else if (mode == "I")
-                    {
-                        using var intReg = (Region)hatchRegion.Clone();
-                        using var cReg = (Region)clipRegion.Clone();
-                        try
+                        else
                         {
-                            intReg.BooleanOperation(BooleanOperationType.BoolIntersect, cReg);
-                            if (intReg.Area < AreaTol)
+                            using var inside = (Region)hatchRegion.Clone();
+                            if (TryApplyClipBoolean(inside, BooleanOperationType.BoolIntersect, clipRegion))
                             {
-                                hatch.Erase();
-                                erasedOriginal = true;
-                                return true;
-                            }
+                                if (inside.Area < AreaTol || remaining.Area < AreaTol) return false;
 
-                            if (TryPopulateHatchFromRegion(tr, space, hatch, intReg, localOrigin,
-                                groupIntoSingleHatch: true, updateInPlace: hatch, out _))
-                                return true;
-                        }
-                        catch { }
-                    }
-                    else
-                    {
-                        // mode == "K": 从原填充中挖掉该区域，但不删除，生成独立新填充
-                        using var outsideReg = (Region)hatchRegion.Clone();
-                        using var insideReg = (Region)hatchRegion.Clone();
-                        using var cReg1 = (Region)clipRegion.Clone();
-                        using var cReg2 = (Region)clipRegion.Clone();
-                        var regionsReady = true;
-                        try
-                        {
-                            outsideReg.BooleanOperation(BooleanOperationType.BoolSubtract, cReg1);
-                            insideReg.BooleanOperation(BooleanOperationType.BoolIntersect, cReg2);
-                        }
-                        catch (Autodesk.AutoCAD.Runtime.Exception)
-                        {
-                            regionsReady = false;
-                        }
+                                if (TryPopulateHatchFromRegion(tr, space, hatch, remaining, localOrigin,
+                                    groupIntoSingleHatch: true, updateInPlace: hatch, out _, requireCompleteResult: true))
+                                {
+                                    if (!TryPopulateHatchFromRegion(tr, space, hatch, inside, localOrigin,
+                                        groupIntoSingleHatch: false, updateInPlace: null, out var splitPieces, requireCompleteResult: true))
+                                        throw new InvalidOperationException("无法生成挖出的独立填充。");
 
-                        if (regionsReady)
-                        {
-                            if (insideReg.Area < AreaTol) return false;
-                            if (outsideReg.Area < AreaTol)
-                            {
-                                return TryPopulateHatchFromRegion(tr, space, hatch, insideReg, localOrigin,
-                                    groupIntoSingleHatch: true, updateInPlace: hatch, out _);
-                            }
-
-                            if (TryPopulateHatchFromRegion(tr, space, hatch, outsideReg, localOrigin,
-                                groupIntoSingleHatch: true, updateInPlace: hatch, out _))
-                            {
-                                if (!TryPopulateHatchFromRegion(tr, space, hatch, insideReg, localOrigin,
-                                    groupIntoSingleHatch: false, updateInPlace: null, out var splitPieces))
-                                    throw new InvalidOperationException("无法生成挖出的独立填充，本次剪裁已取消。");
-
-                                extraCreated = splitPieces.Count;
-                                return true;
+                                    extraCreated = splitPieces.Count;
+                                    return true;
+                                }
                             }
                         }
                     }
@@ -632,6 +605,20 @@ namespace YangCAD.AutoCADHost.Services.Cad
             // ACIS 无法处理异常环时，使用严格二维凸包/矩形精确多边形裁切引擎，绝不直接叠加未裁切的框作为黑洞
             usedFallback = true;
             return TryClipBy2dPolygonFallback(tr, space, hatch, clipPolyOcs, localOrigin, mode, out extraCreated, out erasedOriginal);
+        }
+
+        private static bool TryApplyClipBoolean(Region target, BooleanOperationType operation, Region clip)
+        {
+            using var operand = (Region)clip.Clone();
+            try
+            {
+                target.BooleanOperation(operation, operand);
+                return true;
+            }
+            catch (Autodesk.AutoCAD.Runtime.Exception)
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -651,18 +638,22 @@ namespace YangCAD.AutoCADHost.Services.Cad
             extraCreated = 0;
             erasedOriginal = false;
 
-            var clipPoly2d = FlattenPolyline2d(clipPolyOcsLocal, 24);
-            if (clipPoly2d.Count < 3 || !IsConvexPolygonCcw(clipPoly2d)) return false;
+            var clipPoly2d = GetStraightVertices(clipPolyOcsLocal);
+            if (clipPoly2d == null || clipPoly2d.Count < 3 || !IsConvexPolygonCcw(clipPoly2d)) return false;
 
             var rawPolys = new List<(List<Point2d> Pts, double Area)>();
             for (var i = 0; i < hatch.NumberOfLoops; i++)
             {
-                using var lp = ConvertLoopToPolyline(hatch, hatch.GetLoopAt(i), -localOrigin.GetAsVector());
-                if (lp == null) continue;
-                var pts = FlattenPolyline2d(lp, 24);
-                if (pts.Count < 3) continue;
+                var loop = hatch.GetLoopAt(i);
+                if (!loop.IsPolyline && (loop.Curves == null || loop.Curves.Cast<Curve2d>().Any(curve => !(curve is LineSegment2d))))
+                    return false;
+
+                using var lp = ConvertLoopToPolyline(hatch, loop, -localOrigin.GetAsVector());
+                if (lp == null) return false;
+                var pts = GetStraightVertices(lp);
+                if (pts == null || pts.Count < 3) return false;
                 var area = Math.Abs(ComputeSignedArea2d(pts));
-                if (area < AreaTol) continue;
+                if (area < AreaTol) return false;
                 if (ComputeSignedArea2d(pts) < 0) pts.Reverse();
                 rawPolys.Add((pts, area));
             }
@@ -732,12 +723,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             }
 
             // mode == "K"
-            if (insidePolys.Count == 0) return false;
-            if (outsidePolys.Count == 0)
-            {
-                RebuildHatchFrom2dPolygons(hatch, insidePolys, insideHoles, localOrigin);
-                return true;
-            }
+            if (insidePolys.Count == 0 || outsidePolys.Count == 0) return false;
 
             RebuildHatchFrom2dPolygons(hatch, outsidePolys, outsideHoles, localOrigin);
             foreach (var piece in insidePolys)
@@ -771,7 +757,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             {
                 AppendPointListAsLoop(target, h, HatchLoopTypes.Default, shiftBack);
             }
-            try { target.EvaluateHatch(false); } catch { }
+            target.EvaluateHatch(false);
         }
 
         private static List<List<Point2d>> FilterContainedPolygons(List<Point2d> outer, List<List<Point2d>> candidates)
@@ -1103,7 +1089,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
             return islands.Count > 0;
         }
 
-        private static bool TryBuildHatchCompositeRegion(Hatch hatch, Point2d localOrigin, out Region? composite)
+        private static bool TryBuildHatchCompositeRegion(Hatch hatch, Point2d localOrigin, out Region? composite,
+            bool requireAllLoops = false)
         {
             composite = null;
             if (!TryExtractLoopHierarchy(hatch, localOrigin, out var records, out var islands))
@@ -1111,6 +1098,9 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
             using (DisposeList(records))
             {
+                if (requireAllLoops && records.Count != hatch.NumberOfLoops)
+                    return false;
+
                 Region? total = null;
                 try
                 {
@@ -1154,7 +1144,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
             Point2d localOrigin,
             bool groupIntoSingleHatch,
             Hatch? updateInPlace,
-            out List<Hatch> resultingHatches)
+            out List<Hatch> resultingHatches,
+            bool requireCompleteResult = false)
         {
             resultingHatches = new List<Hatch>();
             var loopPolys = ExplodeRegionToClosedPolylines(region, template.Normal, template.Elevation);
@@ -1182,7 +1173,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     });
                 }
 
-                if (records.Count == 0) return false;
+                if (records.Count == 0 || (requireCompleteResult && records.Count != loopPolys.Count)) return false;
 
                 records.Sort((a, b) => b.Area.CompareTo(a.Area));
                 for (var i = 0; i < records.Count; i++)
@@ -1236,7 +1227,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                             AppendPolylineAsLoop(target, records[hi].Polyline, HatchLoopTypes.Default, shiftBack);
                     }
 
-                    try { target.EvaluateHatch(false); } catch { }
+                    try { target.EvaluateHatch(false); } catch when (!requireCompleteResult) { }
 
                     if (updateInPlace == null)
                     {
@@ -1263,7 +1254,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     foreach (var hi in kv.Value)
                         AppendPolylineAsLoop(target, records[hi].Polyline, HatchLoopTypes.Default, shiftBack);
 
-                    try { target.EvaluateHatch(false); } catch { }
+                    try { target.EvaluateHatch(false); } catch when (!requireCompleteResult) { }
 
                     if (!useExisting)
                     {
@@ -1989,30 +1980,17 @@ namespace YangCAD.AutoCADHost.Services.Cad
         // ============================================================
         // 几何小助手（扁平化 / 凸性 / 点内判 / 三点凸度 / 平面投影）
         // ============================================================
-        private static List<Point2d> FlattenPolyline2d(Polyline poly, int arcSegs)
+        private static List<Point2d>? GetStraightVertices(Polyline poly)
         {
-            var res = new List<Point2d>();
-            var n = poly.NumberOfVertices;
-            for (var i = 0; i < n; i++)
+            var vertices = new List<Point2d>(poly.NumberOfVertices);
+            for (var i = 0; i < poly.NumberOfVertices; i++)
             {
-                var p1 = poly.GetPoint2dAt(i);
-                var p2 = poly.GetPoint2dAt((i + 1) % n);
-                var b = poly.GetBulgeAt(i);
-                AddUniquePt(res, p1);
-                if (Math.Abs(b) > 1e-6 && p1.GetDistanceTo(p2) > PtTol)
-                {
-                    var arc2d = poly.GetArcSegment2dAt(i);
-                    var iv = arc2d.GetInterval();
-                    for (var k = 1; k < arcSegs; k++)
-                    {
-                        var t = iv.LowerBound + (iv.UpperBound - iv.LowerBound) * k / arcSegs;
-                        AddUniquePt(res, arc2d.EvaluatePoint(t));
-                    }
-                }
+                if (Math.Abs(poly.GetBulgeAt(i)) > 1e-9) return null;
+                AddUniquePt(vertices, poly.GetPoint2dAt(i));
             }
-            if (res.Count > 2 && res[0].GetDistanceTo(res[res.Count - 1]) < PtTol)
-                res.RemoveAt(res.Count - 1);
-            return res;
+            if (vertices.Count > 2 && vertices[0].GetDistanceTo(vertices[vertices.Count - 1]) < PtTol)
+                vertices.RemoveAt(vertices.Count - 1);
+            return vertices;
         }
 
         private static double ComputeSignedArea2d(IReadOnlyList<Point2d> pts)

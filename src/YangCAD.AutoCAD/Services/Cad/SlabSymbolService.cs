@@ -101,7 +101,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var settings = UserSettings.Load();
             int n = 0, bad = 0;
 
-            ed.WriteMessage($"\n[SLB] 点击板格内部自动放置受力符号 | 延伸={settings.SlabExtend:0} 单向板比>={settings.SlabOneWayRatio:0.#} 系数={settings.SlabFactor:0.##}");
+            ed.WriteMessage($"\n[SLB] 点击封闭板格内部放置受力符号 | 延伸={settings.SlabExtend:0} 单向板比>={settings.SlabOneWayRatio:0.#} 系数={settings.SlabFactor:0.##}");
 
             while (true)
             {
@@ -233,18 +233,28 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (kr.Status == PromptStatus.Cancel) return;
             var keepOld = !string.Equals(kr.StringResult, "N", StringComparison.OrdinalIgnoreCase);
 
-            int fixedCount = 0, dup = 0, bad = 0;
+            int fixedCount = 0, dup = 0, skipped = 0, bad = 0;
             var doneCenters = new List<Point2d>();
 
             using (var tr = db.TransactionManager.StartTransaction())
             {
-                EnsureLayerAndBlocks(db, tr);
-
                 foreach (var id in ids)
                 {
-                    if (!(tr.GetObject(id, OpenMode.ForRead) is BlockReference br)) continue;
+                    if (!(tr.GetObject(id, OpenMode.ForRead) is BlockReference br) || br.OwnerId != db.CurrentSpaceId)
+                    {
+                        skipped++;
+                        continue;
+                    }
+
+                    var blockName = GetBlockName(tr, br);
+                    if (!KnownSymbolBlocks.Contains(blockName, StringComparer.OrdinalIgnoreCase))
+                    {
+                        skipped++;
+                        continue;
+                    }
+
                     var pt = new Point2d(br.Position.X, br.Position.Y);
-                    var forcedType = keepOld ? InferOldType(GetBlockName(tr, br)) : null;
+                    var forcedType = keepOld ? InferOldType(blockName) : null;
                     var analysis = AnalyzePoint(db, pt, settings, forcedType);
                     if (analysis == null)
                     {
@@ -261,6 +271,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         continue;
                     }
 
+                    if (fixedCount == 0) EnsureLayerAndBlocks(db, tr);
                     br.UpgradeOpen();
                     UpdateBlockReference(db, tr, br, analysis);
                     doneCenters.Add(analysis.Center);
@@ -270,7 +281,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 tr.Commit();
             }
 
-            ed.WriteMessage($"\n[SLBFIX] 完成: 修正 {fixedCount} 个, 删除同板格重复 {dup} 个, 失败 {bad} 个。");
+            ed.WriteMessage($"\n[SLBFIX] 完成: 修正 {fixedCount} 个, 删除同板格重复 {dup} 个, 跳过非板符号 {skipped} 个, 失败 {bad} 个。");
         }
 
         private static string? PlaceOrUpdateSymbol(Database db, SlabResult res)
