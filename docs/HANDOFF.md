@@ -8,9 +8,9 @@
 
 **当前管理版本**：`0.10.0-rc.1` / **AutoCAD 2024 Quick 特定范围 G5 GO**。现有程序集版本仍为 `0.10.0-dev`，这是为了保留与已验收 DLL 的一致性，**不是遗漏更新 DLL**。
 
-## 唯一当前任务
+## 当前接手入口
 
-查看 `tasks/CURRENT_TASK.md`：已将叠加 PR #4–#10 统一到 **[RC Draft PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11)**，完整 diff/静态 CI/受测 Runtime 一致性已核；不自动 merge `main`，不新开发功能。
+[当前状态](CURRENT_STATE.md) 记录功能覆盖和证据范围，[当前任务](../tasks/CURRENT_TASK.md) 记录 AutoCAD 2024 复测步骤。RC1 已由 PR #11 集成，后续主线又合入了 PR #16 和 #17。
 
 ## 从哪里读代码
 
@@ -32,7 +32,6 @@
 
 - Civil 3D live 67 / Revit Native E2E 仍 NOT_TESTED；MAP + ReaderVerifier 11/11 不是 Revit native ElementId 实测。
 - R06 对象级 Undo 恢复与 DWG 二进制恢复不同；R07 批处理是 2 通过 / 1 跳过 / 1 失败。
-- `main` 仍是旧稳定基线，不能在合并前声称 0.10.0 已落地 `main`。PR 合并策略见 `docs/RC_MERGE_PLAN.md`。
 - 当前 AUTO CAD 2024 RC 不表示 2021/2022/2023/2025/2026/2027 均通过。
 
 ## 交接规则

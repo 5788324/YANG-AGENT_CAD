@@ -1,10 +1,24 @@
+# YangCAD 当前状态（2026-11-19）
+
+本轮接手以 `main@ef23385a6bf832388c70cd9f0862ed7e0a49f58e` 为基线。采用局部重构：保留原生命令、绘图服务、事务和 MCP 契约，先整理日常使用的工具箱。
+
+| 功能 | 现有依据与范围 |
+|---|---|
+| 图层、矩形大样、比例转换、引线、PGP | RC1 在 AutoCAD 2024 有指定样例证据。矩形大样跳过部分复杂对象，标准比例转换有 INSERT 跳过记录。 |
+| 双线、固定中轴改宽、标注改字筛选、坡度、文字框 | [PR #16](https://github.com/5788324/YANG-AGENT_CAD/pull/16#issuecomment-6848545441) 和 [PR #17](https://github.com/5788324/YANG-AGENT_CAD/pull/17#issuecomment-6848546242) 分别有 Core Console 证据。合并后的 DLL 和 GUI 待验。 |
+| 图片与外参内嵌 | RC1 批处理为 2 通过、1 跳过、1 失败。Worker 处理磁盘 DWG。本轮统一工具箱两个“处理当前图纸”入口的保存要求。 |
+| CAD → Revit、Civil 3D | CAD 端交换文件读回有记录，Revit 原生重建和 Civil 3D 本轮实机待验。 |
+| 折断线、多边形大样、边界外裁切 | 分别在 PR #13–#15，未进入基线。PR #18 是审查快照。 |
+
+本轮 STATIC 检查和 WINDOWS 实机分别记录，后者待验。复测顺序见 [当前任务](../tasks/CURRENT_TASK.md)。
+
 ## 2026-11-13 — YangCAD 双线 + 标注工具整合
 
 按用户确认，整理已单独通过 AutoCAD 2024 Core Console G5 的 PR #16 和 PR #17：`YGDL`、`YGDLW`、`YGDIMTXT`、`YGSLOPE`、`YGTBOX`。保留双线/坡度/文字框全部个人设置、Toolbox 按钮、快捷键。**GUI 及联合程序集 Windows Build 未验收**，不代表已安装发布。PR #13/#14/#15 与综合审查 PR #18 不包含在本次主线合并中。完整说明 `docs/INTEGRATION_PR16_PR17_20261113.md`。
 
 ---
 
-# YangCAD 当前事实（2026-11-05）
+## RC1 历史验收（2026-11-05）
 
 **当前发布管理标记：`0.10.0-rc.1`（AutoCAD 2024 Quick 范围） / `G5_AUTOCAD2024_SCOPE_PASS`。**
 
@@ -12,10 +26,10 @@
 
 ## Git 与证据
 
-- `main`：旧稳定回退 SHA `396a79408bfb38d374871fb030b54012748be8b6`，**尚不含 0.10 RC**。
+- RC1 合并前的历史基线：`396a79408bfb38d374871fb030b54012748be8b6`。
 - R00–R10 AutoCAD 2024 实机基线：`b6ff1370b0ed48e5e50fec43d2a5a2e14ca5ec54`。
 - 修复发布契约且 Windows PS5.1 定点验收：`d5200c57a75b1fd228713dc67b606126a5c04924`。
-- 唯一 RC 文档集成分支：`release/autocad2024-0.10.0-rc1`，基于 d520；[Draft PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) → `main`，静态 CI 已通过、无冲突、**尚未合并**。
+- RC1 集成由 [PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) 合入主线，合并提交 `2f0980d4acd08b087d924b5c1f5a5bb18e8668a8`。
 - G5 ChatGPT 独立审计：`https://github.com/5788324/YANG-AGENT_CAD/issues/9#issuecomment-6646760886`。
 - 已验收 Quick ZIP SHA256 `ACA88A9440968411A2D7A014800AC70FE8E60C314ECBE936BBBC4037C5C79692`；AutoCAD DLL SHA256 `880329CF7E5C464078686FE56B0BB7070B4C2F7B7F482A91771D9C8`。
 
@@ -37,7 +51,3 @@
 图层合并/显隐/冻结/锁定、**矩形**大样、比例转换、引线恢复与文字关联、PGP 快捷键、Ribbon/Palette、图片 OLE 和 Xref Bind、MCP、CAD→Revit MAP 均有 **AutoCAD 2024 特定样例** 的真实测试材料。R07 文件夹批量结果为 2 PASS、1 SKIP、1 FAIL，不是全成功；R06 标准模式跳过受检 INSERT；Undo 不是完整 DWG 字节级证明。详细证据见 `docs/RC_AUTOCAD2024_0.10.0.md`。
 
 未实现：闭合多段线任意边界提取、复杂跨界对象可选裁切、删除边界外、直线 Z 折断线；请不要在 GUI/MCP 说明中冒称已完成。
-
-## 当前动作
-
-已建立 **docs-only RC Draft PR #11** → `main`，静态 CI PASS，RC 与 d520 运行时代码无差异；`main` 不自动合并，保留旧版回退；后续按 `docs/RC_MERGE_PLAN.md` 处理堆叠 PR。**STATIC** 与 **WINDOWS** 状态必须分列记录。

@@ -15,15 +15,6 @@ namespace YangCAD.AutoCADHost.UI
 {
     public partial class ToolboxView : UserControl
     {
-        private sealed class ToolCardItem
-        {
-            public string Id { get; set; } = "";
-            public string Name { get; set; } = "";
-            public string Description { get; set; } = "";
-            public string CategoryPath { get; set; } = "";
-            public string DisplayStatus { get; set; } = "";
-        }
-
         private readonly ToolboxRegistry _registry;
         private ToolboxToolDescriptor? _selected;
         private DispatcherTimer? _embedStatusTimer;
@@ -47,39 +38,15 @@ namespace YangCAD.AutoCADHost.UI
             _registry = registry;
             InitializeComponent();
             ThemeManager.Apply(Resources, UserSettings.Load().Theme);
-            RefreshTools();
+            ToolItems.ItemsSource = _registry.Descriptors
+                .Where(x => x.DeclaredStatus != ToolboxDeclaredStatus.Hidden && x.DeclaredStatus != ToolboxDeclaredStatus.Planned)
+                .ToList();
             Unloaded += (_, __) => StopEmbedStatusMonitor();
         }
 
         public void ApplyTheme(string theme) => ThemeManager.Apply(Resources, theme);
 
-        public void RefreshContext()
-        {
-            RefreshTools();
-            if (_selected != null) UpdateSelectedState();
-        }
-
-        private void RefreshTools()
-        {
-            if (ToolItems == null) return;
-            ToolItems.ItemsSource = _registry.Descriptors
-                .Where(x => x.DeclaredStatus != ToolboxDeclaredStatus.Hidden && x.DeclaredStatus != ToolboxDeclaredStatus.Planned)
-                .Select(ToCard)
-                .ToList();
-        }
-
-        private ToolCardItem ToCard(ToolboxToolDescriptor descriptor)
-        {
-            var status = _registry.CanExecute(descriptor.Id) ? descriptor.StatusText : "当前不可用";
-            return new ToolCardItem
-            {
-                Id = descriptor.Id,
-                Name = descriptor.Name,
-                Description = descriptor.Description,
-                CategoryPath = descriptor.CategoryPath,
-                DisplayStatus = status
-            };
-        }
+        public void RefreshContext() => UpdateSelectedState();
 
         // Quick commands route through the normal AutoCAD command context; no duplicate business logic.
         private void QuickNativeCommandClick(object sender, RoutedEventArgs e)
@@ -87,6 +54,7 @@ namespace YangCAD.AutoCADHost.UI
             if (!((sender as Button)?.Tag is string command)) return;
             var allowed = new[] { "YGLAYER", "YGDETAIL", "YGDL", "YGDLW", "YGDIMTXT", "YGSLOPE", "YGTBOX", "YGSCALE", "YGLEADERFIX", "YGKEYS" };
             if (!allowed.Contains(command, StringComparer.OrdinalIgnoreCase)) return;
+            ResultBorder.Visibility = Visibility.Collapsed;
             var document = AcApp.DocumentManager.MdiActiveDocument;
             if (document == null)
             {
@@ -104,7 +72,6 @@ namespace YangCAD.AutoCADHost.UI
             if (_selected == null) return;
 
             DetailNameText.Text = _selected.Name;
-            DetailCategoryText.Text = _selected.CategoryPath;
             DetailDescriptionText.Text = _selected.Description;
             ParameterPanel.SetParameters(_selected.ParameterShape);
             ImageQuickActions.Visibility = _selected.Id == "project.image.embed" ? Visibility.Visible : Visibility.Collapsed;
@@ -113,28 +80,34 @@ namespace YangCAD.AutoCADHost.UI
             UpdateSelectedState();
             ToolListPane.Visibility = Visibility.Collapsed;
             ToolDetailPane.Visibility = Visibility.Visible;
+            ToolboxScroll.ScrollToTop();
+            if (_selected.Id == "project.image.embed")
+            {
+                _embedLastState = "";
+                EmbedStatusTick(null, EventArgs.Empty);
+            }
         }
 
         private void UpdateSelectedState()
         {
             if (_selected == null) return;
             var canExecute = _registry.CanExecute(_selected.Id);
-            DetailStatusText.Text = canExecute ? _selected.StatusText : "当前不可用";
-            AvailabilityText.Text = canExecute ? "" : "请先打开一张 CAD 图纸。";
+            TrialNotice.Visibility = _selected.DeclaredStatus == ToolboxDeclaredStatus.Experimental
+                ? Visibility.Visible : Visibility.Collapsed;
+            AvailabilityText.Text = canExecute ? "" : "当前不可用，请先打开一张 CAD 图纸。";
             AvailabilityText.Visibility = canExecute ? Visibility.Collapsed : Visibility.Visible;
             ExecuteButton.IsEnabled = canExecute;
             PreviewButton.Visibility = _selected.SupportsDryRun ? Visibility.Visible : Visibility.Collapsed;
             PreviewButton.IsEnabled = canExecute;
         }
 
-        private void BackToList(object sender, RoutedEventArgs e) => ShowList();
-
-        private void ShowList()
+        private void BackToList(object sender, RoutedEventArgs e)
         {
-            if (ToolListPane == null || ToolDetailPane == null) return;
             ToolDetailPane.Visibility = Visibility.Collapsed;
             ToolListPane.Visibility = Visibility.Visible;
-            RefreshTools();
+            ResultBorder.Visibility = Visibility.Collapsed;
+            _selected = null;
+            ToolboxScroll.ScrollToTop();
         }
 
         private void PreviewSelectedTool(object sender, RoutedEventArgs e)
@@ -177,6 +150,11 @@ namespace YangCAD.AutoCADHost.UI
 
             try
             {
+                if (_selected.Id == "project.image.embed" &&
+                    (!values.TryGetValue("input_path", out var input) || string.IsNullOrWhiteSpace(input as string)) &&
+                    GetSavedCurrentDrawing() == null)
+                    return;
+
                 RuntimeLogger.Info("Toolbox GUI execute begin tool=" + _selected.Id);
                 var result = _registry.Execute(_selected.Id, values);
                 RuntimeLogger.Info("Toolbox GUI execute completed tool=" + _selected.Id);
@@ -242,18 +220,24 @@ namespace YangCAD.AutoCADHost.UI
 
         private void QuickEmbedCurrentClick(object sender, RoutedEventArgs e)
         {
+            var path = GetSavedCurrentDrawing();
+            if (path != null) RunImageQuickAction(path, "当前图纸");
+        }
+
+        private string? GetSavedCurrentDrawing()
+        {
             var doc = AcApp.DocumentManager.MdiActiveDocument;
             if (doc == null || string.IsNullOrWhiteSpace(doc.Name) || !File.Exists(doc.Name))
             {
-                ShowResult(false, "请先保存图纸", "请先将当前 DWG 保存到磁盘。为避免把未保存更改误作最终结果，请保存后再执行一键内嵌。");
-                return;
+                ShowResult(false, "请先保存图纸", "请先将当前 DWG 保存到磁盘。");
+                return null;
             }
             if (System.Convert.ToInt32(AcApp.GetSystemVariable("DBMOD")) != 0)
             {
                 ShowResult(false, "请先保存更改", "当前图纸有未保存修改。请 Ctrl+S 后再运行，避免输出副本缺少当前更改。");
-                return;
+                return null;
             }
-            RunImageQuickAction(doc.Name, "当前图纸");
+            return doc.Name;
         }
 
         private void QuickEmbedFolderClick(object sender, RoutedEventArgs e)
@@ -325,9 +309,10 @@ namespace YangCAD.AutoCADHost.UI
                 var headline = terminal ? $"引用处理完成：{state}" : $"引用处理进行中：{state}";
                 var details = $"总数：{job.total_files}；成功：{job.passed}；部分成功：{job.partial}；失败：{job.failed}；跳过：{job.skipped}\n输出：{_embedOutputFolder}\n状态：{_embedStatusFile}";
                 if (!string.IsNullOrWhiteSpace(job.fatal_error)) details += "\n错误：" + job.fatal_error;
-                if (terminal || !string.Equals(_embedLastState, details, StringComparison.Ordinal))
+                if (_selected?.Id == "project.image.embed" &&
+                    (terminal || !string.Equals(_embedLastState, details, StringComparison.Ordinal)))
                 {
-                    ShowResult(state == "PASS" || !terminal, headline, details);
+                    ShowResult(state == "PASS" || !terminal, headline, details, showEmbedOutput: true);
                     _embedLastState = details;
                 }
                 if (terminal) StopEmbedStatusMonitor();
@@ -337,7 +322,8 @@ namespace YangCAD.AutoCADHost.UI
             {
                 StopEmbedStatusMonitor();
                 RuntimeLogger.Error("Image embed status monitor failed.", ex);
-                ShowResult(false, "无法解析任务状态", ex.Message + "\n状态文件：" + _embedStatusFile);
+                if (_selected?.Id == "project.image.embed")
+                    ShowResult(false, "无法解析任务状态", ex.Message + "\n状态文件：" + _embedStatusFile, showEmbedOutput: true);
             }
         }
 
@@ -355,12 +341,15 @@ namespace YangCAD.AutoCADHost.UI
             catch (System.Exception ex) { ShowResult(false, "打开输出目录失败", ex.Message); }
         }
 
-        private void ShowResult(bool success, string title, string text)
+        private void ShowResult(bool success, string title, string text, bool showEmbedOutput = false)
         {
+            var reveal = ResultBorder.Visibility != Visibility.Visible;
             ResultTitleText.Text = title;
             ResultText.Text = string.IsNullOrWhiteSpace(text) ? (success ? "操作已完成。" : "未返回详细错误。") : text;
             ResultTitleText.SetResourceReference(TextBlock.ForegroundProperty, success ? "SuccessBrush" : "DangerBrush");
+            OpenEmbedOutputButton.Visibility = showEmbedOutput ? Visibility.Visible : Visibility.Collapsed;
             ResultBorder.Visibility = Visibility.Visible;
+            if (reveal) ResultTitleText.BringIntoView();
         }
 
         private void CopyResultClick(object sender, RoutedEventArgs e)

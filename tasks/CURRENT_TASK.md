@@ -1,5 +1,9 @@
-# 当前任务 — 主线集成后 Windows GUI 验收（2026-11-13）
+# 当前任务 — AutoCAD 2024 工具箱验收（2026-11-19）
 
-此次源码范围：PR #16（YGDL、YGDLW） + PR #17（YGDIMTXT、YGSLOPE、YGTBOX）。独立 Core Console G5 PASS；同 DLL Windows Build、NETLOAD、Toolbox 中文按钮、鼠标取点、原生 GUI 和交叉功能回归 NOT_TESTED。
-下一步：使用集成后 main 的 40 位 SHA，在 Windows AutoCAD 2024 重新构建、加载及测五个命令。无用户另行授权不要修改 PR #13/#14/#15 或审查 PR #18。
-详细说明：docs/INTEGRATION_PR16_PR17_20261113.md
+以 `main@ef23385a6bf832388c70cd9f0862ed7e0a49f58e` 为基线，Windows 上使用实际签出的候选提交构建和加载 AutoCAD 2024 版。记录提交、已加载 DLL 路径和 SHA-256。
+
+1. 打开工具箱，窄停靠和浮动各测一次。核对命令按钮、两项图纸详情、返回和主题切换。用未打开图纸的状态验证快捷命令错误可见。
+2. 用一份测试 DWG 核对合并后的五个命令：YGDL 画 600 宽，YGDLW 改到 1000，中心线位置保持，单次 Undo 恢复；YGDIMTXT 比较原始、仅占位符和改字标注；YGSLOPE 用高差 1、水平距离 10 检查 10%；YGTBOX 核对旋转 TEXT 与 MTEXT 外框、原文字及单次 Undo。
+3. 在已保存 DWG 上画一条线但先不保存。引用内嵌的快捷按钮、留空输入路径的高级执行都应提示保存；保存后确认输出为副本。用另一个测试目录验证批量入口以及离开、返回详情后可见的批处理结果。
+
+现有独立命令测试见 [PR #16／#17 整合说明](../docs/INTEGRATION_PR16_PR17_20261113.md)。图片与外参批量、CAD → Revit 原生重建仍按实际结果记录。
