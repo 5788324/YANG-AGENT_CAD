@@ -1,3 +1,9 @@
+## 2026-11-19 — 板符号自动检查入口
+
+在安装 AutoCAD 2024 的 Windows 上，使用 [Core Console 执行器](../tools/run_slab_core_console_smoke.py) 和 DXF 转存的测试 DWG。启动方式及日志位置见 [当前任务](../tasks/CURRENT_TASK.md)。
+
+---
+
 ## 2026-11-19 — 板符号回归样图
 
 可直接用 [板符号测试图](../tools/fixtures/SLB_SUPPORT_DIRECTIONS.dxf) 验证 0–4 侧方向和最后一侧梁线删除后的修正及撤销。[操作与预期结果](../tasks/CURRENT_TASK.md)。

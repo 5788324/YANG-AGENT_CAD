@@ -259,6 +259,7 @@ tools/Verify-Release.ps1
 tools/fixtures/RVT_EXCHANGE_V1_CONTROLLED_11.json
 tools/fixtures/RVT_EXCHANGE_V1_YANGTOOLS_FIXTURE.json
 tools/fixtures/SLB_SUPPORT_DIRECTIONS.dxf
+tools/run_slab_core_console_smoke.py
 tools/run_static_checks.py
 tools/test_annotation_utilities_policy.py
 tools/test_civil_api_compat_policy.py

@@ -30,4 +30,16 @@
 2. 02 删除一侧梁线并执行 SLBFIX，只去掉对应方向的箭头。取消图层配置后再修正，方向符号应保留。
 3. 梁线的原判定为距轮廓边不超过 1 个图纸单位且覆盖至少半边。未指定板轮廓时，复测旧闭合梁线识别和单向／双向板符号。
 
+## Core Console 自动检查
+
+在 Windows AutoCAD 2024 打开上面的 DXF，原样另存成测试 DWG。使用已经编译的本分支 DLL，保留其同目录依赖。命令可以在仓库目录的 PowerShell 里运行，按实际安装路径替换参数。
+
+```powershell
+python tools/run_slab_core_console_smoke.py --core-console "C:/Program Files/Autodesk/AutoCAD 2024/accoreconsole.exe" --dll "artifacts/bin/2024/AutoCAD/YangCAD.AutoCAD.dll" --dwg "D:/CAD-Test/SLB_SUPPORT_DIRECTIONS.dwg"
+```
+
+脚本检查九个板格、输入图元、符号总数、零支承移除、一次撤销、减一侧箭头和普通块保留。退出码 0 需全部 15 项及完成标记通过。运行目录在 artifacts/slab-smoke-*，包含输入文件哈希、测试图副本、实际 SCR 和原始输出。若使用自定义板跨设置，须允许测试图的 4000–6000 mm 板跨。
+
+Core Console 检查命令和 DWG 结果。Ribbon、工具箱、鼠标拾点和预览显示继续按上述 GUI 步骤验收。
+
 旧版 RC1 和 PR #16/#17 的记录保留为历史证据。
