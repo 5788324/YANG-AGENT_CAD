@@ -183,20 +183,56 @@ def check_results(raw: bytes, exit_code: int, expected: set[str] = CHECKS) -> li
     return failures
 
 
+def build_plugin(core: Path, run_dir: Path) -> Path | None:
+    dotnet = shutil.which("dotnet")
+    if dotnet is None:
+        print("FAIL: 找不到 dotnet SDK，无法编译 AutoCAD 2024 插件。")
+        return None
+
+    output = run_dir / "plugin"
+    project = ROOT / "src" / "YangCAD.AutoCAD" / "YangCAD.AutoCAD.csproj"
+    log = run_dir / "build.log"
+    print(f"编译 AutoCAD 2024 插件，日志：{log}", flush=True)
+    with log.open("wb") as stream:
+        process = subprocess.run(
+            [dotnet, "build", str(project), "-c", "Release", "--no-incremental",
+             "-p:CadYear=2024", f"-p:AcadRoot={core.parent}", "-o", str(output)],
+            cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, check=False,
+        )
+
+    dll = output / "YangCAD.AutoCAD.dll"
+    if process.returncode or not dll.is_file():
+        print(f"FAIL: 编译阶段未生成可测 DLL，请查看 {log}")
+        return None
+    return dll
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--core-console", type=Path, required=True, help="AutoCAD 2024 accoreconsole.exe")
-    parser.add_argument("--dll", type=Path, required=True, help="Built AutoCAD 2024 YangCAD.AutoCAD.dll")
+    plugin = parser.add_mutually_exclusive_group(required=True)
+    plugin.add_argument("--build", action="store_true", help="Build AutoCAD 2024 plugin from this checkout first")
+    plugin.add_argument("--dll", type=Path, help="Built AutoCAD 2024 YangCAD.AutoCAD.dll")
     parser.add_argument("--dwg", type=Path, required=True, help="DWG saved from SLB_SUPPORT_DIRECTIONS.dxf")
     args = parser.parse_args()
-    core, dll, dwg = (path.resolve() for path in (args.core_console, args.dll, args.dwg))
-    for path, suffix in ((core, ".exe"), (dll, ".dll"), (dwg, ".dwg")):
+    core = args.core_console.resolve()
+    dwg = args.dwg.resolve()
+    dll = args.dll.resolve() if args.dll else None
+    inputs = [(core, ".exe"), (dwg, ".dwg")]
+    if dll is not None:
+        inputs.append((dll, ".dll"))
+    for path, suffix in inputs:
         if not path.is_file() or path.suffix.lower() != suffix:
             parser.error(f"Expected an existing {suffix} file: {path}")
 
     artifacts = ROOT / "artifacts"
     artifacts.mkdir(exist_ok=True)
     run_dir = Path(tempfile.mkdtemp(prefix="slab-smoke-", dir=artifacts))
+    if dll is None:
+        dll = build_plugin(core, run_dir)
+        if dll is None:
+            return 1
+
     profile = run_dir / "profile"
     profile.mkdir()
     drawing = run_dir / "fixture-copy.dwg"

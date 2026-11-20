@@ -35,14 +35,14 @@ SLBFIX 有四个选项：Y 处理全部、传统模式保留原类型；N 处理
 
 ## Core Console 自动检查
 
-在 Windows AutoCAD 2024 打开上面的 DXF，原样另存成测试 DWG。使用已经编译的本分支 DLL，保留其同目录依赖。命令可以在仓库目录的 PowerShell 里运行，按实际安装路径替换参数。
+在 Windows AutoCAD 2024 打开上面的 DXF，原样另存成测试 DWG。在仓库目录执行下面一条命令。安装路径按本机调整。脚本会用该安装目录的 AutoCAD 库编译当前分支，然后用同一份 DLL 连跑两阶段实测。已有候选 DLL 时可把 --build 换成 --dll 加路径。
 
 ```powershell
-python tools/run_slab_core_console_smoke.py --core-console "C:/Program Files/Autodesk/AutoCAD 2024/accoreconsole.exe" --dll "artifacts/bin/2024/AutoCAD/YangCAD.AutoCAD.dll" --dwg "D:/CAD-Test/SLB_SUPPORT_DIRECTIONS.dwg"
+python tools/run_slab_core_console_smoke.py --core-console "C:/Program Files/Autodesk/AutoCAD 2024/accoreconsole.exe" --build --dwg "D:/CAD-Test/SLB_SUPPORT_DIRECTIONS.dwg"
 ```
 
-脚本检查九个板格、输入图元、符号总数、零支承移除、一次撤销、减一侧箭头和普通块保留。第一阶段在布置前重命名梁线图层并保存测试副本，第二阶段用独立 Core Console 进程重开并直接布置。在重开阶段还会创建 02 内板，先布置内板，再重布外板并批量修正，核对两块可同时保留、方向正确且 Handle 不变。同阶段还会混选原单向、原双向块分别运行 One 和 Two，核对筛选外块的属性没有变化。退出码 0 需要两阶段共 22 项全部通过。运行目录在 artifacts/slab-smoke-*，包含输入文件哈希、测试图副本、实际 SCR 和原始输出。若使用自定义板跨设置，须允许测试图的 4000–6000 mm 板跨。
+脚本检查九个板格、输入图元、符号总数、零支承移除、一次撤销、减一侧箭头和普通块保留。第一阶段在布置前重命名梁线图层并保存测试副本，第二阶段用独立 Core Console 进程重开并直接布置。在重开阶段还会创建 02 内板，先布置内板，再重布外板并批量修正，核对两块可同时保留、方向正确且 Handle 不变。同阶段还会混选原单向、原双向块分别运行 One 和 Two，核对筛选外块的属性没有变化。退出码 0 需要两阶段共 22 项全部通过。运行目录在 artifacts/slab-smoke-*，包含编译日志、候选 DLL、输入文件哈希、测试图副本、实际 SCR 和原始输出。若使用自定义板跨设置，须允许测试图的 4000–6000 mm 板跨。
 
-Core Console 检查命令和 DWG 结果。Ribbon、工具箱、鼠标拾点和预览显示继续按上述 GUI 步骤验收。
+同一批验收再用该目录下的 DLL 完成顶部的 GUI 清单，集中记录 Ribbon、命令入口、填充、内嵌及板符号结果，失败项收齐后统一修正。
 
 旧版 RC1 和 PR #16/#17 的记录保留为历史证据。

@@ -1,3 +1,9 @@
+## 2026-11-20 — Windows 验收使用同一构建
+
+按 [当前任务](../tasks/CURRENT_TASK.md) 的命令编译并跑 22 项 Core Console 检查，再用同一份 DLL 完成 GUI 清单。暂时以真实 Windows 结果作为下轮修复依据。
+
+---
+
 ## 2026-11-20 — SLBFIX 单向／双向筛选
 
 框选混合块后可输入 One 或 Two。实机脚本新增两次混选，检查被跳过块的属性。见 [当前任务](../tasks/CURRENT_TASK.md)。
