@@ -15,7 +15,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
 {
     public static class JianrenTextService
     {
-        private static readonly Regex TrailingOrLastNumberRegex = new Regex(@"-?\d+", RegexOptions.Compiled);
+        private static readonly Regex TrailingOrLastNumberRegex = new Regex(@"(?:(?<![\p{L}\p{N}])-)?\d+", RegexOptions.Compiled);
         private static readonly Regex MTextFormatControlRegex = new Regex(@"\\[Pp]", RegexOptions.Compiled);
 
         private static readonly Dictionary<char, char> CnToEnPunctuation = new Dictionary<char, char>

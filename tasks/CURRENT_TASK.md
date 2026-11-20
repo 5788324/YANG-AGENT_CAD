@@ -13,6 +13,18 @@ Get-FileHash artifacts/bin/2024/AutoCAD/YangCAD.AutoCAD.dll
 
 记录 AutoCAD 完整版本、PID、Build 日志和实际 NETLOAD 的完整路径与哈希。全程同一份 DLL。只有真实 Civil 3D 2024 时，在开跑 AutoCAD 测试前构建 Civil 版本，使用 -AcadRoot 和 -CivilRoot 并去掉 -SkipCivil。记录 Revit、Civil 或安装验收缺少的实际依赖。
 
+## 实测失败项复验
+
+以下三项优先使用本次构建的同一份 DLL 执行。原报告基线为 `4b5e2466910a8e7414fe654088f4111c0390114b`。
+
+| 项目 | 用例与预期 |
+|---|---|
+| 板符号 | 运行下方仓库脚本，两阶段共 22/22 通过。第一阶段保留 QSAVE 时的图层配置和测试图元，之后的删线与符号变更在退出时放弃。 |
+| YGHSPLIT | 用原失败样本 A3b_Hatch_Fixture.dwg，选中带洞 ANSI31 后出现首点提示。用两点切分，再用 E 选现有直线或多段线切分，分别核对结果区域、洞口、图案属性和一次原生撤销。另测 Esc 取消与多孤岛拆分。 |
+| YGINC | 步长 +1，验证 B-01 → B-02、B-009 → B-010、B-99 → B-100，并复测独立负数 -01 → 00。检查源文字不变，原生撤销移除副本。 |
+
+原报告中的 Ribbon、工具箱、REINIT、YGSCALE、SLBP 预览、YGEMBED 与 Revit 重建、Live MCP、Civil 3D GUI 和安装实装需要可交互的 Windows 桌面。
+
 ## 一次跑完的验收范围
 
 | 模块 | 用例与预期 |

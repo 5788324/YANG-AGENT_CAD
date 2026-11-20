@@ -127,7 +127,7 @@ def build_script(dll: Path) -> str:
         '(ys-check "marker" (and ys-marker-before (equal ys-marker-before (entget ys-marker))))',
         '(prompt "\\nYANGCAD_SLAB_SMOKE_DONE\\n")',
         '_.QUIT',
-        '_No',
+        '_Yes',
         '',
     ]
     return '\r\n'.join(lines) + '\r\n'
@@ -158,7 +158,7 @@ def build_reopen_script(dll: Path) -> str:
         '(ys-check "type-two" (and (= "SLB_DIR_07" (cdr (assoc 2 (entget ys-two)))) (equal ys-one-after (entget ys-one))))',
         '(prompt "\\nYANGCAD_SLAB_SMOKE_DONE\\n")',
         '_.QUIT',
-        '_No',
+        '_Yes',
         '',
     ]
     return '\r\n'.join(lines) + '\r\n'

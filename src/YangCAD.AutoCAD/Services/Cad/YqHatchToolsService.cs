@@ -2321,7 +2321,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
         private static bool PromptCutLinePoints(Editor ed, Database db, List<Point3d> outPtsWcs)
         {
             outPtsWcs.Clear();
-            var ppo = new PromptPointOptions("\n指定切分线第一点 或 [选现有直线/多段线(E)]：", "E");
+            var ppo = new PromptPointOptions("\n指定切分线第一点：");
+            ppo.Keywords.Add("E", "E", "选现有直线或多段线(E)");
             var ppr = ed.GetPoint(ppo);
             if (ppr.Status == PromptStatus.Cancel) return false;
 
