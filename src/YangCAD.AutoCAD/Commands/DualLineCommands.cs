@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
@@ -58,47 +59,56 @@ namespace YangCAD.AutoCADHost.Commands
             var ed = doc.Editor;
             try
             {
-                // GetPoint returns WCS. V1 creates WCS XY polylines only.
-                // Reject tilted UCS instead of silently projecting cursor points.
-                var ucsNormal = Vector3d.ZAxis.TransformBy(ed.CurrentUserCoordinateSystem);
-                if (ucsNormal.Length < 1e-8 ||
-                    Math.Abs(ucsNormal.GetNormal().DotProduct(Vector3d.ZAxis)) < 0.999999)
-                    throw new NotSupportedException(
-                        "当前 UCS 与世界 XY 平面不平行。YGDL V1 为防止错位已取消；请先切换到水平 UCS。");
+                var ucs = ed.CurrentUserCoordinateSystem;
+                PolygonBoundary2d.RequireHorizontalUcs(ucs);
                 var settings = UserSettings.Load();
                 var multiplier = DualLineService.MillimetersPerDrawingUnit(doc.Database);
                 if (Convert.ToInt32(doc.Database.Insunits) == 0)
                     ed.WriteMessage("\n[YangCAD] 图纸 INSUNITS=0，暂按毫米单位解释；请确保模型单位一致。\n");
-                var mode = AskKeyword(ed, "绘制类型 [Double(双线)/Pipe(管道三线)]",
-                    new[] { "Double", "Pipe" }, settings.DoubleLineMode);
-                if (mode.Length == 0) return;
-                var width = AskWidth(ed, settings.DoubleLineWidthMm, "实际双线宽度 / 管径");
-                if (!width.HasValue) return;
-                var alignment = AskKeyword(ed,
-                    "轴线对齐 [Center(中心)/Left(左侧)/Right(右侧)]",
-                    new[] { "Center", "Left", "Right" }, settings.DoubleLineAlignment);
-                if (alignment.Length == 0) return;
-                var corner = AskKeyword(ed,
-                    "转角处理 [Miter(斜接)/Bevel(倒角)/Round(圆弧弯头)]",
-                    new[] { "Miter", "Bevel", "Round" }, settings.DoubleLineCorner);
-                if (corner.Length == 0) return;
-                var extension = mode == "Pipe"
-                    ? AskExtension(ed, settings.DoubleLineCenterExtensionMm) : 0;
-                if (!extension.HasValue) return;
+                var mode = settings.DoubleLineMode;
+                double? width = settings.DoubleLineWidthMm;
+                var alignment = settings.DoubleLineAlignment;
+                var corner = settings.DoubleLineCorner;
+                double? extension = mode == "Pipe" ? settings.DoubleLineCenterExtensionMm : 0;
 
                 var total = 0;
                 while (true)
                 {
-                    var firstOpt = new PromptPointOptions(
-                        "\n起点 [Width(改变下段宽度)/Exit(完成命令)]，回车退出：") {
-                        AllowNone = true
-                    };
-                    firstOpt.Keywords.Add("Width");
-                    firstOpt.Keywords.Add("Exit");
+                    var firstOpt = new PromptPointOptions($"\n起点（{(mode == "Pipe" ? "管道三线" : "双线")} / 宽 {width:0.###} mm / {alignment} / {corner}），回车结束：") { AllowNone = true };
+                    firstOpt.Keywords.Add("W", "W", "改已有双线宽度(W)");
+                    firstOpt.Keywords.Add("D", "D", "设置绘制参数(D)");
+                    firstOpt.Keywords.Add("N", "N", "改下一段宽度(N)");
+                    firstOpt.Keywords.Add("Exit", "Exit", "结束(Exit)");
                     var first = ed.GetPoint(firstOpt);
                     if (first.Status == PromptStatus.Keyword)
                     {
-                        if (string.Equals(first.StringResult, "Width", StringComparison.OrdinalIgnoreCase))
+                        if (first.StringResult == "W")
+                        {
+                            ChangeDoubleLineWidth();
+                            break;
+                        }
+                        if (first.StringResult == "D")
+                        {
+                            mode = AskKeyword(ed, "绘制类型 [Double(双线)/Pipe(管道三线)]",
+                                new[] { "Double", "Pipe" }, settings.DoubleLineMode);
+                            if (mode.Length == 0) return;
+                            width = AskWidth(ed, settings.DoubleLineWidthMm, "实际双线宽度 / 管径");
+                            if (!width.HasValue) return;
+                            alignment = AskKeyword(ed,
+                                "轴线对齐 [Center(中心)/Left(左侧)/Right(右侧)]",
+                                new[] { "Center", "Left", "Right" }, settings.DoubleLineAlignment);
+                            if (alignment.Length == 0) return;
+                            corner = AskKeyword(ed,
+                                "转角处理 [Miter(斜接)/Bevel(倒角)/Round(圆弧弯头)]",
+                                new[] { "Miter", "Bevel", "Round" }, settings.DoubleLineCorner);
+                            if (corner.Length == 0) return;
+                            extension = mode == "Pipe"
+                                ? AskExtension(ed, settings.DoubleLineCenterExtensionMm) : 0;
+                            if (!extension.HasValue) return;
+
+                            continue;
+                        }
+                        if (first.StringResult == "N")
                         {
                             var changed = AskWidth(ed, width.Value, "下一段双线宽度");
                             if (changed.HasValue) width = changed.Value;
@@ -108,9 +118,8 @@ namespace YangCAD.AutoCADHost.Commands
                     }
                     if (first.Status != PromptStatus.OK) break;
 
-                    var verts = new List<Point2d> {
-                        new Point2d(first.Value.X, first.Value.Y)
-                    };
+                    var firstWorld = first.Value.TransformBy(ucs);
+                    var verts = new List<Point3d> { first.Value };
                     var last = first.Value;
                     var cancelled = false;
                     while (verts.Count < 96)
@@ -124,18 +133,17 @@ namespace YangCAD.AutoCADHost.Commands
                         if (p.Status == PromptStatus.Keyword)
                         {
                             if (verts.Count > 1) verts.RemoveAt(verts.Count - 1);
-                            last = new Point3d(verts[verts.Count - 1].X,
-                                               verts[verts.Count - 1].Y, first.Value.Z);
+                            last = verts[verts.Count - 1];
                             continue;
                         }
                         if (p.Status == PromptStatus.None) break;
                         if (p.Status != PromptStatus.OK) { cancelled = true; break; }
-                        if (Math.Abs(p.Value.Z - first.Value.Z) > 1e-7)
+                        if (Math.Abs(p.Value.TransformBy(ucs).Z - firstWorld.Z) > 1e-7)
                         {
                             ed.WriteMessage("\n仅支持同一 XY 平面的路径，本段已取消。\n");
                             cancelled = true; break;
                         }
-                        verts.Add(new Point2d(p.Value.X, p.Value.Y));
+                        verts.Add(p.Value);
                         last = p.Value;
                     }
                     if (cancelled) continue;
@@ -145,10 +153,12 @@ namespace YangCAD.AutoCADHost.Commands
                         continue;
                     }
                     var req = new DualLineService.Request {
-                        Points = verts, Width = width.Value / multiplier,
+                        Points = verts.Select(point => point.TransformBy(ucs))
+                            .Select(point => new Point2d(point.X, point.Y)).ToList(),
+                        Width = width.Value / multiplier,
                         Mode = mode, Alignment = alignment, Corner = corner,
                         CenterExtension = extension.Value / multiplier,
-                        Elevation = first.Value.Z
+                        Elevation = firstWorld.Z
                     };
                     try
                     {

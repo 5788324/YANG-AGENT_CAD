@@ -77,6 +77,48 @@ function Resolve-ImagePath([string]$ImageFile, [string]$DwgPath) {
     return [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetDirectoryName($DwgPath)) $ImageFile))
 }
 
+function Test-RasterClipped($Doc, [string]$handle, [int]$TimeoutSeconds) {
+    if ($handle -notmatch '^[0-9A-F]+$') { throw "Invalid raster handle: $handle" }
+
+    # IMAGE DXF stores an enabled whole-image clip as a two-corner pixel rectangle.
+    $expression = @'
+((lambda (/ entity data size points item p1 p2)
+   (setq entity (handent "{0}"))
+   (if entity (setq data (entget entity)))
+   (setq size (cdr (assoc 13 data)))
+   (foreach item data
+     (if (= (car item) 14) (setq points (cons (cdr item) points))))
+   (setq p1 (car points) p2 (cadr points))
+   (setvar "USERI5"
+     (cond
+       ((not (and (equal (cdr (assoc 0 data)) "IMAGE") size)) 2)
+       ((and (not (equal (cdr (assoc 290 data)) 1))
+             (equal (cdr (assoc 71 data)) 1)
+             (= (length points) 2)
+             (equal (min (car p1) (car p2)) -0.5 0.000001)
+             (equal (min (cadr p1) (cadr p2)) -0.5 0.000001)
+             (equal (max (car p1) (car p2)) (- (car size) 0.5) 0.000001)
+             (equal (max (cadr p1) (cadr p2)) (- (cadr size) 0.5) 0.000001)) 0)
+       (T 1)))))
+'@
+    $saved = $Doc.GetVariable('USERI5')
+    try {
+        $Doc.SetVariable('USERI5', [int16]-1)
+        $Doc.SendCommand((($expression -f $handle) -replace '\r?\n', ' ') + "`r")
+        $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+        do {
+            $result = [int]$Doc.GetVariable('USERI5')
+            if ($result -eq 0 -or $result -eq 1) { return ($result -eq 1) }
+            if ($result -ne -1) { break }
+            Start-Sleep -Milliseconds 100
+        } while ([DateTime]::UtcNow -lt $deadline)
+        throw "Could not read raster clip boundary: $handle"
+    }
+    finally {
+        $Doc.SetVariable('USERI5', $saved)
+    }
+}
+
 function Snapshot-Raster($Raster, [string]$LayoutName, [string]$DwgPath) {
     $imageFile = [string]$Raster.ImageFile
     $resolved = Resolve-ImagePath $imageFile $DwgPath
@@ -155,7 +197,7 @@ function Convert-Raster($Acad, $Doc, $Layout, $RasterInfo, [int]$TimeoutSeconds)
     if (-not (Test-Path -LiteralPath $RasterInfo.resolved_path)) {
         return [ordered]@{ ok=$false; handle=$RasterInfo.handle; reason='missing_image_file'; path=$RasterInfo.resolved_path }
     }
-    if ($RasterInfo.clipping_enabled) {
+    if ($RasterInfo.clipping_enabled -and (Test-RasterClipped $Doc $RasterInfo.handle $TimeoutSeconds)) {
         return [ordered]@{ ok=$false; handle=$RasterInfo.handle; reason='clipped_image_not_supported_v1'; path=$RasterInfo.resolved_path }
     }
     if ($RasterInfo.brightness -ne 50 -or $RasterInfo.contrast -ne 50 -or $RasterInfo.fade -ne 0) {
@@ -542,7 +584,11 @@ try {
         }
         Write-Status $statusPath $status
     }
-    $status.state = if ($status.failed -eq 0 -and $status.partial -eq 0) { 'PASS' } elseif ($status.passed -gt 0 -or $status.partial -gt 0) { 'PARTIAL' } else { 'FAIL' }
+    $status.state = if ($status.failed -eq 0 -and $status.partial -eq 0) {
+        if ($status.passed -gt 0) { 'PASS' } else { 'SKIPPED' }
+    }
+    elseif ($status.passed -gt 0 -or $status.partial -gt 0) { 'PARTIAL' }
+    else { 'FAIL' }
 }
 catch {
     $status.state = 'FAIL'
@@ -557,4 +603,5 @@ finally {
 
 if ($status.state -eq 'PASS') { exit 0 }
 if ($status.state -eq 'PARTIAL') { exit 3 }
+if ($status.state -eq 'SKIPPED') { exit 4 }
 exit 1

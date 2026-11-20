@@ -1,7 +1,9 @@
 ﻿param(
   [Parameter(Mandatory=$true)][ValidateSet(2021,2022,2023,2024,2025,2026,2027)][int]$Year,
   [ValidateSet("Debug","Release")][string]$Configuration="Release",
-  [switch]$SkipCivil
+  [switch]$SkipCivil,
+  [string]$AcadRoot = "",
+  [string]$CivilRoot = ""
 )
 $utf8 = New-Object System.Text.UTF8Encoding($false)
 [Console]::OutputEncoding = $utf8
@@ -9,8 +11,8 @@ $OutputEncoding = $utf8
 
 $ErrorActionPreference="Stop"
 $root=Split-Path -Parent $PSScriptRoot
-$acadRoot="C:\Program Files\Autodesk\AutoCAD $Year"
-$civilRoot=Join-Path $acadRoot "C3D"
+if(-not $AcadRoot){$AcadRoot = "C:\Program Files\Autodesk\AutoCAD $Year"}
+if(-not $CivilRoot){$CivilRoot = Join-Path $AcadRoot "C3D"}
 $logDir=Join-Path $root "artifacts\logs"
 $autoOut=Join-Path $root "artifacts\bin\$Year\AutoCAD"
 $civilOut=Join-Path $root "artifacts\bin\$Year\Civil3D"
@@ -21,7 +23,7 @@ if(-not(Test-Path(Join-Path $acadRoot "AcMgd.dll"))){throw "AutoCAD $Year API no
 if(-not(Test-Path(Join-Path $acadRoot "AdWindows.dll"))){throw "AutoCAD Ribbon API not found: $(Join-Path $acadRoot 'AdWindows.dll')"}
 
 if(Test-Path $autoOut){Remove-Item $autoOut -Recurse -Force}
-if(Test-Path $civilOut){Remove-Item $civilOut -Recurse -Force}
+if(-not $SkipCivil -and (Test-Path $civilOut)){Remove-Item $civilOut -Recurse -Force}
 if(Test-Path $batchOut){Remove-Item $batchOut -Recurse -Force}
 
 Write-Host "[YangCAD] Build AutoCAD $Year ($Configuration)..."

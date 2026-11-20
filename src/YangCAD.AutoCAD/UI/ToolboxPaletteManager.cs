@@ -1,6 +1,7 @@
 using System;
 using Autodesk.AutoCAD.Windows;
 using YangCAD.AutoCADHost.Infrastructure;
+using YangCAD.AutoCADHost.Services.Cad;
 using YangCAD.AutoCADHost.Toolbox;
 
 namespace YangCAD.AutoCADHost.UI
@@ -23,6 +24,24 @@ namespace YangCAD.AutoCADHost.UI
                 RuntimeLogger.Info("Toolbox PaletteSet created.");
             }
             _palette.Visible = true;
+        }
+
+        internal static void TrackEmbed(ImageEmbedBatchService.Result job)
+        {
+            Show();
+            _view?.StartEmbedStatusMonitor(job);
+        }
+
+        internal static void ShowRevitTaskResult(RevitExchangeService.Result result)
+        {
+            Show();
+            _view?.ShowRevitTaskResult(result);
+        }
+
+        internal static void ShowTaskFailure(string title, string error)
+        {
+            Show();
+            _view?.ShowTaskFailure(title, error);
         }
 
         public static void ApplyTheme(string theme)

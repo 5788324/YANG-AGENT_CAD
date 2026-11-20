@@ -19,7 +19,7 @@ ok("tool has product MCP coverage", 'SupportsMcp = true' in segment and 'project
 ok("service exposes stable shared Request/Result", 'public sealed class Request' in SERVICE and 'public sealed class Result' in SERVICE and 'public static Result Preview' in SERVICE and 'public static Result Start' in SERVICE)
 ok("service does not access active cad document", 'MdiActiveDocument' not in SERVICE and 'DocumentManager' not in SERVICE)
 ok("preview does not create output folder", 'BuildPlan(request, createOutputDirectory: false)' in SERVICE and 'if (createOutputDirectory) Directory.CreateDirectory(outputRoot)' in SERVICE)
-ok("execute uses independent STA powershell worker", 'powershell.exe' in SERVICE and '-Sta' in SERVICE and 'Start-YangCAD-ImageEmbed.ps1' in SERVICE and 'Process.Start' in SERVICE)
+ok("execute uses independent STA powershell worker", 'powershell.exe' in SERVICE and '-Sta' in SERVICE and 'RuntimeAssetMaterializer.EnsureImageEmbedWorker()' in SERVICE and 'Process.Start' in SERVICE)
 ok("worker uses exact-year autocad progid", all(x in SERVICE for x in ['AutoCAD.Application.24.0','AutoCAD.Application.24.1','AutoCAD.Application.24.2','AutoCAD.Application.24.3']))
 ok("input overwrite is refused", '本工具永不原位覆盖源文件' in SERVICE and 'overwrite = false' in SERVICE)
 ok("batch is bounded", 'files.Length > 5000' in SERVICE)
@@ -39,7 +39,10 @@ ok("xref presence is reported separately", "xrefBlockCount" in WORKER and "xref_
 ok("require all images discards partial dwg", 'Image embedding incomplete' in WORKER and 'Remove-Item -LiteralPath $workPath' in WORKER)
 ok("release bundle packages worker", 'Contents\\ImageEmbed' in PACKAGE and 'Start-YangCAD-ImageEmbed.ps1' in PACKAGE)
 ok("release verification requires worker", 'Contents\\ImageEmbed\\Start-YangCAD-ImageEmbed.ps1' in VERIFY)
-ok("worker also embedded for dll-only fallback", 'YangCAD.Runtime.ImageEmbed.Start-YangCAD-ImageEmbed.ps1' in CSPROJ)
+ok("worker comes from the running plugin build", "ResolveInstalledWorker" not in SERVICE
+   and 'EnsureGroup(Path.Combine("ImageEmbed", buildId), ImageEmbedAssets)' in
+   (ROOT / "src/YangCAD.AutoCAD/Infrastructure/RuntimeAssetMaterializer.cs").read_text(encoding="utf-8-sig"))
+ok("worker embedded in the plugin DLL", 'YangCAD.Runtime.ImageEmbed.Start-YangCAD-ImageEmbed.ps1' in CSPROJ)
 ok("powershell 5.1 generic-list result serialization is explicit", 'return [pscustomobject]@{' in WORKER and 'image_results = @($results.ToArray())' in WORKER)
 ok("handle hashset is returned without pipeline enumeration", 'return ,$result' in WORKER)
 ok("layout lookup fails closed instead of silently falling back", 'Never fall back to another layout' in WORKER and 'throw "Layout not found: $LayoutName"' in WORKER)

@@ -2,6 +2,7 @@
 from pathlib import Path
 import xml.etree.ElementTree as ET
 root = Path(__file__).resolve().parents[1]
+catalog = (root/"src/YangCAD.AutoCAD/Toolbox/CadToolCatalog.cs").read_text(encoding="utf-8-sig")
 def read(p): return (root / p).read_text(encoding="utf-8-sig")
 src = read("src/YangCAD.AutoCAD/Services/Cad/DualLineService.cs")
 cmd = read("src/YangCAD.AutoCAD/Commands/DualLineCommands.cs")
@@ -19,10 +20,10 @@ check("first width 1000mm and persist", 'DoubleLineWidthMm { get; set; } = 1000'
 check("persist existing shared settings", "settings.Save();" in cmd and "settings.json" in user)
 check("mm conversion", "MillimetersPerDrawingUnit" in src and "db.Insunits" in src and "case 6: return 1000" in src)
 check("reject unsupported drawing units", "当前 INSUNITS 不是受支持" in src)
-check("WCS Z elevation", "Elevation = first.Value.Z" in cmd and "drawable.Elevation = record.Elevation" in src)
+check("WCS Z elevation", "Elevation = firstWorld.Z" in cmd and "drawable.Elevation = record.Elevation" in src)
 check("tilted UCS explicitly rejected", "ed.CurrentUserCoordinateSystem" in cmd
-      and "ucsNormal.GetNormal().DotProduct(Vector3d.ZAxis)" in cmd
-      and "当前 UCS 与世界 XY 平面不平行" in cmd)
+      and "PolygonBoundary2d.RequireHorizontalUcs(ucs)" in cmd
+      and "first.Value.TransformBy(ucs)" in cmd)
 check("invisible/locked current layer rejected before append",
       "ctx.Database.Clayer" in src and "currentLayer.IsLocked" in src
       and "currentLayer.IsFrozen" in src and "currentLayer.IsOff" in src)
@@ -45,8 +46,8 @@ check("old LINE existing handles unchanged", "a.UpgradeOpen(); b.UpgradeOpen();"
 check("old Polyline not silently paired", "旧图元配对首版仅支持两条 LINE" in src)
 check("lock frozen off", "layer.IsLocked" in src and "layer.IsFrozen" in src and "layer.IsOff" in src)
 check("path guards", "MaxVertices = 96" in src and "路径自交" in src and "路径不能原路折返" in src)
-check("toolbox and native command route", 'Tag="YGDL"' in ui and 'Tag="YGDLW"' in ui and '"YGDL", "YGDLW"' in ui_code)
-check("PGP alias supports both", 'new Feature("智能双线/管道", "YGDL")' in aliases and 'new Feature("修正双线宽度", "YGDLW")' in aliases)
+check("toolbox and native command route", 'Tag="{Binding Command}"' in ui and all(f'"{cmd}"' in catalog for cmd in ('YGDL','YGDLW')) and "CadToolCatalog.All" in ui_code)
+check("PGP alias supports both", "CadToolCatalog.All" in aliases and "new Feature(item.Name, item.Command)" in aliases)
 check("documents hold 600 to 1000 and native undo test", "600" in doc and "1000" in doc and "_.U" in task and "WINDOWS_NOT_TESTED" in doc)
 failed = []
 for name, ok in checks:

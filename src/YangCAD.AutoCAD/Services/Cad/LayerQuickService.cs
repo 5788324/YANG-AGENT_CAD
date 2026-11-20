@@ -15,6 +15,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
         public sealed class LayerInfo
         {
             public string name { get; set; } = "";
+            public string color_rgb { get; set; } = "";
             public bool off { get; set; }
             public bool frozen { get; set; }
             public bool locked { get; set; }
@@ -44,9 +45,11 @@ namespace YangCAD.AutoCADHost.Services.Cad
             return lt.Cast<ObjectId>().Select(id =>
             {
                 var layer = (LayerTableRecord)ctx.Transaction.GetObject(id, OpenMode.ForRead);
+                var color = layer.Color.ColorValue;
                 return new LayerInfo
                 {
                     name = layer.Name, off = layer.IsOff, frozen = layer.IsFrozen,
+                    color_rgb = $"#{color.R:X2}{color.G:X2}{color.B:X2}",
                     locked = layer.IsLocked, xref_dependent = layer.IsDependent,
                     current = id == ctx.Database.Clayer
                 };

@@ -1,35 +1,58 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using YangCAD.AutoCADHost.Infrastructure;
-using YangCAD.AutoCADHost.Toolbox;
-using YangCAD.AutoCADHost.Services.Cad;
-using System.IO;
-using System.Collections.Generic;
-using System.Diagnostics;
+using System.Windows.Input;
 using System.Windows.Threading;
+using YangCAD.AutoCADHost.Infrastructure;
+using YangCAD.AutoCADHost.Services.Cad;
+using YangCAD.AutoCADHost.Toolbox;
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 
 namespace YangCAD.AutoCADHost.UI
 {
     public partial class ToolboxView : UserControl
     {
-        private sealed class ToolCardItem
+        private sealed class ToolGroup
         {
-            public string Id { get; set; } = "";
-            public string Name { get; set; } = "";
-            public string Description { get; set; } = "";
-            public string CategoryPath { get; set; } = "";
-            public string DisplayStatus { get; set; } = "";
+            public string Key { get; }
+            public string Name { get; }
+            public bool IsExpanded { get; }
+            public object[] Tools { get; }
+
+            public ToolGroup(string key, string name, bool isExpanded, IEnumerable<CadToolItem> tools)
+            {
+                Key = key;
+                Name = name;
+                IsExpanded = isExpanded;
+                Tools = tools.Select(tool => (object)new
+                {
+                    tool.Command,
+                    tool.ShortName,
+                    Help = $"{tool.Name}\n{tool.Description}\n{tool.Command}（{tool.DefaultAliasHint}）"
+                }).ToArray();
+            }
         }
+
+        private static readonly (string Key, string Name)[] GroupOrder =
+        {
+            ("修改", "绘图与编辑"), ("图层", "图层"), ("结构", "结构绘图"), ("标注", "标注"),
+            ("文字", "文字编辑与对齐"), ("填充", "填充编辑"), ("专项", "图纸与引用"), ("系统", "设置")
+        };
 
         private readonly ToolboxRegistry _registry;
         private ToolboxToolDescriptor? _selected;
+        private string _selectedAliasCommand = "";
         private DispatcherTimer? _embedStatusTimer;
         private string _embedStatusFile = "";
-        private string _embedOutputFolder = "";
         private string _embedLastState = "";
+        private string _taskOutputFolder = "";
+        private string[] _favorites = Array.Empty<string>();
+        private string[] _recent = Array.Empty<string>();
+        private string[] _collapsedGroups = Array.Empty<string>();
 
         public sealed class EmbedStatusDto
         {
@@ -40,14 +63,26 @@ namespace YangCAD.AutoCADHost.UI
             public int partial { get; set; }
             public int skipped { get; set; }
             public string fatal_error { get; set; } = "";
+            public EmbedItemDto[] items { get; set; } = Array.Empty<EmbedItemDto>();
+        }
+
+        public sealed class EmbedItemDto
+        {
+            public string status { get; set; } = "";
+            public string error { get; set; } = "";
         }
 
         public ToolboxView(ToolboxRegistry registry)
         {
             _registry = registry;
             InitializeComponent();
-            ThemeManager.Apply(Resources, UserSettings.Load().Theme);
+            var settings = UserSettings.Load();
+            ThemeManager.Apply(Resources, settings.Theme);
+            _favorites = settings.ToolboxFavorites;
+            _recent = settings.ToolboxRecent;
+            _collapsedGroups = settings.ToolboxCollapsedGroups;
             RefreshTools();
+            Loaded += (_, __) => ResumeEmbedStatusMonitor();
             Unloaded += (_, __) => StopEmbedStatusMonitor();
         }
 
@@ -61,66 +96,253 @@ namespace YangCAD.AutoCADHost.UI
 
         private void RefreshTools()
         {
-            if (ToolItems == null) return;
-            ToolItems.ItemsSource = _registry.Descriptors
-                .Where(x => x.DeclaredStatus != ToolboxDeclaredStatus.Hidden && x.DeclaredStatus != ToolboxDeclaredStatus.Planned)
-                .Select(ToCard)
-                .ToList();
-        }
+            if (ToolGroups == null || ToolSearchBox == null) return;
+            var query = ToolSearchBox.Text.Trim();
+            var terms = query.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+            var catalog = CadToolCatalog.All.Where(tool => tool.Command != "YANGCAD_TOOLBOX");
+            var visible = catalog.Where(tool =>
+                (!tool.IsSecondary || terms.Length > 0) &&
+                terms.All(term => $"{tool.Name} {tool.ShortName} {tool.Command} {tool.DefaultAliasHint} {tool.Category}"
+                    .IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
+            var groups = new List<ToolGroup>();
 
-        private ToolCardItem ToCard(ToolboxToolDescriptor descriptor)
-        {
-            var status = _registry.CanExecute(descriptor.Id) ? descriptor.StatusText : "当前不可用";
-            return new ToolCardItem
+            if (terms.Length == 0)
             {
-                Id = descriptor.Id,
-                Name = descriptor.Name,
-                Description = descriptor.Description,
-                CategoryPath = descriptor.CategoryPath,
-                DisplayStatus = status
-            };
+                var favorites = _favorites.Select(id => catalog.FirstOrDefault(tool => tool.Id == id))
+                    .OfType<CadToolItem>().ToArray();
+                if (favorites.Length > 0)
+                    groups.Add(new ToolGroup("favorites", "常用", !_collapsedGroups.Contains("favorites"), favorites));
+
+                var recent = _recent.Where(id => !_favorites.Contains(id))
+                    .Select(id => visible.FirstOrDefault(tool => tool.Id == id))
+                    .OfType<CadToolItem>().Take(6).ToArray();
+                if (recent.Length > 0)
+                    groups.Add(new ToolGroup("recent", "最近使用", !_collapsedGroups.Contains("recent"), recent));
+            }
+
+            foreach (var (key, name) in GroupOrder)
+            {
+                var tools = visible.Where(tool => tool.Category == key).ToArray();
+                if (tools.Length > 0)
+                    groups.Add(new ToolGroup(key, name, terms.Length > 0 || !_collapsedGroups.Contains(key), tools));
+            }
+            ToolGroups.ItemsSource = groups;
+            EmptySearchText.Visibility = groups.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        // Quick commands route through the normal AutoCAD command context; no duplicate business logic.
+        private void ToolSearchChanged(object sender, TextChangedEventArgs e) => RefreshTools();
+
+        private void ToolGroupExpansionChanged(object sender, RoutedEventArgs e)
+        {
+            if (!ReferenceEquals(sender, e.OriginalSource) || !(sender is Expander group) ||
+                !(group.Tag is string key) || !string.IsNullOrWhiteSpace(ToolSearchBox?.Text)) return;
+            var collapsed = _collapsedGroups.Contains(key);
+            if (collapsed == !group.IsExpanded) return;
+            _collapsedGroups = group.IsExpanded ? _collapsedGroups.Where(x => x != key).ToArray()
+                : _collapsedGroups.Concat(new[] { key }).ToArray();
+            var settings = UserSettings.Load();
+            settings.ToolboxCollapsedGroups = _collapsedGroups;
+            settings.Save();
+        }
+
+        private static string? TryFindActivePgpPath()
+        {
+            try
+            {
+                var doc = AcApp.DocumentManager.MdiActiveDocument;
+                return doc == null ? null : ShortcutAliasService.FindActivePgpPath(doc.Database);
+            }
+            catch { return null; }
+        }
+
+        private static string? TryGetCurrentAlias(string pgpPath, string command)
+        {
+            try { return ShortcutAliasService.CurrentAlias(pgpPath, command); }
+            catch { return null; }
+        }
+
+        // Use the same native command entry points as the Ribbon and command line.
         private void QuickNativeCommandClick(object sender, RoutedEventArgs e)
         {
             if (!((sender as Button)?.Tag is string command)) return;
-            var allowed = new[] { "YGLAYER", "YGDETAIL", "YGDL", "YGDLW", "YGDIMTXT", "YGSLOPE", "YGTBOX", "YGSCALE", "YGLEADERFIX", "YGKEYS" };
-            if (!allowed.Contains(command, StringComparer.OrdinalIgnoreCase)) return;
+            var tool = CadToolCatalog.All.FirstOrDefault(item => item.Command == command);
+            if (tool == null || !TryStartNativeCommand(command)) return;
+            SetQuickStatus("");
+            if (_recent.FirstOrDefault() == tool.Id) return;
+            _recent = new[] { tool.Id }.Concat(_recent.Where(id => id != tool.Id)).Take(6).ToArray();
+            var settings = UserSettings.Load();
+            settings.ToolboxRecent = _recent;
+            settings.Save();
+            RefreshTools();
+        }
+
+        private bool TryStartNativeCommand(string command)
+        {
             var document = AcApp.DocumentManager.MdiActiveDocument;
             if (document == null)
             {
-                ShowResult(false, "请先打开图纸", "打开 DWG 后即可使用这些工具。");
-                return;
+                SetQuickStatus("请先打开图纸后使用命令。");
+                return false;
             }
-            try { document.SendStringToExecute(command + " ", true, false, false); }
-            catch (System.Exception ex) { ShowResult(false, "无法启动工具", ex.Message); }
+
+            try
+            {
+                var busy = !string.IsNullOrWhiteSpace(Convert.ToString(AcApp.GetSystemVariable("CMDNAMES")));
+                if (busy && !CadToolCatalog.CanInterruptActiveCommand(command))
+                {
+                    SetQuickStatus("请先结束当前 CAD 命令。");
+                    return false;
+                }
+
+                document.SendStringToExecute((busy ? "\u0003\u0003" : "") + command + " ", true, false, false);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                SetQuickStatus("无法启动命令：" + ex.Message);
+                return false;
+            }
         }
 
-        private void ToolClick(object sender, RoutedEventArgs e)
+        private void SetQuickStatus(string message)
         {
-            if (!((sender as Button)?.Tag is string id)) return;
+            QuickAliasStatus.Text = message;
+            QuickAliasStatus.Visibility = string.IsNullOrEmpty(message) ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        private void QuickToolRightClick(object sender, MouseButtonEventArgs e)
+        {
+            if (!((sender as Button)?.Tag is string command)) return;
+            e.Handled = true;
+            var descriptorId = command == "YGREVIT" ? "project.revit.prepare" :
+                command == "YGREFEMBED" || command == "YGEMBED" || command == "YGEMBEDBATCH" ? "project.image.embed" : null;
+            if (!(sender is Button button)) return;
+            var item = CadToolCatalog.All.FirstOrDefault(tool => tool.Command == command);
+            if (item == null) return;
+            var menu = new ContextMenu { PlacementTarget = button };
+            var pinned = _favorites.Contains(item.Id);
+            var favorite = new MenuItem { Header = pinned ? "从常用移除" : "置顶到常用" };
+            favorite.Click += (_, __) => ToggleFavorite(item.Id);
+            menu.Items.Add(favorite);
+            var shortcut = new MenuItem { Header = "设置命令缩写" };
+            shortcut.Click += (_, __) => EditAlias(command);
+            menu.Items.Add(shortcut);
+            if (descriptorId != null)
+            {
+                var parameters = new MenuItem { Header = "任务参数与预览" };
+                parameters.Click += (_, __) => ShowTool(descriptorId);
+                menu.Items.Add(parameters);
+            }
+            menu.IsOpen = true;
+        }
+
+        private void ToggleFavorite(string id)
+        {
+            _favorites = _favorites.Contains(id) ? _favorites.Where(item => item != id).ToArray()
+                : new[] { id }.Concat(_favorites).ToArray();
+            var settings = UserSettings.Load();
+            settings.ToolboxFavorites = _favorites;
+            settings.Save();
+            RefreshTools();
+        }
+
+        private void EditAlias(string command)
+        {
+            _selectedAliasCommand = command;
+            QuickAliasEditor.Visibility = Visibility.Visible;
+            var item = CadToolCatalog.All.FirstOrDefault(x =>
+                string.Equals(x.Command, command, StringComparison.OrdinalIgnoreCase));
+            var name = item?.Name ?? command;
+            QuickAliasLabel.Text = $"{name} ({command})";
+
+            var pgpPath = TryFindActivePgpPath();
+            var existing = !string.IsNullOrEmpty(pgpPath) ? TryGetCurrentAlias(pgpPath!, command) : null;
+            QuickAliasInput.Text = existing ?? "";
+            SetQuickStatus(string.IsNullOrEmpty(existing) ? $"建议缩写：{item?.DefaultAliasHint ?? command}" : "");
+            QuickAliasInput.Focus();
+            QuickAliasInput.SelectAll();
+        }
+
+        private void CloseAliasEditorClick(object sender, RoutedEventArgs e)
+        {
+            QuickAliasEditor.Visibility = Visibility.Collapsed;
+            _selectedAliasCommand = "";
+            SetQuickStatus("");
+        }
+
+        private void QuickAliasSaveClick(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(_selectedAliasCommand))
+            {
+                SetQuickStatus("请先右键点击上方任意工具按钮，再输入快捷键。");
+                return;
+            }
+            var pgpPath = TryFindActivePgpPath();
+            if (string.IsNullOrEmpty(pgpPath))
+            {
+                SetQuickStatus("请先打开一张图纸再修改快捷键。");
+                return;
+            }
+            try
+            {
+                var alias = QuickAliasInput.Text.Trim();
+                if (string.IsNullOrEmpty(alias))
+                {
+                    var removed = ShortcutAliasService.Remove(pgpPath!, _selectedAliasCommand);
+                    if (removed) ApplyAlias("已清除并重新加载快捷键。");
+                    else SetQuickStatus("该命令暂无自定义快捷键。");
+                }
+                else
+                {
+                    var saved = ShortcutAliasService.Save(pgpPath!, _selectedAliasCommand, alias, allowExistingOverride: false);
+                    ApplyAlias($"已应用 {saved} → {_selectedAliasCommand}。");
+                }
+            }
+            catch (Exception ex)
+            {
+                SetQuickStatus(ex.Message);
+            }
+        }
+
+        private void ApplyAlias(string success)
+        {
+            if (ShortcutAliasService.TryReloadActivePgp()) SetQuickStatus(success);
+            else if (TryStartNativeCommand("_.REINIT"))
+                SetQuickStatus("在“重新初始化”窗口中勾选“PGP 文件”并确定。");
+        }
+
+        private void ShowTool(string id)
+        {
             _selected = _registry.Descriptors.FirstOrDefault(x => string.Equals(x.Id, id, StringComparison.OrdinalIgnoreCase));
             if (_selected == null) return;
 
+            QuickAliasEditor.Visibility = Visibility.Collapsed;
+            SetQuickStatus("");
             DetailNameText.Text = _selected.Name;
             DetailCategoryText.Text = _selected.CategoryPath;
             DetailDescriptionText.Text = _selected.Description;
-            ParameterPanel.SetParameters(_selected.ParameterShape);
+            ParameterPanel.SetParameters(_selected.ParameterShape.Where(parameter =>
+                parameter.Key != "scan_blocks" && parameter.Key != "show_worker" &&
+                parameter.Key != "command_timeout_seconds").ToArray());
             ImageQuickActions.Visibility = _selected.Id == "project.image.embed" ? Visibility.Visible : Visibility.Collapsed;
             RevitQuickActions.Visibility = _selected.Id == "project.revit.prepare" ? Visibility.Visible : Visibility.Collapsed;
             ResultBorder.Visibility = Visibility.Collapsed;
             UpdateSelectedState();
             ToolListPane.Visibility = Visibility.Collapsed;
+            ToolSearchPanel.Visibility = Visibility.Collapsed;
             ToolDetailPane.Visibility = Visibility.Visible;
+            if (_selected.Id == "project.image.embed")
+            {
+                _embedLastState = "";
+                EmbedStatusTick(this, EventArgs.Empty);
+            }
         }
 
         private void UpdateSelectedState()
         {
             if (_selected == null) return;
             var canExecute = _registry.CanExecute(_selected.Id);
-            DetailStatusText.Text = canExecute ? _selected.StatusText : "当前不可用";
-            AvailabilityText.Text = canExecute ? "" : "请先打开一张 CAD 图纸。";
+            AvailabilityText.Text = canExecute ? "" : "当前不可用，请先打开一张 CAD 图纸。";
             AvailabilityText.Visibility = canExecute ? Visibility.Collapsed : Visibility.Visible;
             ExecuteButton.IsEnabled = canExecute;
             PreviewButton.Visibility = _selected.SupportsDryRun ? Visibility.Visible : Visibility.Collapsed;
@@ -132,8 +354,10 @@ namespace YangCAD.AutoCADHost.UI
         private void ShowList()
         {
             if (ToolListPane == null || ToolDetailPane == null) return;
+            _selected = null;
             ToolDetailPane.Visibility = Visibility.Collapsed;
             ToolListPane.Visibility = Visibility.Visible;
+            ToolSearchPanel.Visibility = Visibility.Visible;
             RefreshTools();
         }
 
@@ -177,16 +401,23 @@ namespace YangCAD.AutoCADHost.UI
 
             try
             {
+                if (_selected.Id == "project.image.embed" &&
+                    (!values.TryGetValue("input_path", out var input) || string.IsNullOrWhiteSpace(input as string)) &&
+                    GetSavedCurrentDrawing() == null)
+                    return;
+
                 RuntimeLogger.Info("Toolbox GUI execute begin tool=" + _selected.Id);
                 var result = _registry.Execute(_selected.Id, values);
                 RuntimeLogger.Info("Toolbox GUI execute completed tool=" + _selected.Id);
                 if (result is ImageEmbedBatchService.Result embed && embed.started)
                 {
-                    ShowResult(true, "任务已启动（尚未完成）", $"共 {embed.file_count} 份 DWG。\n输出目录：{embed.output_folder}\n状态文件：{embed.status_path}\n下方将自动显示进度和最终结果。\n\n" + FormatResult(result));
                     StartEmbedStatusMonitor(embed);
                 }
                 else
-                    ShowResult(true, "执行完成", FormatResult(result));
+                {
+                    if (result is RevitExchangeService.Result exchange) ShowRevitTaskResult(exchange);
+                    else ShowResult(true, "执行完成", FormatResult(result));
+                }
                 UpdateSelectedState();
             }
             catch (Exception ex)
@@ -210,13 +441,7 @@ namespace YangCAD.AutoCADHost.UI
                 var result = _registry.Execute("project.revit.prepare",
                     new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase));
                 RuntimeLogger.Info("Toolbox GUI execute completed tool=project.revit.prepare shortcut=one_click");
-                if (result is RevitExchangeService.Result exchange)
-                {
-                    ShowResult(true, "已生成 Revit 图纸副本",
-                        $"DWG：{exchange.output_dwg}\n已整理：{exchange.classified_entities} 个对象；未转换：{exchange.unsupported_count} 个。\n" +
-                        "原图未修改。详细 MAP/REPORT 与 DWG 位于同一输出目录。" +
-                        (exchange.warnings.Length > 0 ? "\n注意：" + string.Join("；", exchange.warnings.Take(4)) : ""));
-                }
+                if (result is RevitExchangeService.Result exchange) ShowRevitTaskResult(exchange);
                 else ShowResult(true, "预处理完成", FormatResult(result));
             }
             catch (System.Exception ex)
@@ -228,32 +453,31 @@ namespace YangCAD.AutoCADHost.UI
 
         private void QuickLeaderRepairClick(object sender, RoutedEventArgs e)
         {
-            var doc = AcApp.DocumentManager.MdiActiveDocument;
-            if (doc == null)
-            {
-                ShowResult(false, "请先打开图纸", "需要在 CAD 绘图区选择要修复的引线。");
-                return;
-            }
-            // Send a native modal command to the CAD editor. Selection must not run inside a WPF callback.
-            // This reports only that the command was queued, NOT that the repair succeeded.
-            doc.SendStringToExecute("YGLEADERFIX\n", true, false, false);
-            ShowResult(true, "请在绘图区选择引线", "1. 选择旧引线或炸开的连续线段，回车。\n2. 选择旁边的文字；没有文字直接回车。\n3. 无文字时拾取箭头端点。\n原生 MLeader 创建成功后才会替换原对象。");
+            if (!TryStartNativeCommand("YGLEADERFIX")) return;
+            SetQuickStatus("");
+            ShowResult(true, "请在绘图区框选引线与文字", "直接框选炸开的引线线段和旁边文字，回车即可合成原生 MLeader。");
         }
 
         private void QuickEmbedCurrentClick(object sender, RoutedEventArgs e)
+        {
+            var path = GetSavedCurrentDrawing();
+            if (path != null) RunImageQuickAction(path, "当前图纸");
+        }
+
+        private string? GetSavedCurrentDrawing()
         {
             var doc = AcApp.DocumentManager.MdiActiveDocument;
             if (doc == null || string.IsNullOrWhiteSpace(doc.Name) || !File.Exists(doc.Name))
             {
                 ShowResult(false, "请先保存图纸", "请先将当前 DWG 保存到磁盘。为避免把未保存更改误作最终结果，请保存后再执行一键内嵌。");
-                return;
+                return null;
             }
             if (System.Convert.ToInt32(AcApp.GetSystemVariable("DBMOD")) != 0)
             {
                 ShowResult(false, "请先保存更改", "当前图纸有未保存修改。请 Ctrl+S 后再运行，避免输出副本缺少当前更改。");
-                return;
+                return null;
             }
-            RunImageQuickAction(doc.Name, "当前图纸");
+            return doc.Name;
         }
 
         private void QuickEmbedFolderClick(object sender, RoutedEventArgs e)
@@ -282,8 +506,6 @@ namespace YangCAD.AutoCADHost.UI
                     RequireAllImages = true
                 });
                 RuntimeLogger.Info("Toolbox GUI quick embed worker started job=" + result.job_id);
-                ShowResult(true, label + "任务已启动（等待 Worker 完成）",
-                    $"待处理 DWG：{result.file_count}\n输出：{result.output_folder}\n状态文件：{result.status_path}\n\n不会覆盖源 DWG；下方将自动显示进度和最终结果。");
                 StartEmbedStatusMonitor(result);
             }
             catch (Exception ex)
@@ -293,13 +515,19 @@ namespace YangCAD.AutoCADHost.UI
             }
         }
 
-        private void StartEmbedStatusMonitor(ImageEmbedBatchService.Result job)
+        internal void StartEmbedStatusMonitor(ImageEmbedBatchService.Result job)
         {
             StopEmbedStatusMonitor();
+            ResultBorder.Visibility = Visibility.Collapsed;
             _embedStatusFile = job.status_path;
-            _embedOutputFolder = job.output_folder;
             _embedLastState = "";
-            OpenEmbedOutputButton.Visibility = Visibility.Visible;
+            SetTaskStatus("正在内嵌引用…", $"待处理 {job.file_count} 份图纸", job.output_folder);
+            ResumeEmbedStatusMonitor();
+        }
+
+        private void ResumeEmbedStatusMonitor()
+        {
+            if (_embedStatusTimer != null || string.IsNullOrEmpty(_embedStatusFile)) return;
             _embedStatusTimer = new DispatcherTimer(DispatcherPriority.Background) { Interval = TimeSpan.FromSeconds(2) };
             _embedStatusTimer.Tick += EmbedStatusTick;
             _embedStatusTimer.Start();
@@ -321,15 +549,29 @@ namespace YangCAD.AutoCADHost.UI
                 var job = JsonCodec.Deserialize<EmbedStatusDto>(File.ReadAllText(_embedStatusFile));
                 if (job == null || string.IsNullOrWhiteSpace(job.state)) return;
                 var state = job.state.Trim().ToUpperInvariant();
-                var terminal = state == "PASS" || state == "PARTIAL" || state == "FAIL";
-                var headline = terminal ? $"引用处理完成：{state}" : $"引用处理进行中：{state}";
-                var details = $"总数：{job.total_files}；成功：{job.passed}；部分成功：{job.partial}；失败：{job.failed}；跳过：{job.skipped}\n输出：{_embedOutputFolder}\n状态：{_embedStatusFile}";
-                if (!string.IsNullOrWhiteSpace(job.fatal_error)) details += "\n错误：" + job.fatal_error;
-                if (terminal || !string.Equals(_embedLastState, details, StringComparison.Ordinal))
+                var terminal = state == "PASS" || state == "PARTIAL" || state == "FAIL" || state == "SKIPPED";
+                var headline = state switch
                 {
-                    ShowResult(state == "PASS" || !terminal, headline, details);
+                    "PASS" => "内嵌完成 · 原图未改动",
+                    "PARTIAL" => "内嵌部分完成 · 原图未改动",
+                    "SKIPPED" => "没有生成新副本",
+                    "FAIL" => "内嵌失败 · 原图未改动",
+                    _ => "正在内嵌引用…"
+                };
+                var error = string.IsNullOrWhiteSpace(job.fatal_error)
+                    ? job.items.FirstOrDefault(item => !string.IsNullOrWhiteSpace(item.error))?.error
+                    : job.fatal_error;
+                var details = $"成功 {job.passed} / 跳过 {job.skipped} / 失败 {job.failed}" +
+                    (job.partial == 0 ? "" : $" / 部分成功 {job.partial}");
+                if (terminal && !string.IsNullOrWhiteSpace(error)) details += "\n" + error;
+                if (_embedLastState != details || terminal)
+                {
+                    TaskStatusTitle.Text = headline;
+                    TaskStatusDetails.Text = details;
                     _embedLastState = details;
                 }
+                TaskOutputButton.Visibility = terminal && state != "FAIL" && Directory.Exists(_taskOutputFolder)
+                    ? Visibility.Visible : Visibility.Collapsed;
                 if (terminal) StopEmbedStatusMonitor();
             }
             catch (IOException) { /* Worker may be atomically replacing status.json; retry next tick. */ }
@@ -337,22 +579,55 @@ namespace YangCAD.AutoCADHost.UI
             {
                 StopEmbedStatusMonitor();
                 RuntimeLogger.Error("Image embed status monitor failed.", ex);
-                ShowResult(false, "无法解析任务状态", ex.Message + "\n状态文件：" + _embedStatusFile);
+                TaskStatusTitle.Text = "无法读取引用任务状态";
+                TaskStatusDetails.Text = ex.Message;
             }
         }
 
-        private void OpenEmbedOutputClick(object sender, RoutedEventArgs e)
+        internal void ShowRevitTaskResult(RevitExchangeService.Result result)
         {
-            if (string.IsNullOrWhiteSpace(_embedOutputFolder) || !Directory.Exists(_embedOutputFolder))
+            if (_embedStatusTimer != null) return;
+            _embedStatusFile = "";
+            SetTaskStatus("Revit 副本已生成 · 原图未改动",
+                $"已整理 {result.classified_entities} 个 / 跳过 {result.unsupported_count} 个",
+                Path.GetDirectoryName(result.output_dwg) ?? "");
+        }
+
+        internal void ShowTaskFailure(string title, string error)
+        {
+            if (_embedStatusTimer != null) return;
+            _embedStatusFile = "";
+            SetTaskStatus(title, error, "");
+        }
+
+        private void SetTaskStatus(string title, string details, string folder)
+        {
+            _taskOutputFolder = folder;
+            TaskStatusTitle.Text = title;
+            TaskStatusDetails.Text = details;
+            TaskOutputButton.Visibility = Directory.Exists(folder) && _embedStatusFile.Length == 0
+                ? Visibility.Visible : Visibility.Collapsed;
+            TaskStatusBar.Visibility = Visibility.Visible;
+        }
+
+        private void CloseTaskStatusClick(object sender, RoutedEventArgs e)
+            => TaskStatusBar.Visibility = Visibility.Collapsed;
+
+        private void OpenTaskOutputClick(object sender, RoutedEventArgs e)
+        {
+            if (!Directory.Exists(_taskOutputFolder))
             {
-                ShowResult(false, "输出目录尚不存在", "请检查 Worker 最终状态，部分失败任务可能没有生成输出副本。");
+                TaskStatusDetails.Text = "输出目录尚未生成。";
                 return;
             }
             try
             {
-                Process.Start(new ProcessStartInfo("explorer.exe", "\"" + _embedOutputFolder + "\"") { UseShellExecute = true });
+                Process.Start(new ProcessStartInfo("explorer.exe", "\"" + _taskOutputFolder + "\"") { UseShellExecute = true });
             }
-            catch (System.Exception ex) { ShowResult(false, "打开输出目录失败", ex.Message); }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                TaskStatusDetails.Text = "打开输出目录失败：" + ex.Message;
+            }
         }
 
         private void ShowResult(bool success, string title, string text)
@@ -368,12 +643,12 @@ namespace YangCAD.AutoCADHost.UI
             if (!string.IsNullOrWhiteSpace(ResultText.Text)) Clipboard.SetText(ResultText.Text);
         }
 
-        private static string FormatResult(object? result)
+        private static string FormatResult(object? result) => result switch
         {
-            if (result == null) return "操作已完成。";
-            if (result is string text) return text;
-            try { return JsonCodec.Serialize(result, indented: true); }
-            catch { return Convert.ToString(result) ?? "操作已完成。"; }
-        }
+            ImageEmbedBatchService.Result image => $"预计处理 {image.file_count} 份图纸，原图不会改动。",
+            RevitExchangeService.Result revit => $"已识别 {revit.classified_entities} 个对象，跳过 {revit.unsupported_count} 个。",
+            string message => message,
+            _ => "操作已完成。"
+        };
     }
 }

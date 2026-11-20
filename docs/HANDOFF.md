@@ -1,40 +1,7 @@
-## 2026-11-13 — YangCAD 双线 + 标注工具整合
+# YangCAD 接手与 Windows 验收
 
-按用户确认，整理已单独通过 AutoCAD 2024 Core Console G5 的 PR #16 和 PR #17：`YGDL`、`YGDLW`、`YGDIMTXT`、`YGSLOPE`、`YGTBOX`。保留双线/坡度/文字框全部个人设置、Toolbox 按钮、快捷键。**GUI 及联合程序集 Windows Build 未验收**，不代表已安装发布。PR #13/#14/#15 与综合审查 PR #18 不包含在本次主线合并中。完整说明 `docs/INTEGRATION_PR16_PR17_20261113.md`。
+1. 从 [草稿 PR #20](https://github.com/5788324/YANG-AGENT_CAD/pull/20) 获取整合候选并记录实际 HEAD。
+2. 按 [当前任务](../tasks/CURRENT_TASK.md) 重新构建。优先复验普通 PNG 的真实内嵌、裁剪拒绝、候选 worker 来源及整批跳过。工具箱合并入口、任务状态条、Ribbon 和 BMK 直边样本也列在当前任务。本轮交互复验涵盖 PGP 静默重载、图层批量操作、旋转 UCS、切命令和单次撤销。
+3. 回传各模块 PASS / FAIL / BLOCKED / NOT_TESTED 与对应原始证据，失败集中修复。
 
----
-
-# YangCAD 接手与工程边界（2026-11-05）
-
-**当前管理版本**：`0.10.0-rc.1` / **AutoCAD 2024 Quick 特定范围 G5 GO**。现有程序集版本仍为 `0.10.0-dev`，这是为了保留与已验收 DLL 的一致性，**不是遗漏更新 DLL**。
-
-## 唯一当前任务
-
-查看 `tasks/CURRENT_TASK.md`：已将叠加 PR #4–#10 统一到 **[RC Draft PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11)**，完整 diff/静态 CI/受测 Runtime 一致性已核；不自动 merge `main`，不新开发功能。
-
-## 从哪里读代码
-
-- Ribbon / Palette / ControlCenter：`src/YangCAD.AutoCAD/UI/`；用户拾取命令：`src/YangCAD.AutoCAD/Commands/`。
-- 真实业务 Service：`src/YangCAD.AutoCAD/Services/Cad/`，GUI / 命令 / MCP 薄适配器共用。
-- CAD document/transaction：`Infrastructure/CadTransactionRunner.cs`。
-- MCP：`src/YangCAD.AutoCAD/Mcp/`、`mcp/yangcad_mcp/`；不能跨线程直接进 Autodesk API。
-- Image OLE worker：`workers/ImageEmbed/`；Windows 打包：`tools/Build.ps1`、`tools/Package-Release.ps1`、`tools/Verify-Release.ps1`。
-- 历史旧实现、协议：相应 `docs/*`；第三方参考 `references/*` 不允许混入未经授权 VLX 等。
-
-## 完整证据索引
-
-- 旧版本问题审查与实际修复：`https://github.com/5788324/YANG-AGENT_CAD/issues/9`。
-- 已验收 AutoCAD 2024 源码：`b6ff1370b0ed48e5e50fec43d2a5a2e14ca5ec54`；Release 合同修复：`d5200c57a75b1fd228713dc67b606126a5c04924`。
-- 已验收发行 ZIP SHA256 `ACA88A9440968411A2D7A014800AC70FE8E60C314ECBE936BBBC4037C5C79692`；Loaded/发行 DLL SHA256 `880329CF7E5C464078686FE56B0BB7070B4C2F7B7F482A91771D9C8`。
-- CAD 原始测试证据 `https://drive.google.com/drive/folders/1AJI15SxQCXlPUXVXOMLg3-jN-wuOkMm0`；PR10 正反向 `https://drive.google.com/drive/folders/1bUkqFnOBmG6j5vz5z0DogLN30xZcAYUs`。
-
-## 不能越界声明的事
-
-- Civil 3D live 67 / Revit Native E2E 仍 NOT_TESTED；MAP + ReaderVerifier 11/11 不是 Revit native ElementId 实测。
-- R06 对象级 Undo 恢复与 DWG 二进制恢复不同；R07 批处理是 2 通过 / 1 跳过 / 1 失败。
-- `main` 仍是旧稳定基线，不能在合并前声称 0.10.0 已落地 `main`。PR 合并策略见 `docs/RC_MERGE_PLAN.md`。
-- 当前 AUTO CAD 2024 RC 不表示 2021/2022/2023/2025/2026/2027 均通过。
-
-## 交接规则
-
-每次提交后刷新 GitHub HEAD、提交内容、PR 状态与 CI；新功能改动要追加功能测试，不要混在已验收的 RC 里。需静态验证：`python tools/verify_source_manifest.py --complete`、`python tools/run_static_checks.py`，仍要区分 STATIC/WINDOWS。
+[项目状态](CURRENT_STATE.md) · [功能入口](FEATURE_CATALOG.md) · [代码结构](PRODUCT_STRUCTURE.md) · [Gemini 执行约定](GEMINI_EXECUTOR_SOP.md)

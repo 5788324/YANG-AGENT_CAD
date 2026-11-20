@@ -14,17 +14,22 @@ namespace YangCAD.AutoCADHost.UI
             "1:1", "1:2", "1:5", "1:10", "1:20", "1:25", "1:50", "1:100", "1:200", "1:250", "1:500"
         };
 
+        private readonly UserSettings _settings;
         private bool _loaded;
 
         public ScaleConvertWindow(int selectedCount)
         {
             InitializeComponent();
-            var settings = UserSettings.Load();
-            ThemeManager.Apply(Resources, ThemeManager.Normalize(settings.Theme));
+            _settings = UserSettings.Load();
+            ThemeManager.Apply(Resources, ThemeManager.Normalize(_settings.Theme));
             OldScaleCombo.ItemsSource = Presets;
             NewScaleCombo.ItemsSource = Presets;
-            OldScaleCombo.Text = "1:5";
-            NewScaleCombo.Text = "1:10";
+            OldScaleCombo.Text = string.IsNullOrWhiteSpace(_settings.LastOldScale) ? "1:5" : _settings.LastOldScale;
+            NewScaleCombo.Text = string.IsNullOrWhiteSpace(_settings.LastNewScale) ? "1:10" : _settings.LastNewScale;
+            if (string.Equals(_settings.LastScaleMode, "Scaled", StringComparison.OrdinalIgnoreCase))
+                ScaledModeRadio.IsChecked = true;
+            else
+                StandardModeRadio.IsChecked = true;
             SelectionSummaryText.Text = $"已选择 {selectedCount} 个对象";
             _loaded = true;
             RefreshModeAndFactor();
@@ -59,6 +64,24 @@ namespace YangCAD.AutoCADHost.UI
             if (_loaded) RefreshModeAndFactor(showValidation: false);
         }
 
+        private void QuickOldScaleClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string ratio)
+            {
+                OldScaleCombo.Text = ratio;
+                RefreshModeAndFactor(showValidation: false);
+            }
+        }
+
+        private void QuickNewScaleClick(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is string ratio)
+            {
+                NewScaleCombo.Text = ratio;
+                RefreshModeAndFactor(showValidation: false);
+            }
+        }
+
         private void StartClick(object sender, RoutedEventArgs e)
         {
             if (!TryReadScale(OldScaleCombo.Text, out var oldScale) || !TryReadScale(NewScaleCombo.Text, out var newScale))
@@ -75,17 +98,10 @@ namespace YangCAD.AutoCADHost.UI
                 return;
             }
 
-            if (SelectedMode == ScaleConversionService.DrawingMode.ScaledDrawing)
-            {
-                var factor = OldScale / NewScale;
-                var answer = MessageBox.Show(
-                    this,
-                    $"缩尺绘图模式会实际修改几何尺寸。\n\n1:{OldScale:0.####} → 1:{NewScale:0.####}\n几何将缩放为原来的 {factor:P2}。\n\n继续吗？",
-                    "确认缩尺转换",
-                    MessageBoxButton.OKCancel,
-                    MessageBoxImage.Warning);
-                if (answer != MessageBoxResult.OK) return;
-            }
+            _settings.LastOldScale = OldScaleCombo.Text.Trim();
+            _settings.LastNewScale = NewScaleCombo.Text.Trim();
+            _settings.LastScaleMode = SelectedMode == ScaleConversionService.DrawingMode.ScaledDrawing ? "Scaled" : "Standard";
+            try { _settings.Save(); } catch { }
 
             DialogResult = true;
             Close();
@@ -110,14 +126,14 @@ namespace YangCAD.AutoCADHost.UI
             if (SelectedMode == ScaleConversionService.DrawingMode.Standard1To1)
             {
                 var annotation = newScale / oldScale;
-                FactorText.Text = $"几何倍率 1.0000 · 注释倍率 {annotation:0.0000}";
-                ModeHintText.Text = "标准模式不改变真实几何；文字、标注、引线、Hatch、线型按目标比例调整模型空间显示尺度。";
+                FactorText.Text = $"几何保持不变 · 注释缩放 {annotation:0.####} 倍";
+                ModeHintText.Text = "只调整文字、标注、引线、填充与线型的显示尺度，模型几何尺寸不变。";
             }
             else
             {
                 var geometry = oldScale / newScale;
-                FactorText.Text = $"几何倍率 {geometry:0.0000} · 注释倍率 1.0000";
-                ModeHintText.Text = "缩尺绘图模式会按基点实际缩放几何，同时尽量恢复文字、标注、引线、Hatch、线型的纸面视觉大小。";
+                FactorText.Text = $"几何缩放 {geometry:0.####} 倍 · 纸面字高保持不变";
+                ModeHintText.Text = "按基点缩放几何大小，同时保持文字、标注与引线的图纸视觉大小。";
             }
         }
 

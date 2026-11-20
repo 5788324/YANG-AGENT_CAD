@@ -1,39 +1,5 @@
-## 2026-11-13 — YangCAD 双线 + 标注工具整合
+# YangCAD 当前接手入口
 
-按用户确认，整理已单独通过 AutoCAD 2024 Core Console G5 的 PR #16 和 PR #17：`YGDL`、`YGDLW`、`YGDIMTXT`、`YGSLOPE`、`YGTBOX`。保留双线/坡度/文字框全部个人设置、Toolbox 按钮、快捷键。**GUI 及联合程序集 Windows Build 未验收**，不代表已安装发布。PR #13/#14/#15 与综合审查 PR #18 不包含在本次主线合并中。完整说明 `docs/INTEGRATION_PR16_PR17_20261113.md`。
+当前候选为 [PR #20](https://github.com/5788324/YANG-AGENT_CAD/pull/20) 的 feature/ribbon-layout-20261119。核对 GitHub HEAD 后执行 [当前任务](../tasks/CURRENT_TASK.md)。R00–R10 历史结果见 docs/RUNTIME_TEST_MATRIX.md。feature/product-foundation-v010-20261103 是历史候选。
 
----
-
-# YangCAD — 新 AI / 新对话 60 秒接手（2026-11-05）
-
-仓库：`https://github.com/5788324/YANG-AGENT_CAD`。
-
-## 先确认当前分支，不要测错版本
-
-- **唯一 RC 集成入口**：[PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) · `release/autocad2024-0.10.0-rc1`；它是从 `d5200c57...` 派生的 docs-only 版本，用于审查全部叠加功能如何进入 `main`。
-- 当前旧开发父链末端：`feature/product-foundation-v010-20261103` / PR #8，受测 `b6ff137...`。原先的 `feature/product-foundation-v010-20261103` 是 0.10.0-dev 测试基线，不是 RC 合并入口。
-- 原始 G5 审核：`https://github.com/5788324/YANG-AGENT_CAD/issues/9#issuecomment-6646760886`；后续测试以 **完整 Git SHA** 为准。
-
-## 快速阅读顺序
-
-1. `docs/CURRENT_STATE.md` — 最新分层事实
-2. `docs/RC_AUTOCAD2024_0.10.0.md` — 本 RC 的唯一可宣称范围与 SHA
-3. `docs/RC_MERGE_PLAN.md` — PR #4→#10 依赖/合并纪律
-4. `docs/FEATURE_CATALOG.md` — 哪些功能做了、哪些未实现
-5. `docs/HANDOFF.md` — 工程代码入口和执行者分工
-6. `docs/RUNTIME_TEST_MATRIX.md` — R00–R10 独立证据状态（保留历史标记 `PARTIAL_OLD_EVIDENCE` 作溯源，不得解读为当前没测）
-7. `tasks/CURRENT_TASK.md` — 唯一当前任务
-8. `AGENTS.md` / `docs/QUALITY_GATES.md` — 工程与审核硬门禁
-
-## 保持证据与运行范围边界
-
-- AutoCAD 2024 Quick：**G5 scope GO**，发布 ZIP SHA `ACA88A...`；DLL SHA `880329CF...`。
-- Civil 3D 67 live Tools、Revit Native E2E、其他 AutoCAD 年份：**NOT_TESTED_CURRENT_RC**。
-- GUI、MCP、批处理共用业务逻辑；不要从 MCP 后台线程直接修改 Autodesk DB。
-- 不因 docs-only RC 分支多一个提交就宣称新 DLL 已重新构建。若改业务代码须重新 Build/Loaded/Undo。
-
-## 任务与开发范围
-
-本轮是**合并审查/文档管理**，不开发 Backlog：任意多段线裁切、复杂对象裁切开关、删除边界外、Z 折断线。Gemini 若需要复测按任务 Issue，ChatGPT 最终独立审核；勿自行把 RC 升级为多宿主正式发布。
-
-静态命令：`python tools/verify_source_manifest.py --complete` 和 `python tools/run_static_checks.py`。
+[当前状态](CURRENT_STATE.md) · [接手说明](HANDOFF.md) · [命令目录](FEATURE_CATALOG.md)

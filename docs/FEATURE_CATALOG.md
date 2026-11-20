@@ -1,25 +1,18 @@
-## 2026-11-13 — YangCAD 双线 + 标注工具整合
+# YangCAD 功能目录
 
-按用户确认，整理已单独通过 AutoCAD 2024 Core Console G5 的 PR #16 和 PR #17：`YGDL`、`YGDLW`、`YGDIMTXT`、`YGSLOPE`、`YGTBOX`。保留双线/坡度/文字框全部个人设置、Toolbox 按钮、快捷键。**GUI 及联合程序集 Windows Build 未验收**，不代表已安装发布。PR #13/#14/#15 与综合审查 PR #18 不包含在本次主线合并中。完整说明 `docs/INTEGRATION_PR16_PR17_20261113.md`。
+以下为整合候选中的入口，验证状态见 [项目状态](CURRENT_STATE.md)。
 
----
+| 功能 | 主要入口 | 验收重点 |
+|---|---|---|
+| Ribbon、工具箱、主题、快捷键 | YANGCAD_TOOLBOX、YANGCAD、YGKEYS | GUI、启动页签、PGP |
+| 图层、比例、双线 | YGLAYER、YGSCALE、YGDL / YGDLW | 图元属性与撤销 |
+| 矩形与多边形大样 | YGDETAIL、YGDETAILPOLY | 保留原图，直边多段线 |
+| 折断线、边界外编辑 | YGBREAKLINE、YGOUTSIDE | 原生多段线、预览、撤销 |
+| 文字与标注 | YGTL、YGINC、YGLEADERFIX、YGDIMTXT、YGSLOPE、YGTBOX | 对齐、数值、引线、外框 |
+| 填充 | YGHCLIP、YGHCLIPSPLIT、YGHSPLIT、YGHUNION | 裁切、分离、纹理、回滚 |
+| 梁柱板 | BMK、CMK、SLB / SLBFIX / SLBLAYER | 工程标记与箭头方向 |
+| 图纸与引用 | YGREVIT、YGEMBED / YGEMBEDBATCH | 保留原图、输出副本、重开 |
+| 自动化与批处理 | YANGCAD_MCP、Python MCP、BatchWorker | 读写、权限、批处理源图哈希 |
+| Civil 3D | Civil 宿主与其 MCP 工具 | 仅有真实 Civil 3D 2024 时执行 |
 
-# YangCAD 功能目录与证据范围（2026-11-05）
-
-版本：`0.10.0-rc.1`（**RC 文档标记**；实际 Assembly/MCP 仍 `0.10.0-dev`）；范围：AutoCAD 2024 Quick 特定样例 G5 GO。
-
-| 功能 | CAD/GUI 入口 | MCP | AutoCAD 2024 本轮结论 |
-|---|---|---|---|
-| 工具箱/Ribbon/关于 | `YANGCAD_TOOLBOX` / YangCAD 面板 | — | R01 样例通过 |
-| 图层合并/开关/冻结/锁定 | `YGLAYER` / `YGLMERGE` / `YGLONOFF` / `YGLFREEZE` / `YGLLOCK` | `cad.layer.*` | R03 样例与单步 Undo 通过 |
-| **矩形** QG 风格提取大样 | `YGDETAIL` | `cad.detail.extract` | R04 样例通过；复杂对象仍可能跳过 |
-| 比例转换双模式 | `YGSCALE` | `cad.scale.convert` | R06：标准 7/8（INSERT 跳过），缩尺 8/8；对象级 Undo |
-| 引线重建/独立文字关联 | `YGLEADERFIX` | `cad.leader.rebuild` | R05 样例通过，复杂路径安全拒绝 |
-| Revit 图纸预处理 | Toolbox 一键 | `project.revit.prepare` | R09 GUI/MCP MAP 11/11 与 ReaderVerifier 通过；**Revit Native NOT_TESTED** |
-| 图片 OLE / DWG Xref Bind | Toolbox 当前图 / 选择文件夹 | `project.image.embed` | R07 内部化读回通过；文件夹仍 **PARTIAL 2/1/1** |
-| 快捷键 | `YGKEYS`，PGP / CUI | — | R02 PGP/备份/REINIT 通过 |
-| 本地 MCP | `YANGCAD_MCP` | stdio 74 / AutoCAD 37 | R08 当前 AutoCAD 样例通过；Civil live 67 **NOT_TESTED** |
-
-**未实现（Backlog）**：按任意闭合多段线边界提取、跨边界复杂对象按选项裁切、删除闭合边界外全部图元、直线转 Z 形折断线。此处不可视为本版功能。
-
-**其他年份和宿主**：Civil 3D live / Revit Native / 非 AutoCAD 2024 均不属于本轮 G5 通过范围。详细验收 SHA 与发布包见 `docs/RC_AUTOCAD2024_0.10.0.md`；单个 MCP tool 见 `docs/MCP_COVERAGE_MATRIX.md`。
+[快捷命令目录](../src/YangCAD.AutoCAD/Toolbox/CadToolCatalog.cs) · [MCP 覆盖表](MCP_COVERAGE_MATRIX.md)。新几何命令先提供 CAD 入口。
