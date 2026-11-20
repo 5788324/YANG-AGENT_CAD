@@ -41,6 +41,7 @@ namespace YangCAD.AutoCADHost.UI
 
             // Remember Autodesk's selected tab before adding our custom tab. Adding a tab
             // late during startup must not steal the native Home/Civil 3D ribbon focus.
+            RibbonIcons.UseLightTheme = Convert.ToInt32(Application.GetSystemVariable("COLORTHEME")) == 1;
             var previousTab = ribbon.ActiveTab;
             var newTab = new RibbonTab { Id = TabId, Title = "YangCAD" };
 
@@ -60,8 +61,8 @@ namespace YangCAD.AutoCADHost.UI
                     MenuItem("合并图层", "YGLMERGE ", "layer_merge"),
                     MenuItem("图层冻结", "YGLFREEZE ", "layer_freeze"),
                     MenuItem("图层锁定", "YGLLOCK ", "layer_lock")),
-                Menu("填充编辑", "hatch_clip",
-                    MenuItem("剪裁填充", "YGHCLIP ", "hatch_clip"),
+                Button("剪裁填充", "YGHCLIP ", "ControlCenter32.png"),
+                RememberedMenu("填充编辑", "hatch_clip",
                     MenuItem("挖出并保留独立填充", "YGHCLIPSPLIT ", "hatch_clip_split"),
                     MenuItem("仅保留框内填充", "YGHCLIPINT ", "hatch_clip"),
                     MenuItem("拆分填充", "YGHSPLIT ", "hatch_split"),
@@ -71,7 +72,9 @@ namespace YangCAD.AutoCADHost.UI
                     MenuItem("重设填充基点", "YGHBASE ", "hatch_base")));
 
             AddPanel(newTab, "文字与标注",
-                Menu("文字对齐", "text_align_lr",
+                Button("递增复制", "YGINC ", "ControlCenter32.png"),
+                Button("引线修复", "YGLEADERFIX ", "ControlCenter32.png"),
+                RememberedMenu("文字对齐", "text_align_lr",
                     MenuItem("文字左对齐", "YGTL ", "text_align_lr"),
                     MenuItem("水平居中对齐", "YGTC ", "text_align_lr"),
                     MenuItem("文字右对齐", "YGTR ", "text_align_lr"),
@@ -81,8 +84,7 @@ namespace YangCAD.AutoCADHost.UI
                     MenuItem("按线投影对齐", "YGTLINE ", "text_align_lr"),
                     MenuItem("按弧环绕对齐", "YGTARC ", "text_arc"),
                     MenuItem("整理段落", "TXAL ", "text_align")),
-                Menu("文字编辑", "text_increment",
-                    MenuItem("递增复制", "YGINC ", "text_increment"),
+                RememberedMenu("文字编辑", "text_increment",
                     MenuItem("加删前后缀", "YGTAFFIX ", "text_affix"),
                     MenuItem("刷文字内容", "YGTBRUSH ", "text_brush"),
                     MenuItem("互换文字内容", "YGTSWAP ", "text_swap"),
@@ -97,7 +99,6 @@ namespace YangCAD.AutoCADHost.UI
                     MenuItem("拆成单字", "YGTEXP ", "text_join"),
                     MenuItem("选择空格或换行清理方式", "YGTSPACE ", "text_space")),
                 Menu("标注工具", "dim_check",
-                    MenuItem("引线修复", "YGLEADERFIX ", "leader_fix"),
                     MenuItem("筛选改字标注", "YGDIMTXT ", "dim_override"),
                     MenuItem("标注坡度", "YGSLOPE ", "slope_mark"),
                     MenuItem("矩形或圆形文字框", "YGTBOX ", "text_frame"),
@@ -111,9 +112,8 @@ namespace YangCAD.AutoCADHost.UI
                     MenuItem("标注检查与取整设置", "DFSET ", "dim_fix")));
 
             AddPanel(newTab, "结构绘图",
-                Menu("双线", "double_line",
-                    MenuItem("绘制双线", "YGDL ", "double_line"),
-                    MenuItem("修改双线宽度", "YGDLW ", "double_line")),
+                Button("智能双线", "YGDL ", "ControlCenter32.png"),
+                MenuItem("修改双线宽度", "YGDLW ", "double_line"),
                 Menu("梁柱板", "beam_mark",
                     MenuItem("梁尺寸标注", "BMK ", "beam_mark"),
                     MenuItem("柱尺寸标注", "CMK ", "col_mark"),
@@ -130,9 +130,10 @@ namespace YangCAD.AutoCADHost.UI
                     MenuItem("批量内嵌文件夹", "YGEMBEDBATCH ", "folder_embed")));
 
             AddPanel(newTab, "连接与设置",
-                Button("快捷键", "YGKEYS ", "ControlCenter32.png"),
                 Button("MCP", "YANGCAD_MCP ", "Mcp32.png"),
-                Button("控制中心", "YANGCAD ", "ControlCenter32.png"));
+                Menu("设置", "control_center",
+                    MenuItem("快捷键", "YGKEYS ", "shortcut_keys"),
+                    MenuItem("控制中心", "YANGCAD ", "control_center")));
 
             ribbon.Tabs.Add(newTab);
             // Autodesk may automatically activate a newly inserted ribbon tab. Restore only
@@ -210,6 +211,14 @@ namespace YangCAD.AutoCADHost.UI
         private static RibbonButton MenuItem(string text, string command, string iconKey) =>
             BuildButton(text, command, iconKey, "ControlCenter32.png", RibbonItemSize.Standard, Orientation.Horizontal);
 
+        private static RibbonSplitButton RememberedMenu(string title, string iconKey, params RibbonButton[] items)
+        {
+            var menu = Menu(title, iconKey, items);
+            menu.IsSplit = true;
+            menu.IsSynchronizedWithCurrentItem = true;
+            return menu;
+        }
+
         private static RibbonSplitButton Menu(string title, string iconKey, params RibbonButton[] items)
         {
             var menu = new RibbonSplitButton
@@ -239,6 +248,10 @@ namespace YangCAD.AutoCADHost.UI
             RibbonItemSize size,
             System.Windows.Controls.Orientation orientation)
         {
+            var trimmed = command.Trim();
+            var catalog = CadToolCatalog.All.FirstOrDefault(x =>
+                string.Equals(x.Command, trimmed, StringComparison.OrdinalIgnoreCase));
+            iconKeyOrCommand = catalog?.IconKey ?? iconKeyOrCommand;
             ImageSource? small = null;
             ImageSource? large = null;
             try
@@ -260,9 +273,6 @@ namespace YangCAD.AutoCADHost.UI
                 }
             }
 
-            var trimmed = command.Trim();
-            var catalog = CadToolCatalog.All.FirstOrDefault(x =>
-                string.Equals(x.Command, trimmed, StringComparison.OrdinalIgnoreCase));
             text = catalog?.Name ?? text;
             var button = new RibbonButton
             {

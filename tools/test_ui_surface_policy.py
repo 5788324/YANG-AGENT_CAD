@@ -45,7 +45,15 @@ ok('toolbox command buttons all route to registered commands',
 ok('control center has no visible MCP controls', all(x not in cc_x for x in ['MCP 状态','复制 MCP 配置','允许 MCP 修改当前 DWG','Tag="MCP"']))
 ok('mcp window has no duplicate theme selector', all(x not in mcp_x for x in ['墨曜 · Obsidian','月瓷 · Porcelain','雾蓝 · Mist']))
 ok('toolbox registry is exactly two descriptors', re.findall(r'Id\s*=\s*"([^"]+)"', registry) == ['project.revit.prepare','project.image.embed'])
-ok('toolbox has no system/planning navigation', all(x not in tb_x for x in ['系统','规划','CategoryList','SearchBox','收藏','最近']))
+catalog = text('src/YangCAD.AutoCAD/Toolbox/CadToolCatalog.cs')
+rows = re.findall(r'new CadToolItem\("[^"]+",\s*"[^"]+",\s*"[^"]+",\s*"([^"]+)",\s*"([^"]+)",\s*"([^"]+)"', catalog)
+catalog_commands, hints, icon_keys = (list(col) for col in zip(*rows))
+icons = set(re.findall(r'case "([^"]+)"', text('src/YangCAD.AutoCAD/UI/RibbonIcons.cs')))
+ok('catalog commands are unique and registered', len(catalog_commands) == len(set(catalog_commands)) and set(catalog_commands) <= registered_commands)
+ok('catalog alias hints are unique', len(hints) == len({hint.upper() for hint in hints}))
+ok('catalog icon keys exist', set(icon_keys) <= icons)
+ok('toolbox renders catalog short labels and commands', all(x in tb_x for x in ['{Binding ShortName}', '{Binding Command}', 'ToolGroups']))
+ok('four frequent tools are direct Ribbon buttons', all(re.search(r'(?<!MenuItem)Button\("[^"]+", "'+cmd+r' ', ribbon) for cmd in ('YGHCLIP','YGLEADERFIX','YGINC','YGDL')))
 
 for label,x,c in [('control center',cc_x,cc_c),('mcp window',mcp_x,mcp_c),('toolbox',tb_x,tb_c),('scale converter',scale_x,scale_c),('layer quick',layer_x,layer_c)]:
     missing=handlers(x)-methods(c)

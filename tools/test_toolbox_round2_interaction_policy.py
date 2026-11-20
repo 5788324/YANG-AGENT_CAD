@@ -21,7 +21,9 @@ ok('output folders may be newly typed','case ToolboxParameterKind.Folder:' in pa
 ok('runtime unavailable is visible and execute disabled','当前不可用' in view and 'ExecuteButton.IsEnabled = canExecute' in view and 'AvailabilityText.Text' in view)
 ok('execution result and error stay in palette','ShowResult(true' in view and 'ShowResult(false' in view and 'ResultBorder.Visibility' in view)
 ok('results can be copied','CopyResultClick' in view and 'Clipboard.SetText(ResultText.Text)' in view)
-ok('favorites/recent/backlog ui removed',all(x not in view+xaml for x in ['ToggleFavorite','RecordRecent','ToolboxFavorites','ToolboxRecent','CategoryChanged','SearchChanged','FavoriteButton']))
+ok('search, recent and section state use the main toolbox', all(x in view+xaml for x in ['ToolSearchBox','ToolboxRecent','ToolboxCollapsedGroups','ToolGroups']))
+ok('project tasks use shared status area', all(x in view+xaml for x in ['TaskStatusBar','StartEmbedStatusMonitor','OpenTaskOutputClick']))
+ok('project parameters remain accessible from command buttons', '任务参数与预览' in view and 'ShowTool(descriptorId)' in view)
 ok('only two descriptors remain',registry.count('Id = "project.')==2 and 'system.' not in registry and 'cad.drawing.audit' not in registry)
 ok('document activation refreshes availability','ToolboxPaletteManager.RefreshContext()' in ext)
 failed=[n for n,v in checks if not v]

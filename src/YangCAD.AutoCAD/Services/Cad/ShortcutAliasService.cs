@@ -1,3 +1,4 @@
+using YangCAD.AutoCADHost.Toolbox;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,77 +31,10 @@ namespace YangCAD.AutoCADHost.Services.Cad
             public override string ToString() => Name + "  (" + Command + ")";
         }
 
-        public static IReadOnlyList<Feature> Features { get; } = new[]
-        {
-            new Feature("工具箱", "YANGCAD_TOOLBOX"),
-            new Feature("工具箱快捷呼出", "YY"),
-            new Feature("图层工具", "YGLAYER"),
-            new Feature("合并图层", "YGLMERGE"),
-            new Feature("图层开关", "YGLONOFF"),
-            new Feature("图层冻结", "YGLFREEZE"),
-            new Feature("图层锁定", "YGLLOCK"),
-            new Feature("切割提取大样", "YGDETAIL"),
-            new Feature("多边形大样", "YGDETAILPOLY"),
-            new Feature("直线转 Z 折断线", "YGBREAKLINE"),
-            new Feature("删除边界外", "YGOUTSIDE"),
-            new Feature("选改过文字的标注", "YGDIMTXT"),
-            new Feature("标注坡度", "YGSLOPE"),
-            new Feature("文字加矩形圆框", "YGTBOX"),
-            new Feature("图纸比例转换", "YGSCALE"),
-            new Feature("引线修复及关联文字", "YGLEADERFIX"),
-            new Feature("智能双线/管道", "YGDL"),
-            new Feature("修正双线宽度", "YGDLW"),
-            new Feature("梁尺寸批量标注", "BMK"),
-            new Feature("文字倒置翻正(梁)", "BMKFIX"),
-            new Feature("柱截面批量标注", "CMK"),
-            new Feature("点板格放受力符号", "SLB"),
-            new Feature("板受力符号预览", "SLBP"),
-            new Feature("板受力符号修正", "SLBFIX"),
-            new Feature("设置板轮廓与梁线", "SLBLAYER"),
-            new Feature("选尾数非0/5标注", "DIMCHK"),
-            new Feature("标注尾数取整", "DIMFIX"),
-            new Feature("标注恢复原值", "DIMRE"),
-            new Feature("翻转标注文字", "DIMFZ"),
-            new Feature("文字/属性保持向上", "TXTUP"),
-            new Feature("文字按段落对齐", "TXAL"),
-            new Feature("文字左对齐", "YGTL"),
-            new Feature("文字居中对齐", "YGTC"),
-            new Feature("文字右对齐", "YGTR"),
-            new Feature("文字顶对齐", "YGTT"),
-            new Feature("文字底对齐", "YGTB"),
-            new Feature("文字中线对齐", "YGTV"),
-            new Feature("文字按线对齐", "YGTLINE"),
-            new Feature("文字按弧环绕", "YGTARC"),
-            new Feature("递增复制", "YGINC"),
-            new Feature("连接文字", "YGTJOIN"),
-            new Feature("单行转多行", "YGTS2M"),
-            new Feature("多行转单行", "YGTM2S"),
-            new Feature("文字炸碎为单字", "YGTEXP"),
-            new Feature("去空格/去换行", "YGTSPACE"),
-            new Feature("大小写/驼峰切换", "YGTCASE"),
-            new Feature("中英文标点切换", "YGTPUNC"),
-            new Feature("文字加删前后缀", "YGTAFFIX"),
-            new Feature("刷文字内容", "YGTBRUSH"),
-            new Feature("文字内容互换", "YGTSWAP"),
-            new Feature("文字改特性刷", "YGTPROP"),
-            new Feature("文字加圆角跑道框", "YGTBOXSLOT"),
-            new Feature("文字加遮罩外框", "YGTBOXMASK"),
-            new Feature("文字排版参数设置", "YGTSET"),
-            new Feature("剪裁填充图案", "YGHCLIP"),
-            new Feature("拆分挖出填充(不删)", "YGHCLIPSPLIT"),
-            new Feature("裁留框内填充", "YGHCLIPINT"),
-            new Feature("拆分填充图案", "YGHSPLIT"),
-            new Feature("合并填充图案", "YGHUNION"),
-            new Feature("去除填充关联", "YGHDIS"),
-            new Feature("重建填充边界", "YGHBOUND"),
-            new Feature("重设填充基点", "YGHBASE"),
-            new Feature("Revit 图纸预处理", "YGREVIT"),
-            new Feature("当前图纸图片内嵌", "YGEMBED"),
-            new Feature("文件夹批量图片内嵌", "YGEMBEDBATCH"),
-            new Feature("MCP", "YANGCAD_MCP"),
-            new Feature("控制中心", "YANGCAD"),
-            new Feature("快捷键设置", "YGKEYS")
-        };
+        public static IReadOnlyList<Feature> Features { get; } = CadToolCatalog.All
+            .Select(item => new Feature(item.Name, item.Command))
+            .Concat(new[] { new Feature("工具箱快捷呼出", "YY") })
+            .ToArray();
 
         public static string FindActivePgpPath(Database database)
         {

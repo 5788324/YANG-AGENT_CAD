@@ -3,6 +3,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 ROOT=Path(__file__).resolve().parents[1]
+catalog = (ROOT/"src/YangCAD.AutoCAD/Toolbox/CadToolCatalog.cs").read_text(encoding="utf-8-sig")
 def read(path): return (ROOT/path).read_text(encoding='utf-8-sig')
 
 service=read('src/YangCAD.AutoCAD/Services/Cad/BreaklineService.cs')
@@ -31,9 +32,9 @@ check('dry-run does not write', 'if (dryRun) return result;' in service)
 check('source erase exclusively real mode', service.count('source.Erase()') == 1)
 check('resource cleanup for dryrun', 'replacement.ObjectId.IsNull' in service and 'replacement.Dispose()' in service)
 check('Ribbon primary action available', 'MenuItem("直线折断", "YGBREAKLINE "' in ribbon)
-check('Palette quick button available', 'Tag="YGBREAKLINE"' in palette)
-check('Palette whitelist includes new command', '"YGBREAKLINE"' in back)
-check('PGP binding registry updated', 'new Feature("直线转 Z 折断线", "YGBREAKLINE")' in alias)
+check('Palette quick button available', 'Tag="{Binding Command}"' in palette)
+check('Palette whitelist includes new command', '"YGBREAKLINE"' in catalog and "CadToolCatalog.All" in back)
+check('PGP binding registry updated', 'new Feature(item.Name, item.Command)' in alias)
 check('not claiming runtime pass', 'WINDOWS_NOT_TESTED' in read('docs/BREAKLINE_V1_20261105.md'))
 check('distinct Windows smoke case', 'YGBREAKLINE' in read('tasks/GEOMETRY_EDIT_V2_WINDOWS_SMOKE_20261105.md'))
 for name,ok in checks: print(('PASS' if ok else 'FAIL')+': '+name)

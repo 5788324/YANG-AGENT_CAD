@@ -8,7 +8,7 @@ using System.Windows.Media.Imaging;
 namespace YangCAD.AutoCADHost.UI
 {
     /// <summary>
-    /// Renders crisp, AutoCAD-2024-dark-themed vector icons to frozen bitmaps at 16x16 and 32x32.
+    /// Renders AutoCAD ribbon vector icons to frozen bitmaps at 16x16 and 32x32.
     /// </summary>
     public static class RibbonIcons
     {
@@ -21,7 +21,10 @@ namespace YangCAD.AutoCADHost.UI
         private static readonly Color GreenColor = Color.FromRgb(0x4A, 0xDE, 0x80);
         private static readonly Color GreenSoftColor = Color.FromArgb(0x44, 0x4A, 0xDE, 0x80);
 
-        private static readonly SolidColorBrush WhiteBrush = FreezeBrush(WhiteColor);
+        internal static bool UseLightTheme { get; set; }
+        private static readonly SolidColorBrush DarkOutlineBrush = FreezeBrush(Color.FromRgb(0x24, 0x33, 0x47));
+        private static readonly SolidColorBrush LightOutlineBrush = FreezeBrush(WhiteColor);
+        private static SolidColorBrush WhiteBrush => UseLightTheme ? DarkOutlineBrush : LightOutlineBrush;
         private static readonly SolidColorBrush MutedBrush = FreezeBrush(MutedColor);
         private static readonly SolidColorBrush CyanBrush = FreezeBrush(CyanColor);
         private static readonly SolidColorBrush CyanSoftBrush = FreezeBrush(CyanSoftColor);

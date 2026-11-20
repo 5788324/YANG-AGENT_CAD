@@ -148,7 +148,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 logLines.Add($"{kv.Key} : {kv.Value}");
             logLines.Add($"SUMMARY labels={cnt} skipped_existing={skip} not_rect={bad} out_of_range={outRange}");
 
-            var logPath = TryWriteLog("COL_log.txt", doc, logLines);
+            var logPath = TryWriteLog("COL_log.txt", logLines);
             ed.WriteMessage($"\n[CMK] 完成: 新增标注 {cnt} 处, 已有标注跳过 {skip} 处, 非矩形 {bad} 个, 尺寸超范围 {outRange} 个。");
             if (stats.Count > 0)
             {
@@ -168,17 +168,17 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var db = doc.Database;
             var settings = UserSettings.Load();
 
-            var filter = new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "LINE") });
+            var filter = new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "LINE,LWPOLYLINE") });
             var selIds = PromptOrImpliedWithSettings(
                 ed,
                 filter,
                 () => $"\n[BMK] 字高={settings.BeamTextHeight:0} 梁宽={settings.BeamMinWidth:0}~{settings.BeamMaxWidth:0} 最小段长={settings.BeamMinOverlap:0} 容差={settings.BeamAngleTolDeg:0.#}°/{settings.BeamWidthTol:0.#}mm",
-                "\n选择梁边线(LINE)，可框选整区域 [改参数(S)]：",
+                "\n选择梁边线（直线或多段线直边），可框选整区域 [改参数(S)]：",
                 () => ConfigureBeamSettings(ed, settings));
 
             if (selIds == null || selIds.Length == 0)
             {
-                ed.WriteMessage("\n未选择到直线。");
+                ed.WriteMessage("\n未选择到梁边线。");
                 return;
             }
 
@@ -205,17 +205,29 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 var lt = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
                 foreach (var id in selIds)
                 {
-                    if (!(tr.GetObject(id, OpenMode.ForRead) is Line ln)) continue;
-                    var rec = BeamLineRec.TryCreate(ln);
-                    if (rec == null || rec.Len < ovmin) continue;
-                    recs.Add(rec);
-                    if (!distinctLayers.Contains(rec.Layer, StringComparer.OrdinalIgnoreCase))
+                    var entity = tr.GetObject(id, OpenMode.ForRead);
+                    var first = recs.Count;
+                    if (entity is Line line)
+                        AddSegment(line.StartPoint, line.EndPoint, line.Layer, id);
+                    else if (entity is Polyline poly && Math.Abs(Math.Abs(poly.Normal.Z) - 1.0) <= 1e-6)
                     {
-                        distinctLayers.Add(rec.Layer);
-                        if (lt.Has(rec.Layer))
+                        var segmentCount = poly.Closed ? poly.NumberOfVertices : poly.NumberOfVertices - 1;
+                        for (var i = 0; i < segmentCount; i++)
                         {
-                            var ltr = (LayerTableRecord)tr.GetObject(lt[rec.Layer], OpenMode.ForRead);
-                            layerColors[rec.Layer] = Math.Abs(ltr.Color.ColorIndex);
+                            if (Math.Abs(poly.GetBulgeAt(i)) > 1e-6) continue;
+                            AddSegment(poly.GetPoint3dAt(i), poly.GetPoint3dAt((i + 1) % poly.NumberOfVertices), poly.Layer, id);
+                        }
+                    }
+
+                    if (recs.Count == first) continue;
+                    var layer = recs[first].Layer;
+                    if (!distinctLayers.Contains(layer, StringComparer.OrdinalIgnoreCase))
+                    {
+                        distinctLayers.Add(layer);
+                        if (lt.Has(layer))
+                        {
+                            var ltr = (LayerTableRecord)tr.GetObject(lt[layer], OpenMode.ForRead);
+                            layerColors[layer] = Math.Abs(ltr.Color.ColorIndex);
                         }
                     }
                 }
@@ -224,7 +236,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
             if (recs.Count == 0)
             {
-                ed.WriteMessage("\n所选直线的长度均小于最短梁段长度。");
+                ed.WriteMessage("\n没有可配对的直边，或直边短于设定梁段长度。");
                 return;
             }
 
@@ -248,7 +260,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             }
 
             int cnt = 0, skip = 0, fail = 0, nshort = 0, nbetween = 0, nlayer = 0, nwidth = 0;
-            var pairedIds = new HashSet<ObjectId>();
+            var pairedSegments = new HashSet<BeamLineRec>();
 
             using (var tr = db.TransactionManager.StartTransaction())
             {
@@ -308,8 +320,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
                             continue;
                         }
 
-                        pairedIds.Add(a.Id);
-                        pairedIds.Add(b.Id);
+                        pairedSegments.Add(a);
+                        pairedSegments.Add(b);
 
                         var tm = (tlo + thi) * 0.5;
                         var cs = s * 0.5;
@@ -364,12 +376,12 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 tr.Commit();
             }
 
-            var unpaired = new List<ObjectId>();
+            var unpaired = new HashSet<ObjectId>();
             var wideTolSin = 0.2;
             var k = 0;
             foreach (var rr in recs)
             {
-                if (BeamLayerHeights[rr.Layer] > 0 && !pairedIds.Contains(rr.Id))
+                if (BeamLayerHeights[rr.Layer] > 0 && !pairedSegments.Contains(rr))
                 {
                     unpaired.Add(rr.Id);
                     k++;
@@ -394,13 +406,19 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 ed.SetImpliedSelection(unpaired.ToArray());
 
             logLines.Add($"SUMMARY labels={cnt} skipped_existing={skip} failed={fail} too_short={nshort} blocked={nbetween} width_out={nwidth} cross_layer={nlayer} unpaired={unpaired.Count}");
-            var logPath = TryWriteLog("BMK_log.txt", doc, logLines);
+            var logPath = TryWriteLog("BMK_log.txt", logLines);
 
             ed.WriteMessage($"\n[BMK] 完成: 新增标注 {cnt} 处, 已有标注跳过 {skip} 处" + (fail > 0 ? $", 创建失败 {fail} 处(请检查图层是否锁定)" : ""));
             ed.WriteMessage($"\n未标原因统计: 太短 {nshort}, 夹有其他线 {nbetween}, 宽度略超范围 {nwidth}, 平行但不同图层 {nlayer}");
-            ed.WriteMessage($"\n未能配对的线 {unpaired.Count} 条" + (unpaired.Count > 0 ? "，已高亮选中(带夹点)。" : "。") + "可直接 U 撤销。");
+            ed.WriteMessage($"\n含未配对边段的图元 {unpaired.Count} 个" + (unpaired.Count > 0 ? "，已高亮选中(带夹点)。" : "。") + "可直接 U 撤销。");
             if (!string.IsNullOrEmpty(logPath))
                 ed.WriteMessage($"\n日志已保存: {logPath}");
+
+            void AddSegment(Point3d start, Point3d end, string layer, ObjectId id)
+            {
+                var record = BeamLineRec.TryCreate(start, end, layer, id);
+                if (record != null && record.Len >= ovmin) recs.Add(record);
+            }
         }
 
         private static ObjectId[]? PromptOrImpliedWithSettings(
@@ -658,10 +676,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
             public string Layer = "";
             public ObjectId Id;
 
-            public static BeamLineRec? TryCreate(Line ln)
+            public static BeamLineRec? TryCreate(Point3d p, Point3d q, string layer, ObjectId id)
             {
-                var p = ln.StartPoint;
-                var q = ln.EndPoint;
                 var dx = q.X - p.X;
                 var dy = q.Y - p.Y;
                 var len = Math.Sqrt(dx * dx + dy * dy);
@@ -681,8 +697,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     Ux = dx / len, Uy = dy / len,
                     Len = len,
                     Elev = p.Z,
-                    Layer = ln.Layer,
-                    Id = ln.ObjectId
+                    Layer = layer,
+                    Id = id
                 };
             }
 
@@ -734,35 +750,25 @@ namespace YangCAD.AutoCADHost.Services.Cad
             return new Point2d(a.Px + a.Ux * tm - a.Uy * (s * 0.5), a.Py + a.Uy * tm + a.Ux * (s * 0.5));
         }
 
-        private static string TryWriteLog(string fileName, Document doc, List<string> lines)
+        private static string TryWriteLog(string fileName, List<string> lines)
         {
-            var candidates = new List<string>();
-            var up = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-            if (!string.IsNullOrEmpty(up))
+            var path = Path.Combine(RuntimeLogger.LogDirectory, fileName);
+            try
             {
-                candidates.Add(Path.Combine(up, "Desktop", fileName));
-                candidates.Add(Path.Combine(up, "OneDrive", "Desktop", fileName));
+                Directory.CreateDirectory(RuntimeLogger.LogDirectory);
+                File.WriteAllLines(path, lines, new UTF8Encoding(false));
+                return path;
             }
-            var dwgDir = Path.GetDirectoryName(doc.Name);
-            if (!string.IsNullOrEmpty(dwgDir))
-                candidates.Add(Path.Combine(dwgDir, fileName));
-            candidates.Add(Path.Combine(Path.GetTempPath(), fileName));
-
-            foreach (var path in candidates)
+            catch (IOException ex)
             {
-                try
-                {
-                    var dir = Path.GetDirectoryName(path);
-                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) continue;
-                    File.WriteAllLines(path, lines, new UTF8Encoding(false));
-                    return path;
-                }
-                catch
-                {
-                    // Try next writable location.
-                }
+                RuntimeLogger.Error("标注日志写入失败。", ex);
+                return "";
             }
-            return "";
+            catch (UnauthorizedAccessException ex)
+            {
+                RuntimeLogger.Error("标注日志写入失败。", ex);
+                return "";
+            }
         }
     }
 }

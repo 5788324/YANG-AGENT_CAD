@@ -80,6 +80,7 @@ namespace YangCAD.AutoCADHost.Infrastructure
 
         public string[] ToolboxFavorites { get; set; } = Array.Empty<string>();
         public string[] ToolboxRecent { get; set; } = Array.Empty<string>();
+        public string[] ToolboxCollapsedGroups { get; set; } = Array.Empty<string>();
 
         public static string SettingsPath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -210,6 +211,7 @@ namespace YangCAD.AutoCADHost.Infrastructure
 
             ToolboxFavorites = NormalizeToolIds(ToolboxFavorites, 200);
             ToolboxRecent = NormalizeToolIds(ToolboxRecent, 10);
+            ToolboxCollapsedGroups = NormalizeToolIds(ToolboxCollapsedGroups, 30);
         }
 
         private static double ClampFinite(double value, double min, double max, double fallback)

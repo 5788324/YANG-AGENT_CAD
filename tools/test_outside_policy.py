@@ -3,6 +3,7 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
+catalog = (ROOT/"src/YangCAD.AutoCAD/Toolbox/CadToolCatalog.cs").read_text(encoding="utf-8-sig")
 def read(path): return (ROOT / path).read_text(encoding="utf-8-sig")
 service = read("src/YangCAD.AutoCAD/Services/Cad/OutsideBoundaryService.cs")
 command = read("src/YangCAD.AutoCAD/Commands/OutsideBoundaryCommands.cs")
@@ -51,9 +52,9 @@ check("dispose rejected or preview fragments", "if (!transferred)" in service an
       "if (item.ObjectId.IsNull) item.Dispose()" in service)
 check("bounded scan and changes", "MaxObjects = 100000" in service and
       "MaxChanges = 10000" in service and "MaxNewParts = 20000" in service)
-check("Chinese toolbox entry and whitelist", 'Tag="YGOUTSIDE"' in palette and
-      '"YGOUTSIDE"' in palette_code)
-check("PGP alias supported", 'new Feature("删除边界外", "YGOUTSIDE")' in aliases)
+check("Chinese toolbox entry and whitelist", 'Tag="{Binding Command}"' in palette and
+      '"YGOUTSIDE"' in catalog and "CadToolCatalog.All" in palette_code)
+check("PGP alias supported", 'new Feature(item.Name, item.Command)' in aliases)
 check("no false undo/runtime PASS", "WINDOWS_NOT_TESTED" in docs and
       "native_undo_must_be_tested" in service)
 check("Windows task contains real DWG and undo", all(x in task for x in
