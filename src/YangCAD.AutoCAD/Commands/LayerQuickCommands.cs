@@ -21,22 +21,18 @@ namespace YangCAD.AutoCADHost.Commands
             try
             {
                 string selected = "";
-                // The list is vital: once a layer is OFF/FROZEN it cannot be picked in the drawing.
-                // The dialog must always permit restoring it without editing the DWG externally.
-                for (var attempts = 0; attempts < 3; attempts++)
+                while (true)
                 {
                     var layers = CadTransactionRunner.ReadContext(doc, LayerQuickService.List);
-                    var window = new LayerQuickWindow(layers, selected);
-                    Application.ShowModalWindow(window);
-                    if (window.DialogResult != true) return;
-                    if (window.Operation == "pick")
+                    var window = new LayerQuickWindow(layers, selected, (operation, sources, target, value) =>
                     {
-                        selected = PickLayer(doc);
-                        if (string.IsNullOrWhiteSpace(selected)) return;
-                        continue;
-                    }
-                    Execute(doc, window.Operation, window.SourceName, window.TargetName, window.Value);
-                    return;
+                        ExecutePanelBatch(doc, operation, sources, target, value);
+                        return CadTransactionRunner.ReadContext(doc, LayerQuickService.List);
+                    });
+                    Application.ShowModalWindow(window);
+                    if (!window.PickRequested) return;
+                    var picked = PickLayer(doc);
+                    selected = string.IsNullOrWhiteSpace(picked) ? window.SourceName : picked;
                 }
             }
             catch (System.Exception ex)
@@ -180,15 +176,16 @@ namespace YangCAD.AutoCADHost.Commands
                    .ToArray());
         }
 
-        private static void Execute(Autodesk.AutoCAD.ApplicationServices.Document doc, string operation, string source, string target, bool value)
+        private static void ExecutePanelBatch(Autodesk.AutoCAD.ApplicationServices.Document doc, string operation,
+            string[] sources, string target, bool value)
         {
-            var result = CadTransactionRunner.WriteContext(doc, false, ctx => operation == "merge"
-                ? LayerQuickService.Merge(ctx, source, target, false)
-                : LayerQuickService.State(ctx, source, operation, value, false));
-            doc.Editor.WriteMessage($"\n[YangCAD] {result.source_layer}：{result.message}" +
-                (operation == "merge" ? $" 已移动 {result.moved} 个对象到 {result.target_layer}；跳过 {result.skipped}。" : "") +
-                "\n");
-            doc.Editor.Regen();
+            var results = CadTransactionRunner.WriteContext(doc, false, ctx =>
+                sources.Select(source => operation == "merge"
+                    ? LayerQuickService.Merge(ctx, source, target, false)
+                    : LayerQuickService.State(ctx, source, operation, value, false)).ToArray());
+            foreach (var result in results)
+                doc.Editor.WriteMessage($"\n[YangCAD] {result.source_layer}：{result.message}");
+            if (results.Length > 0) doc.Editor.Regen();
         }
 
         private static string PickLayer(Autodesk.AutoCAD.ApplicationServices.Document doc, string prompt = "点击要操作的图元（支持块内部、DWG 外参图元）")

@@ -20,10 +20,10 @@ check("first width 1000mm and persist", 'DoubleLineWidthMm { get; set; } = 1000'
 check("persist existing shared settings", "settings.Save();" in cmd and "settings.json" in user)
 check("mm conversion", "MillimetersPerDrawingUnit" in src and "db.Insunits" in src and "case 6: return 1000" in src)
 check("reject unsupported drawing units", "当前 INSUNITS 不是受支持" in src)
-check("WCS Z elevation", "Elevation = first.Value.Z" in cmd and "drawable.Elevation = record.Elevation" in src)
+check("WCS Z elevation", "Elevation = firstWorld.Z" in cmd and "drawable.Elevation = record.Elevation" in src)
 check("tilted UCS explicitly rejected", "ed.CurrentUserCoordinateSystem" in cmd
-      and "ucsNormal.GetNormal().DotProduct(Vector3d.ZAxis)" in cmd
-      and "当前 UCS 与世界 XY 平面不平行" in cmd)
+      and "PolygonBoundary2d.RequireHorizontalUcs(ucs)" in cmd
+      and "first.Value.TransformBy(ucs)" in cmd)
 check("invisible/locked current layer rejected before append",
       "ctx.Database.Clayer" in src and "currentLayer.IsLocked" in src
       and "currentLayer.IsFrozen" in src and "currentLayer.IsOff" in src)

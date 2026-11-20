@@ -293,12 +293,13 @@ namespace YangCAD.AutoCADHost.UI
             {
                 var document = Application.DocumentManager.MdiActiveDocument;
                 if (document == null) return;
-                if (!string.IsNullOrWhiteSpace(Convert.ToString(Application.GetSystemVariable("CMDNAMES"))))
+                var busy = !string.IsNullOrWhiteSpace(Convert.ToString(Application.GetSystemVariable("CMDNAMES")));
+                if (busy && !CadToolCatalog.CanInterruptActiveCommand(_command))
                 {
                     document.Editor.WriteMessage("\n[YangCAD] 请先结束当前 CAD 命令。\n");
                     return;
                 }
-                document.SendStringToExecute(_command, true, false, false);
+                document.SendStringToExecute((busy ? "\u0003\u0003" : "") + _command, true, false, false);
             }
         }
     }

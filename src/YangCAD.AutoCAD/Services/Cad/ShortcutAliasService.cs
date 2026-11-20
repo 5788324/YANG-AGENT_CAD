@@ -1,4 +1,5 @@
 using YangCAD.AutoCADHost.Toolbox;
+using YangCAD.AutoCADHost.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -35,6 +36,20 @@ namespace YangCAD.AutoCADHost.Services.Cad
             .Select(item => new Feature(item.Name, item.Command))
             .Concat(new[] { new Feature("工具箱快捷呼出", "YY") })
             .ToArray();
+
+        public static bool TryReloadActivePgp()
+        {
+            try
+            {
+                Autodesk.AutoCAD.ApplicationServices.Core.Application.SetSystemVariable("RE-INIT", (short)16);
+                return true;
+            }
+            catch (Autodesk.AutoCAD.Runtime.Exception ex)
+            {
+                RuntimeLogger.Error("静默重载 PGP 失败。", ex);
+                return false;
+            }
+        }
 
         public static string FindActivePgpPath(Database database)
         {

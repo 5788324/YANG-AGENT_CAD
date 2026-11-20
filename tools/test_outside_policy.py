@@ -18,18 +18,16 @@ def check(name, ok): checks.append((name, bool(ok)))
 
 ET.fromstring(palette)
 check("native YGOUTSIDE registered", '[CommandMethod("YGOUTSIDE", CommandFlags.Modal)]' in command)
-check("three boundary modes", all(x in command for x in
-      ['Keywords.Add("Rectangle")', 'Keywords.Add("Select")', 'Keywords.Add("Draw")']))
+check("rectangle default with draw and select modes", all(x in command for x in
+      ['GetCorner(', 'Keywords.Add("Select",', 'Keywords.Add("Draw",', 'RectangleCornersInWorld(']))
 check("select current-space closed polyline", 'poly.Closed' in command and
       'poly.OwnerId != ctx.Database.CurrentSpaceId' in command)
 check("reject bulge source boundary", "poly.GetBulgeAt(i)" in command and "不作直线化近似" in command)
 check("source boundary protected", 'id == request.BoundaryId' in service)
-check("preview truly read-only", 'CadTransactionRunner.ReadContext(doc' in command and
-      'OutsideBoundaryService.Preview(ctx, request)' in command)
-check("confirm defaults NO", 'confirm.Keywords.Default = "No"' in command)
-check("write only after explicit Yes", command.index('answer.StringResult, "Yes"') <
-      command.index('CadTransactionRunner.WriteContext(doc, false'))
-check("pre-execution fingerprint rechecked", 'plan.Summary.fingerprint, previewFingerprint' in service)
+check("completed boundary writes directly in one transaction",
+      command.index('ReadBoundary(doc)') < command.index('CadTransactionRunner.WriteContext(doc, false')
+      and command.count('CadTransactionRunner.WriteContext(') == 1
+      and 'OutsideBoundaryService.Preview' not in command and 'previewFingerprint' not in service)
 check("shared concave polygon geometry", "new PolygonBoundary2d(request.Vertices)" in service and
       "inside = !inside" in geometry)
 check("bbox complete-disjoint proof", "DefinitelyOutside" in service and
@@ -55,8 +53,7 @@ check("bounded scan and changes", "MaxObjects = 100000" in service and
 check("Chinese toolbox entry and whitelist", 'Tag="{Binding Command}"' in palette and
       '"YGOUTSIDE"' in catalog and "CadToolCatalog.All" in palette_code)
 check("PGP alias supported", 'new Feature(item.Name, item.Command)' in aliases)
-check("no false undo/runtime PASS", "WINDOWS_NOT_TESTED" in docs and
-      "native_undo_must_be_tested" in service)
+check("Windows validation remains documented", "WINDOWS_NOT_TESTED" in docs)
 check("Windows task contains real DWG and undo", all(x in task for x in
       ["before", "after", "_.U", "Build", "Loaded", "bulge", "凹多边形"]))
 for label, passed in checks: print(("PASS" if passed else "FAIL") + ": " + label)

@@ -42,7 +42,8 @@ ribbon_commands = {cmd.strip() for _, cmd in buttons}
 ok('slab placement and repair are visible while old slab modes remain callable',
    {'SLB','SLBFIX'} <= ribbon_commands and not {'SLBP','SLBLAYER','SLBSET'} & ribbon_commands
    and {'SLBP','SLBLAYER','SLBSET'} <= registered_commands)
-ok('ribbon and toolbox preserve active CAD commands', all(r'\x03' not in ui for ui in [ribbon, tb_c]))
+ok('ribbon and toolbox cancel active commands only for editor tools',
+   all('CanInterruptActiveCommand' in ui and r'\u0003\u0003' in ui for ui in [ribbon, tb_c]))
 ok('toolbox command buttons all route to registered commands',
    set(re.findall(r'Tag="([A-Z][A-Z0-9_]+)"', tb_x)) <= registered_commands)
 ok('control center has no visible MCP controls', all(x not in cc_x for x in ['MCP 状态','复制 MCP 配置','允许 MCP 修改当前 DWG','Tag="MCP"']))
@@ -57,10 +58,10 @@ ok('catalog alias hints are unique', len(hints) == len({hint.upper() for hint in
 catalog_entries = re.findall(r'new CadToolItem\([^\n]+\n[^\n]+', catalog)
 primary = {cmd for cmd, line in zip(catalog_commands, catalog_entries)
            if 'secondary: true' not in line and cmd != 'YANGCAD_TOOLBOX'}
-ok('default toolbox keeps a compact primary catalog', 30 <= len(primary) <= 36)
+ok('default toolbox keeps a compact primary catalog', len(primary) == 30)
 ok('new combined commands appear in both main surfaces',
-   {'YGTALIGN','YGTALONG','YGTSPLITJOIN','YGTCLEAN','YGTCONTENT','YGDIMCHECK','YGDIMEDIT','YGREFEMBED'}
-   <= (primary & ribbon_commands))
+   {'YGTALIGN','YGTSPLITJOIN','YGTCLEAN','YGDIMCHECK','YGDIMEDIT','YGREFEMBED'}
+   <= (primary & ribbon_commands) and {'YGTALONG','YGTCONTENT'} <= ribbon_commands)
 ok('secondary tools are discoverable by search', '(!tool.IsSecondary || terms.Length > 0)' in tb_c)
 ok('catalog icon keys exist', set(icon_keys) <= icons)
 ok('toolbox renders catalog short labels and commands', all(x in tb_x for x in ['{Binding ShortName}', '{Binding Command}', 'ToolGroups']))

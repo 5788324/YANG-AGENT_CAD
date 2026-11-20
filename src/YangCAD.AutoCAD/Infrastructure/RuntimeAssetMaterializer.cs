@@ -68,6 +68,17 @@ namespace YangCAD.AutoCADHost.Infrastructure
         {
             var buildId = Assembly.GetExecutingAssembly().ManifestModule.ModuleVersionId.ToString("N");
             var root = EnsureGroup(Path.Combine("ImageEmbed", buildId), ImageEmbedAssets);
+            var now = DateTime.UtcNow;
+            Directory.SetLastWriteTimeUtc(root, now);
+            foreach (var directory in Directory.EnumerateDirectories(Path.GetDirectoryName(root)!))
+            {
+                var name = Path.GetFileName(directory);
+                if (name == buildId || !Guid.TryParseExact(name, "N", out _) ||
+                    Directory.GetLastWriteTimeUtc(directory) >= now.AddDays(-7)) continue;
+                try { Directory.Delete(directory, recursive: true); }
+                catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
+            }
             return Path.Combine(root, "Start-YangCAD-ImageEmbed.ps1");
         }
 

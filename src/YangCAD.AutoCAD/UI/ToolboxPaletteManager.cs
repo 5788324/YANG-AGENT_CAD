@@ -38,6 +38,12 @@ namespace YangCAD.AutoCADHost.UI
             _view?.ShowRevitTaskResult(result);
         }
 
+        internal static void ShowTaskFailure(string title, string error)
+        {
+            Show();
+            _view?.ShowTaskFailure(title, error);
+        }
+
         public static void ApplyTheme(string theme)
         {
             try { _view?.ApplyTheme(theme); } catch (Exception ex) { RuntimeLogger.Error("Toolbox theme update failed.", ex); }

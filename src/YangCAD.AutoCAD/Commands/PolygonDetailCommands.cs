@@ -63,7 +63,7 @@ namespace YangCAD.AutoCADHost.Commands
                     Vertices = input.Vertices,
                     BoundaryId = input.SourceId,
                     BoundaryElevation = input.Elevation,
-                    Destination = destination.Value,
+                    Destination = destination.Value.TransformBy(ed.CurrentUserCoordinateSystem),
                     Factor = factor.Value,
                     DrawFrame = true,
                     KeepDimensionsAndLeaders = true
@@ -133,8 +133,11 @@ namespace YangCAD.AutoCADHost.Commands
             ed.WriteMessage("\n[YangCAD] 逐点指定闭合直边区域，至少三点，回车结束；不会在原位置绘制边界。\n");
             var first = ed.GetPoint("\n第一个顶点：");
             if (first.Status != PromptStatus.OK) return null;
-            var input = new PolygonInput { Elevation = first.Value.Z };
-            input.Vertices.Add(new Point2d(first.Value.X, first.Value.Y));
+            var ucs = ed.CurrentUserCoordinateSystem;
+            PolygonBoundary2d.RequireHorizontalUcs(ucs);
+            var firstWorld = first.Value.TransformBy(ucs);
+            var input = new PolygonInput { Elevation = firstWorld.Z };
+            input.Vertices.Add(new Point2d(firstWorld.X, firstWorld.Y));
             var last = first.Value;
             while (input.Vertices.Count < 128)
             {
@@ -145,9 +148,10 @@ namespace YangCAD.AutoCADHost.Commands
                 var point = ed.GetPoint(opts);
                 if (point.Status == PromptStatus.None) break;
                 if (point.Status != PromptStatus.OK) return null;
-                if (Math.Abs(point.Value.Z - input.Elevation) > 1e-7)
+                var world = point.Value.TransformBy(ucs);
+                if (Math.Abs(world.Z - input.Elevation) > 1e-7)
                     throw new ArgumentException("绘制边界必须在同一 WCS XY 标高平面。");
-                input.Vertices.Add(new Point2d(point.Value.X, point.Value.Y));
+                input.Vertices.Add(new Point2d(world.X, world.Y));
                 last = point.Value;
             }
             if (input.Vertices.Count < 3)

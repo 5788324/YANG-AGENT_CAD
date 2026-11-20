@@ -29,7 +29,7 @@
    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <StackPanel>
     <TextBlock Text="图层工具" Style="{DynamicResource SectionTitle}"/>
-    <TextBlock Margin="0,3,0,0" Text="点击下方图层或回到图中点选，一键切换开关、冻结、锁定与合并。" TextWrapping="Wrap" Style="{DynamicResource MutedText}"/>
+    <TextBlock Margin="0,3,0,0" Text="按 Ctrl 或 Shift 多选图层，可批量开关、冻结或锁定。" TextWrapping="Wrap" Style="{DynamicResource MutedText}"/>
    </StackPanel>
    <Button Grid.Column="1" Content="图中点选对象" Style="{DynamicResource SecondaryButton}" Click="PickClick" VerticalAlignment="Center"/>
   </Grid>
@@ -41,12 +41,16 @@
   </Grid>
 
   <Border Grid.Row="4" Style="{DynamicResource Card}" Padding="8">
-   <ListBox x:Name="LayerListBox" Style="{DynamicResource NavigationList}" SelectionChanged="LayerListSelected" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+   <ListBox x:Name="LayerListBox" SelectionMode="Extended" Style="{DynamicResource NavigationList}" SelectionChanged="LayerListSelected" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
     <ListBox.ItemTemplate>
      <DataTemplate>
       <Grid>
        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+       <DockPanel LastChildFill="True">
+        <Border DockPanel.Dock="Left" Width="10" Height="10" Background="{Binding Color}" BorderThickness="1"
+                BorderBrush="{DynamicResource BorderBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+        <TextBlock Text="{Binding DisplayName}" VerticalAlignment="Center" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+       </DockPanel>
        <TextBlock Grid.Column="1" Text="{Binding StatusBadge}" VerticalAlignment="Center" Style="{DynamicResource MutedText}" FontSize="11" Margin="8,0,0,0"/>
       </Grid>
      </DataTemplate>
@@ -69,7 +73,10 @@
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <TextBlock Text="合并到：" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,0"/>
     <ComboBox Grid.Column="1" x:Name="TargetLayer" MinHeight="32" IsEditable="True" IsTextSearchEnabled="True" Style="{DynamicResource ParameterComboBox}"/>
-    <Button Grid.Column="3" Content="合并图层" Style="{DynamicResource SecondaryButton}" Click="MergeClick" Padding="12,6"/>
+    <StackPanel Grid.Column="3" Orientation="Horizontal">
+     <Button Content="合并图层" Style="{DynamicResource SecondaryButton}" Click="MergeClick" Padding="12,6"/>
+     <Button Content="关闭" IsCancel="True" Style="{DynamicResource SecondaryButton}" Padding="12,6" Margin="6,0,0,0"/>
+    </StackPanel>
    </Grid>
   </Border>
  </Grid>

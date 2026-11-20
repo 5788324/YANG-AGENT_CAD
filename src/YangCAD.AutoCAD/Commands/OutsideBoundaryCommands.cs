@@ -27,88 +27,47 @@ namespace YangCAD.AutoCADHost.Commands
             var ed = doc.Editor;
             try
             {
-                ed.WriteMessage("\n[YangCAD] 删除/修剪边界外的图元，先只读预览，再确认一次。\n");
-                var opts = new PromptKeywordOptions(
-                    "\n边界方式 [Rectangle(矩形)/Select(已有闭合多段线)/Draw(逐点绘制)] <Rectangle>：");
-                opts.Keywords.Add("Rectangle");
-                opts.Keywords.Add("Select");
-                opts.Keywords.Add("Draw");
-                opts.Keywords.Default = "Rectangle";
-                opts.AllowNone = true;
-                var mode = ed.GetKeywords(opts);
-                if (mode.Status != PromptStatus.OK && mode.Status != PromptStatus.None) return;
-                var choice = mode.Status == PromptStatus.None ? "Rectangle" : mode.StringResult;
-                BoundaryInput? boundary = string.Equals(choice, "Select", StringComparison.OrdinalIgnoreCase)
-                    ? SelectBoundary(doc)
-                    : string.Equals(choice, "Draw", StringComparison.OrdinalIgnoreCase)
-                        ? DrawBoundary(ed) : RectangleBoundary(ed);
+                var boundary = ReadBoundary(doc);
                 if (boundary == null) return;
-                // Reject invalid/self-intersecting polygons before traversing the DWG.
-                var validated = new PolygonBoundary2d(boundary.Vertices);
-                var request = new OutsideBoundaryService.Request {
-                    Vertices = boundary.Vertices, BoundaryId = boundary.SourceId
+                var request = new OutsideBoundaryService.Request
+                {
+                    Vertices = boundary.Vertices,
+                    BoundaryId = boundary.SourceId
                 };
-                var preview = CadTransactionRunner.ReadContext(doc,
-                    ctx => OutsideBoundaryService.Preview(ctx, request));
-                ed.WriteMessage(
-                    "\n[YGOUTSIDE 只读预览] 边界 " + validated.Count +
-                    " 条直边；扫描 " + preview.scanned +
-                    "；待删除 " + preview.erased +
-                    "；待修剪 " + preview.trimmed +
-                    "；新曲线段 " + preview.new_fragments +
-                    "；安全跳过 " + preview.skipped + "。\n");
-                foreach (var warning in preview.warnings)
-                    ed.WriteMessage("  - " + warning + "\n");
-
-                if (preview.erased + preview.trimmed == 0)
-                {
-                    ed.WriteMessage("\n[YangCAD] 没有符合条件的修改，图纸未更改。\n");
-                    return;
-                }
-                var confirm = new PromptKeywordOptions(
-                    "\n确认删除以上边界外图元并精确修剪跨界曲线？[Yes(确认)/No(取消)] <No>：");
-                confirm.Keywords.Add("Yes");
-                confirm.Keywords.Add("No");
-                confirm.Keywords.Default = "No";
-                confirm.AllowNone = true;
-                var answer = ed.GetKeywords(confirm);
-                if (answer.Status != PromptStatus.OK ||
-                    !string.Equals(answer.StringResult, "Yes", StringComparison.OrdinalIgnoreCase))
-                {
-                    ed.WriteMessage("\n[YangCAD] 已取消；没有修改任何图元。\n");
-                    return;
-                }
-
                 var result = CadTransactionRunner.WriteContext(doc, false,
-                    ctx => OutsideBoundaryService.Execute(ctx, request, preview.fingerprint));
-                ed.WriteMessage("\n[YangCAD] 已执行：删除 " + result.erased +
-                    "、修剪 " + result.trimmed +
-                    "、创建内部曲线段 " + result.new_fragments +
-                    "。请用原生 _.U 验证撤销；本版本不声明未测的 Undo PASS。\n");
+                    ctx => OutsideBoundaryService.Execute(ctx, request));
+                if (result.erased + result.trimmed == 0)
+                {
+                    ed.WriteMessage("\n[YangCAD] 没有需要删除或修剪的图元。");
+                    return;
+                }
+
+                ed.WriteMessage($"\n[YangCAD] 已删除 {result.erased} 个、修剪 {result.trimmed} 个，" +
+                    $"跳过 {result.skipped} 个。按 U 撤销。\n");
+                foreach (var warning in result.warnings) ed.WriteMessage("  - " + warning + "\n");
             }
             catch (System.Exception ex)
             {
                 RuntimeLogger.Error("YGOUTSIDE failed.", ex);
-                ed.WriteMessage("\n[YangCAD] 删除边界外失败：事务未正常完成；" +
-                                "如有疑问请检查原图与 Undo。" + ex.Message + "\n");
+                ed.WriteMessage("\n[YangCAD] 删除边界外失败：" + ex.Message + "\n");
             }
         }
 
-        private static BoundaryInput? RectangleBoundary(Editor ed)
+        private static BoundaryInput? ReadBoundary(Document doc)
         {
-            var first = ed.GetPoint("\n矩形边界第一个角点：");
+            var ed = doc.Editor;
+            var options = new PromptPointOptions("\n指定保留矩形的第一个角点：");
+            options.Keywords.Add("Select", "Select", "选闭合多段线(Select)");
+            options.Keywords.Add("Draw", "Draw", "逐点绘制(Draw)");
+            var first = ed.GetPoint(options);
+            if (first.Status == PromptStatus.Keyword)
+                return first.StringResult == "Select" ? SelectBoundary(doc) : DrawBoundary(ed);
             if (first.Status != PromptStatus.OK) return null;
             var opposite = ed.GetCorner(new PromptCornerOptions("\n对角点：", first.Value));
             if (opposite.Status != PromptStatus.OK) return null;
-            double l = Math.Min(first.Value.X, opposite.Value.X);
-            double r = Math.Max(first.Value.X, opposite.Value.X);
-            double b = Math.Min(first.Value.Y, opposite.Value.Y);
-            double t = Math.Max(first.Value.Y, opposite.Value.Y);
             var input = new BoundaryInput();
-            input.Vertices.Add(new Point2d(l, b));
-            input.Vertices.Add(new Point2d(r, b));
-            input.Vertices.Add(new Point2d(r, t));
-            input.Vertices.Add(new Point2d(l, t));
+            var corners = PolygonBoundary2d.RectangleCornersInWorld(first.Value, opposite.Value, ed.CurrentUserCoordinateSystem);
+            foreach (var corner in corners) input.Vertices.Add(new Point2d(corner.X, corner.Y));
             return input;
         }
 
@@ -150,8 +109,11 @@ namespace YangCAD.AutoCADHost.Commands
             ed.WriteMessage("\n依次指定边界直线顶点，回车闭合；不在图上创建临时边界。\n");
             var first = ed.GetPoint("\n第一个顶点：");
             if (first.Status != PromptStatus.OK) return null;
+            var ucs = ed.CurrentUserCoordinateSystem;
+            PolygonBoundary2d.RequireHorizontalUcs(ucs);
+            var firstWorld = first.Value.TransformBy(ucs);
             var input = new BoundaryInput();
-            input.Vertices.Add(new Point2d(first.Value.X, first.Value.Y));
+            input.Vertices.Add(new Point2d(firstWorld.X, firstWorld.Y));
             var last = first.Value;
             while (input.Vertices.Count < 128)
             {
@@ -161,9 +123,10 @@ namespace YangCAD.AutoCADHost.Commands
                 var next = ed.GetPoint(opt);
                 if (next.Status == PromptStatus.None) break;
                 if (next.Status != PromptStatus.OK) return null;
-                if (Math.Abs(next.Value.Z - first.Value.Z) > 1e-7)
+                var world = next.Value.TransformBy(ucs);
+                if (Math.Abs(world.Z - firstWorld.Z) > 1e-7)
                     throw new ArgumentException("手绘边界各顶点必须位于同一 XY 标高。");
-                input.Vertices.Add(new Point2d(next.Value.X, next.Value.Y));
+                input.Vertices.Add(new Point2d(world.X, world.Y));
                 last = next.Value;
             }
             if (input.Vertices.Count < 3)

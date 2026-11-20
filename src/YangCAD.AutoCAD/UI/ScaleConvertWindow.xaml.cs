@@ -98,18 +98,6 @@ namespace YangCAD.AutoCADHost.UI
                 return;
             }
 
-            if (SelectedMode == ScaleConversionService.DrawingMode.ScaledDrawing)
-            {
-                var factor = OldScale / NewScale;
-                var answer = MessageBox.Show(
-                    this,
-                    $"缩尺绘图模式会按比例缩放选定图形。\n\n1:{OldScale:0.####} → 1:{NewScale:0.####}（倍率 {factor:P2}）\n\n继续吗？",
-                    "确认缩尺转换",
-                    MessageBoxButton.OKCancel,
-                    MessageBoxImage.Warning);
-                if (answer != MessageBoxResult.OK) return;
-            }
-
             _settings.LastOldScale = OldScaleCombo.Text.Trim();
             _settings.LastNewScale = NewScaleCombo.Text.Trim();
             _settings.LastScaleMode = SelectedMode == ScaleConversionService.DrawingMode.ScaledDrawing ? "Scaled" : "Standard";

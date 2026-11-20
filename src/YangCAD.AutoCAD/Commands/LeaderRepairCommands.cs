@@ -12,7 +12,7 @@ namespace YangCAD.AutoCADHost.Commands
 {
     public sealed class LeaderRepairCommands
     {
-        [CommandMethod("YGLEADERFIX", CommandFlags.Modal)]
+        [CommandMethod("YGLEADERFIX", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void RebuildLeader()
         {
             var doc = Application.DocumentManager.MdiActiveDocument;
@@ -20,9 +20,10 @@ namespace YangCAD.AutoCADHost.Commands
             var ed = doc.Editor;
             try
             {
-                ed.WriteMessage("\n[YangCAD] 可直接框选炸开的引线和文字（会自动忽略实心箭头）；也可分步点选。\n");
-                var sourceSelection = ed.GetSelection(new PromptSelectionOptions
-                { MessageForAdding = "\n请框选引线或线段（可连带框选文字）：" });
+                var sourceSelection = ed.SelectImplied();
+                if (sourceSelection.Status != PromptStatus.OK)
+                    sourceSelection = ed.GetSelection(new PromptSelectionOptions
+                    { MessageForAdding = "\n框选炸开的引线、线段和文字（可连带实心箭头）：" });
                 if (sourceSelection.Status != PromptStatus.OK || sourceSelection.Value == null) return;
 
                 var ids = sourceSelection.Value.GetObjectIds();
@@ -73,7 +74,7 @@ namespace YangCAD.AutoCADHost.Commands
                 {
                     var point = ed.GetPoint("\n请选择箭头端点（用于确定引线方向）：");
                     if (point.Status != PromptStatus.OK) return;
-                    arrow = point.Value;
+                    arrow = point.Value.TransformBy(ed.CurrentUserCoordinateSystem);
                 }
 
                 var request = new LeaderRepairService.Request

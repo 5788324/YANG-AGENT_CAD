@@ -51,6 +51,7 @@ namespace YangCAD.AutoCADHost.Commands
             {
                 RuntimeLogger.Error("YGREVIT failed.", ex);
                 ed.WriteMessage("\n[YangCAD] Revit 预处理失败：" + ex.Message + "\n");
+                ToolboxPaletteManager.ShowTaskFailure("Revit 预处理失败", ex.Message);
             }
         }
 
@@ -99,13 +100,13 @@ namespace YangCAD.AutoCADHost.Commands
                 ToolboxPaletteManager.TrackEmbed(result);
                 ed.WriteMessage(
                     $"\n[YangCAD] 已启动当前图纸引用内嵌（共 {result.file_count} 份，原图不覆盖）：" +
-                    $"\n  输出目录：{result.output_folder}" +
-                    $"\n  进度文件：{result.status_path}\n");
+                    $"\n  输出目录：{result.output_folder}\n");
             }
             catch (System.Exception ex)
             {
                 RuntimeLogger.Error("YGEMBED failed.", ex);
                 ed.WriteMessage("\n[YangCAD] 当前图纸内嵌启动失败：" + ex.Message + "\n");
+                ToolboxPaletteManager.ShowTaskFailure("当前图纸内嵌启动失败", ex.Message);
             }
         }
 
@@ -134,14 +135,14 @@ namespace YangCAD.AutoCADHost.Commands
                     ToolboxPaletteManager.TrackEmbed(result);
                     ed?.WriteMessage(
                         $"\n[YangCAD] 已启动文件夹批量内嵌（待处理 DWG：{result.file_count} 份，原图不覆盖）：" +
-                        $"\n  输出目录：{result.output_folder}" +
-                        $"\n  进度文件：{result.status_path}\n");
+                        $"\n  输出目录：{result.output_folder}\n");
                 }
             }
             catch (System.Exception ex)
             {
                 RuntimeLogger.Error("YGEMBEDBATCH failed.", ex);
                 ed?.WriteMessage("\n[YangCAD] 批量内嵌启动失败：" + ex.Message + "\n");
+                ToolboxPaletteManager.ShowTaskFailure("批量内嵌启动失败", ex.Message);
             }
         }
     }

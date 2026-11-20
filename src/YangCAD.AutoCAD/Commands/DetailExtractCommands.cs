@@ -1,4 +1,6 @@
 using System;
+using System.Linq;
+using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.ApplicationServices.Core;
 using Autodesk.AutoCAD.EditorInput;
 using Autodesk.AutoCAD.Runtime;
@@ -44,23 +46,52 @@ namespace YangCAD.AutoCADHost.Commands
                 if (factor.Status != PromptStatus.OK && factor.Status != PromptStatus.None) return;
                 var chosenFactor = factor.Status == PromptStatus.None ? defaultFactor : factor.Value;
 
-                var request = new DetailExtractService.Request
+                var ucs = ed.CurrentUserCoordinateSystem;
+                var corners = PolygonBoundary2d.RectangleCornersInWorld(first.Value, second.Value, ucs);
+                var destinationWorld = destination.Value.TransformBy(ucs);
+                var edge = (corners[1] - corners[0]).GetNormal();
+                int copied, skipped;
+                string[] warnings;
+                if (Math.Abs(edge.X) <= 1e-10 || Math.Abs(edge.Y) <= 1e-10)
                 {
-                    FirstCorner = first.Value, OppositeCorner = second.Value,
-                    Destination = destination.Value,
-                    Factor = chosenFactor,
-                    KeepDimensionsAndLeaders = true, DrawFrame = true
-                };
-                var result = CadTransactionRunner.WriteContext(doc, false, ctx =>
-                    DetailExtractService.Extract(ctx, request, false));
+                    var request = new DetailExtractService.Request
+                    {
+                        FirstCorner = corners[0], OppositeCorner = corners[2],
+                        Destination = destinationWorld,
+                        Factor = chosenFactor,
+                        KeepDimensionsAndLeaders = true, DrawFrame = true
+                    };
+                    var result = CadTransactionRunner.WriteContext(doc, false, ctx =>
+                        DetailExtractService.Extract(ctx, request, false));
+                    copied = result.copied_entities;
+                    skipped = result.skipped_sources;
+                    warnings = result.warnings;
+                }
+                else
+                {
+                    var request = new PolygonDetailExtractService.Request
+                    {
+                        Vertices = corners.Select(point => new Point2d(point.X, point.Y)).ToArray(),
+                        BoundaryElevation = corners[0].Z,
+                        PlacementAnchor = corners[0],
+                        Destination = destinationWorld,
+                        Factor = chosenFactor,
+                        KeepDimensionsAndLeaders = true, DrawFrame = true
+                    };
+                    var result = CadTransactionRunner.WriteContext(doc, false, ctx =>
+                        PolygonDetailExtractService.Extract(ctx, request, false));
+                    copied = result.copied_entities;
+                    skipped = result.skipped_sources;
+                    warnings = result.warnings;
+                }
 
                 settings.DetailScaleFactor = chosenFactor;
                 try { settings.Save(); } catch { }
 
-                ed.WriteMessage($"\n[YangCAD] 大样已提取：{result.copied_entities} 个图元（放大 {chosenFactor:0.####} 倍" +
-                    (result.skipped_sources > 0 ? $"，跳过 {result.skipped_sources} 个无法裁切对象" : "") +
+                ed.WriteMessage($"\n[YangCAD] 大样已提取：{copied} 个图元（放大 {chosenFactor:0.####} 倍" +
+                    (skipped > 0 ? $"，跳过 {skipped} 个无法裁切对象" : "") +
                     "）。\n");
-                foreach (var warning in result.warnings) ed.WriteMessage("  - " + warning + "\n");
+                foreach (var warning in warnings) ed.WriteMessage("  - " + warning + "\n");
             }
             catch (System.Exception ex)
             {

@@ -21,6 +21,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             public ObjectId BoundaryId { get; set; } = ObjectId.Null;
             public double BoundaryElevation { get; set; }
             public Point3d Destination { get; set; }
+            internal Point3d? PlacementAnchor { get; set; }
             public double Factor { get; set; } = 1;
             public bool DrawFrame { get; set; } = true;
             public bool KeepDimensionsAndLeaders { get; set; } = true;
@@ -122,7 +123,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var tr = ctx.Transaction;
             var space = (BlockTableRecord)tr.GetObject(ctx.Database.CurrentSpaceId, OpenMode.ForRead);
             if (!space.IsLayout) throw new InvalidOperationException("只支持当前模型空间或布局空间。");
-            var origin = new Point3d(boundary.MinX, boundary.MinY, request.BoundaryElevation);
+            var origin = request.PlacementAnchor ?? new Point3d(boundary.MinX, boundary.MinY, request.BoundaryElevation);
             var scale = Matrix3d.Scaling(request.Factor, origin);
             var move = Matrix3d.Displacement(request.Destination - origin);
             var result = new Result { success = true, dry_run = dryRun };

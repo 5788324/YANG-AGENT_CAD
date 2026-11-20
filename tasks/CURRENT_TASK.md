@@ -1,5 +1,13 @@
 # Gemini 实机任务 — YangCAD 整合候选
 
+## 本轮交互复验
+
+- 测试图中保存一个新 PGP 缩写，立即执行；核对正常路径不弹 REINIT。
+- 在 YGLAYER 用 Ctrl／Shift 选择多个图层，检查颜色、批量操作、刷新、窗口保持打开与 Esc 关闭。
+- 在旋转并平移的水平 UCS 中测试 YGDL、YGDETAIL、YGDETAILPOLY、YGOUTSIDE 和 YGBREAKLINE。用已知 WCS 坐标核对落点和裁切范围，特别是矩形的四角。
+- 在线命令等待选点时点递增复制，核对切换。预选炸开的引线与文字测试 YGLEADERFIX。图纸任务进行时验证状态条与输出目录。
+- 用一次 U 核对 YGOUTSIDE、YGSCALE 的撤销。缩尺选项确认后应直接处理。
+
 ## 本轮优先复验图片内嵌
 
 本轮范围为 AutoCAD 2024 的 `project.image.embed`。下方完整清单留作参考。Claude 评审后的修复同时涉及合并填充和界面标签。
@@ -22,7 +30,7 @@
 
 ## 合并入口复验
 
-- 打开工具箱，核对空搜索有 34 个分类入口，最近使用单独显示。搜索 YGDETAILPOLY、HHJK、SLBP、YGEMBEDBATCH，确认旧工具可搜到，命令行及现有 PGP 仍可调用。
+- 打开工具箱，核对空搜索有 30 个分类入口。右键置顶常用，重开后确认常用、最近使用和折叠状态保留。搜索 YGDETAILPOLY、HHJK、SLBP、YGEMBEDBATCH，确认旧工具可搜到，命令行及现有 PGP 仍可调用。
 - YGDETAIL 默认框矩形，S 选择闭合直边，D 逐点。YGHCLIP 用 S/K/I 实测并核对上次模式。SLB 的 L/S/P 与 SLBFIX 分别验证。
 - YGTBOX 测矩形、圆形、跑道和遮罩，修改留白并检查单位换算。确认原文字保留、遮罩在文字下方且可撤销。预选文字使用已保存样式。
 - 验证文字对齐的上次模式、沿线排字自动分流、单/多 TEXT 和 MTEXT 的拆合、文字清洗和刷换。先用检查命令高亮检查结果，再用修值命令取整或恢复。
@@ -68,7 +76,7 @@ Get-FileHash artifacts/bin/2024/AutoCAD/YangCAD.AutoCAD.dll
 | 构建、加载、GUI | 启动 CAD 页签保持，YangCAD 六组和双列工具箱，主题、停靠、显示比例、帮助和输出目录；运行 YANGCAD、YANGCAD_TOOLBOX、YGLAYER、YGDETAIL、BMK 等跨命令类入口，核对均能进入。 |
 | 图层、快捷键 | 测锁定／冻结／开关／合并及 Undo，PGP 创建和冲突提示，REINIT 后快捷命令可用。对工作图纸和原配置分别使用副本。 |
 | 大样与折断 | YGDETAIL 旧矩形交互；YGDETAILPOLY 的 Select / Draw、凹形、LINE／ARC／CIRCLE、弧段边界拒绝；YGBREAKLINE 保留端点和属性，2D／3D 与单次 Undo。详见 [多边形](DETAIL_POLYGON_WINDOWS_SMOKE_20261105.md) 与 [折断线](GEOMETRY_EDIT_V2_WINDOWS_SMOKE_20261105.md)。 |
-| 边界外裁切 | YGOUTSIDE 分别取消和确认；核对跨界 LINE／ARC、完全外部与锁层／外参保护、原边界、一次 Undo。使用 [边界外案例](OUTSIDE_WINDOWS_SMOKE_20261105.md)。 |
+| 边界外裁切 | YGOUTSIDE 分别在第二角点前 Esc 取消，以及完成边界后直接执行；核对跨界 LINE／ARC、完全外部与锁层／外参保护、原边界、一次 Undo。使用 [边界外案例](OUTSIDE_WINDOWS_SMOKE_20261105.md)。 |
 | 比例、双线 | YGSCALE 1:1 和缩尺前后尺寸，锁层与 Undo；YGDL 直／弧段，YGDLW 保存中心线并改宽。 |
 | 文字与标注 | YGTL、YGINC、YGLEADERFIX、YGDIMTXT、YGSLOPE、YGTBOX；检查原文字、标注数值、引线生成、撤销。 |
 | 填充 | YGHCLIP、YGHCLIPSPLIT／YGHSPLIT、YGHUNION；用洞环、原纹理位置、整块覆盖、确认失败路径和 Undo。 |

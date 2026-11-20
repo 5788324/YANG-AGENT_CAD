@@ -77,11 +77,16 @@ namespace YangCAD.AutoCADHost.Commands
             var settings = UserSettings.Load();
             var mode = ChooseMode(doc.Editor, "文字对齐", settings.TextBoxAlignMode,
                 ("L", "左"), ("R", "右"), ("T", "顶"), ("B", "底"),
-                ("C", "水平中"), ("V", "垂直中"), ("P", "段落"), ("S", "设置"));
+                ("C", "水平中"), ("V", "垂直中"), ("P", "段落"), ("A", "沿线排字"), ("S", "设置"));
             if (mode == null) return;
             if (mode == "S")
             {
                 JianrenTextService.RunTextSettings(doc);
+                return;
+            }
+            if (mode == "A")
+            {
+                JianrenTextService.RunAlignAlongCurve(doc);
                 return;
             }
             settings.TextBoxAlignMode = mode;
@@ -109,11 +114,12 @@ namespace YangCAD.AutoCADHost.Commands
         {
             var doc = Application.DocumentManager.MdiActiveDocument;
             if (doc == null) return;
-            switch (ChooseMode(doc.Editor, "文字清洗", "S", ("S", "空格换行"), ("C", "大小写"), ("P", "中英标点"), ("O", "设置")))
+            switch (ChooseMode(doc.Editor, "文字清洗", "S", ("S", "空格换行"), ("C", "大小写"), ("P", "中英标点"), ("A", "前后缀"), ("O", "设置")))
             {
                 case "S": JianrenTextService.RunSpaceClean(doc); break;
                 case "C": JianrenTextService.RunCaseConvert(doc); break;
                 case "P": JianrenTextService.RunPunctuationSwitch(doc); break;
+                case "A": JianrenTextService.RunAffix(doc); break;
                 case "O": JianrenTextService.RunTextSettings(doc); break;
             }
         }

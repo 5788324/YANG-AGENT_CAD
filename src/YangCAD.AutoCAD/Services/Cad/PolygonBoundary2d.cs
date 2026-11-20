@@ -34,6 +34,32 @@ namespace YangCAD.AutoCADHost.Services.Cad
             public double EndAngle { get; set; }
         }
 
+        internal static Point3d[] RectangleCornersInWorld(Point3d first, Point3d opposite, Matrix3d ucs)
+        {
+            RequireHorizontalUcs(ucs);
+            var left = Math.Min(first.X, opposite.X);
+            var right = Math.Max(first.X, opposite.X);
+            var bottom = Math.Min(first.Y, opposite.Y);
+            var top = Math.Max(first.Y, opposite.Y);
+            if (right - left <= 1e-8 || top - bottom <= 1e-8)
+                throw new ArgumentException("矩形边界宽度和高度必须大于 0。");
+
+            return new[]
+            {
+                new Point3d(left, bottom, first.Z).TransformBy(ucs),
+                new Point3d(right, bottom, first.Z).TransformBy(ucs),
+                new Point3d(right, top, first.Z).TransformBy(ucs),
+                new Point3d(left, top, first.Z).TransformBy(ucs)
+            };
+        }
+
+        internal static void RequireHorizontalUcs(Matrix3d ucs)
+        {
+            var normal = Vector3d.ZAxis.TransformBy(ucs);
+            if (Math.Abs(normal.GetNormal().DotProduct(Vector3d.ZAxis)) < 0.999999)
+                throw new NotSupportedException("当前 UCS 与世界 XY 平面不平行，请切换到水平 UCS。");
+        }
+
         public PolygonBoundary2d(IReadOnlyList<Point2d> vertices)
         {
             if (vertices == null || vertices.Count < 3 || vertices.Count > 512)

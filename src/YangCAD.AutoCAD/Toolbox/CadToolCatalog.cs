@@ -62,7 +62,7 @@ namespace YangCAD.AutoCADHost.Toolbox
             new CadToolItem("cad.line.breakline", "修改", "直线折断", "YGBREAKLINE", "YBR", "scale_convert", false,
                 "点选原生直线，将其转换为带 Z 形折断符号的多段线"),
             new CadToolItem("cad.boundary.outside", "修改", "删除边界外", "YGOUTSIDE", "YOUT", "hatch_clip", false,
-                "预览当前空间的边界外删除与裁切计划，确认后执行", shortName: "边界外删"),
+                "直接删除当前空间边界外的对象，裁切穿过边界的曲线，可一次撤销", shortName: "边界外删"),
             new CadToolItem("cad.detail.extract", "修改", "提取大样", "YGDETAIL", "QG", "detail_extract", true,
                 "默认框选矩形，也可选择闭合多段线或逐点绘制边界"),
             new CadToolItem("cad.scale.convert", "修改", "比例转换", "YGSCALE", "SD", "scale_convert", true,
@@ -104,7 +104,7 @@ namespace YangCAD.AutoCADHost.Toolbox
             new CadToolItem("cad.dim.flip", "标注", "翻转标注", "DIMFZ", "DFZ", "dim_flip", false,
                 "将倒置或选定的尺寸标注文字翻转 180° 并移至尺寸线另一侧", secondary: true),
             new CadToolItem("cad.text.up", "标注", "文字与标注翻正", "TXTUP", "TUP", "text_up", false,
-                "框选文字、标注或属性块，一键将倒着/反向文字原地翻正"),
+                "框选文字、标注或属性块，一键将倒着/反向文字原地翻正", secondary: true),
             new CadToolItem("cad.text.align", "标注", "段落对齐", "TXAL", "TXA", "text_align", false,
                 "以基准文字为准，按设定行距倍数左对齐并旋转整理多个段落文字", secondary: true),
 
@@ -142,7 +142,7 @@ namespace YangCAD.AutoCADHost.Toolbox
             new CadToolItem("cad.text.punc", "文字", "中英标点切换", "YGTPUNC", "YPN", "text_punc", true,
                 "智能互转中文与英文标点（自动保护小数点与比例号）", shortName: "中英标点", secondary: true),
             new CadToolItem("cad.text.affix", "文字", "加删前后缀", "YGTAFFIX", "YAF", "text_affix", false,
-                "批量在文字/标注首尾追加或删除指定前缀与后缀", shortName: "前后缀"),
+                "批量在文字/标注首尾追加或删除指定前缀与后缀", shortName: "前后缀", secondary: true),
             new CadToolItem("cad.text.brush", "文字", "刷内容", "YGTBRUSH", "YTBR", "text_brush", true,
                 "一次拾取源文字（含块属性/标注），连续点刷替换多个目标内容", secondary: true),
             new CadToolItem("cad.text.swap", "文字", "换内容", "YGTSWAP", "YSW", "text_swap", false,
@@ -192,15 +192,15 @@ namespace YangCAD.AutoCADHost.Toolbox
                 "设置标注取整基准与容差", shortName: "取整设置", secondary: true),
 
             new CadToolItem("cad.text.align_group", "文字", "文字对齐", "YGTALIGN", "YTAL", "text_align_lr", false,
-                "六向对齐、段落对齐与排版设置；记住上次方向"),
+                "六向对齐、段落对齐、沿线排字；记住上次方向"),
             new CadToolItem("cad.text.along_curve", "文字", "沿线或圆弧排字", "YGTALONG", "YTAC", "text_arc", false,
-                "点选直线、多段线、圆或圆弧，自动选择排字方式", shortName: "沿线排字"),
+                "点选直线、多段线、圆或圆弧，自动选择排字方式", shortName: "沿线排字", secondary: true),
             new CadToolItem("cad.text.split_join", "文字", "文字拆合", "YGTSPLITJOIN", "YTSJ", "text_join", false,
                 "根据选中的单行或多行文字提供连接、转换与拆字"),
             new CadToolItem("cad.text.clean", "文字", "文字清洗", "YGTCLEAN", "YTCL", "text_space", false,
-                "空格换行、大小写、中英标点"),
+                "空格换行、大小写、中英标点、文字前后缀"),
             new CadToolItem("cad.text.transfer", "文字", "文字刷换", "YGTCONTENT", "YTXC", "text_brush", false,
-                "刷内容、互换文字、刷文字特性"),
+                "刷内容、互换文字、刷文字特性", secondary: true),
             new CadToolItem("cad.dim.check_group", "标注", "标注检查", "YGDIMCHECK", "YDC", "dim_check", false,
                 "检查异常尾数、查找修改过的标注文字、调整设置"),
             new CadToolItem("cad.dim.edit_group", "标注", "标注修值", "YGDIMEDIT", "YDE", "dim_fix", false,
@@ -216,6 +216,17 @@ namespace YangCAD.AutoCADHost.Toolbox
             new CadToolItem("ui.mcp", "系统", "MCP", "YANGCAD_MCP", "YM", "mcp_core", true,
                 "查看本机 AI 网关连接状态、复制 MCP 配置并控制写入权限", secondary: true)
         };
+
+        internal static bool CanInterruptActiveCommand(string command)
+        {
+            return command.Trim().ToUpperInvariant() switch
+            {
+                "YGDL" or "YGDLW" or "YGTL" or "YGTC" or "YGTR" or "YGTT" or "YGTB" or "YGTV" or
+                "YGTALIGN" or "YGTLINE" or "YGTARC" or "YGTALONG" or "YGINC" or "YGSLOPE" or
+                "YGTBOX" or "YGTBOXSLOT" or "YGTBOXMASK" or "SLB" or "SLBP" or "BMK" or "CMK" => true,
+                _ => false
+            };
+        }
 
         public static string GetActiveAliasOrHint(string? pgpPath, CadToolItem item)
         {

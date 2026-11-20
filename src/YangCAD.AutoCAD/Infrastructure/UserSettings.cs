@@ -110,17 +110,24 @@ namespace YangCAD.AutoCADHost.Infrastructure
             Normalize();
             Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);
             var json = JsonCodec.Serialize(this, indented: true);
-            var temp = SettingsPath + ".tmp";
-            File.WriteAllText(temp, json);
+            var temp = SettingsPath + ".tmp." + Guid.NewGuid().ToString("N");
             try
             {
-                if (File.Exists(SettingsPath)) File.Replace(temp, SettingsPath, null);
-                else File.Move(temp, SettingsPath);
+                File.WriteAllText(temp, json);
+                if (!File.Exists(SettingsPath))
+                {
+                    try
+                    {
+                        File.Move(temp, SettingsPath);
+                        return;
+                    }
+                    catch (IOException) when (File.Exists(SettingsPath)) { }
+                }
+                File.Replace(temp, SettingsPath, null);
             }
-            catch
+            finally
             {
-                File.Copy(temp, SettingsPath, true);
-                try { File.Delete(temp); } catch { }
+                if (File.Exists(temp)) File.Delete(temp);
             }
         }
 

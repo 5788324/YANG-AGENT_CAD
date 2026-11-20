@@ -29,7 +29,7 @@ namespace YangCAD.AutoCADHost.Commands
                         BreaklineService.Convert(ctx, new BreaklineService.Request
                         {
                             LineId = selected.ObjectId,
-                            PickPoint = selected.PickedPoint,
+                            PickPoint = selected.PickedPoint.TransformBy(ed.CurrentUserCoordinateSystem),
                             SymbolWidth = 0
                         }, false));
                     ed.WriteMessage("\n[YangCAD] 已转为原生折断多段线（" + result.entity_type +
