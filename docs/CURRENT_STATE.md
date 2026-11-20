@@ -1,97 +1,14 @@
-## 2026-11-20 — PR #20 集中实机验收
+# YangCAD 当前状态（2026-11-20）
 
-当前源码包含 Ribbon、工具箱、填充裁切和方向板符号。实机验收用同一候选 DLL 集中完成。测试入口可先编译当前分支，再自动执行 22 项板符号检查。窗口、拾点、填充和内嵌在同一批 GUI 验收中覆盖。Windows 执行结果待取得，见 [当前任务](../tasks/CURRENT_TASK.md)。
+[PR #20](https://github.com/5788324/YANG-AGENT_CAD/pull/20) 汇总当前整合源码。DLL、MCP 与安装包使用 0.10.0-dev 对应的版本体系。验收以 PR HEAD 完整 SHA 为准。
 
----
+| 领域 | 状态 |
+|---|---|
+| 源码、入口和测试契约 | STATIC，以 PR 最新 CI 为准 |
+| AutoCAD 2024 构建、加载、GUI、DWG | WINDOWS NOT_TESTED |
+| Civil 3D、Revit 端、其他宿主 | 当前候选待验证 |
+| 发布 | 尚未发布 |
 
-## 2026-11-20 — SLBFIX 按原类型筛选
+整合范围见 [功能目录](FEATURE_CATALOG.md)。折断、多边形大样、边界外裁切纳入本候选，多边形使用 YGDETAILPOLY，YGDETAIL 和原 MCP 矩形入口继续可用。
 
-SLBFIX 可仅修正原单向或原双向块。筛选发生在几何分析和写图前，跳过的块保留。图纸已配置方向识别时，选中的旧块按实际支承侧更新。
-
----
-
-## 2026-11-19 — 嵌套板轮廓的符号归属
-
-方向受力符号保存对应的板轮廓对象。SLB 重复点板和 SLBFIX 批量重算按轮廓分别识别符号，避免外板吞掉内板的箭头。已有方向符号在能确定归属时补记关联。Windows AutoCAD 2024 尚待实测。
-
----
-
-## 2026-11-19 — 板符号图层随 DWG 保存
-
-SLBLAYER 的梁线和板轮廓配置写入当前图纸。保存并重开后可直接使用 SLB；更名后按图层对象标识继续识别，图层失效时提示重新选择。自动测试增加重开检查，Windows AutoCAD 2024 尚待运行。见 [当前任务](../tasks/CURRENT_TASK.md)。
-
----
-
-## 2026-11-19 — 板符号 Core Console 实机执行器
-
-新增脚本调用提供的 AutoCAD 2024 Core Console 和候选 DLL，在板符号测试图副本上对照 15 项结果。Linux 已检查脚本生成和结果判定。Windows 宿主执行及 GUI 仍待验证。见 [当前任务](../tasks/CURRENT_TASK.md)。
-
----
-
-## 2026-11-19 — 板符号零支承回归
-
-配置有效且矩形板四侧确认为无支承时，SLBP 预览只显示板轮廓，SLB 跳过布置，SLBFIX 可移除已选中的方向符号。轮廓识别失败、缺少配置或遇到旧单向／双向块时保留旧图元。测试图与步骤见 [当前任务](../tasks/CURRENT_TASK.md)。
-
----
-
-## 2026-11-19 — 矩形板按支承侧放置箭头
-
-SLBLAYER 增加可选的矩形板轮廓图层。指定梁线和轮廓后，SLB / SLBP 逐侧识别支承，支持 1–4 侧，零支承保留空板。箭头预览与写入使用同一几何。未配置轮廓时沿用旧的闭合梁线板格识别。详见 [复测步骤](../tasks/CURRENT_TASK.md)。
-
----
-
-## 2026-11-19 — 填充裁切与板符号修正
-
-基于 PR #20 的界面候选。SLBFIX 仅处理当前空间的已知板受力符号块。填充剪裁在写入异常时回滚本次命令，二维备用算法跳过曲边或无法完整读取边界的填充。封闭板格的放置规则沿用现状，开放边的 1–4 向箭头还未实现。Windows 编译与 DWG 实测待完成，见 [复测步骤](../tasks/CURRENT_TASK.md)。
-
----
-
-## 2026-11-19 — 排版、填充与结构候选的界面整理
-
-截图对应 `feature/annotation-utilities-v1-20261109@057171c86a0c47331e58d0d252e36535e2af59f5`。本轮从该候选单独开发 Ribbon 与工具箱。原有功能均保留，修正板格预览标签、CAD 命令执行期间的按钮行为以及填充拆分的部分失败路径。已有 RC1 和 PR #16/#17 的测试记录对应各自受测版本。当前候选 Windows AutoCAD 2024 Build、NETLOAD 与 DWG 结果待验。见 [复测步骤](../tasks/CURRENT_TASK.md)。
-
----
-
-## 2026-11-13 — YangCAD 双线 + 标注工具整合
-
-按用户确认，整理已单独通过 AutoCAD 2024 Core Console G5 的 PR #16 和 PR #17：`YGDL`、`YGDLW`、`YGDIMTXT`、`YGSLOPE`、`YGTBOX`。保留双线/坡度/文字框全部个人设置、Toolbox 按钮、快捷键。**GUI 及联合程序集 Windows Build 未验收**，不代表已安装发布。PR #13/#14/#15 与综合审查 PR #18 不包含在本次主线合并中。完整说明 `docs/INTEGRATION_PR16_PR17_20261113.md`。
-
----
-
-# YangCAD 当前事实（2026-11-05）
-
-**当前发布管理标记：`0.10.0-rc.1`（AutoCAD 2024 Quick 范围） / `G5_AUTOCAD2024_SCOPE_PASS`。**
-
-源码中的编译与 Python/Bundled 版本仍为 **`0.10.0` / `0.10.0-dev`**；此次 RC 分支未重新编译、更换 DLL 或改变业务行为。产品可运行不等于跨宿主正式 Release。
-
-## Git 与证据
-
-- `main`：旧稳定回退 SHA `396a79408bfb38d374871fb030b54012748be8b6`，**尚不含 0.10 RC**。
-- R00–R10 AutoCAD 2024 实机基线：`b6ff1370b0ed48e5e50fec43d2a5a2e14ca5ec54`。
-- 修复发布契约且 Windows PS5.1 定点验收：`d5200c57a75b1fd228713dc67b606126a5c04924`。
-- 唯一 RC 文档集成分支：`release/autocad2024-0.10.0-rc1`，基于 d520；[Draft PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) → `main`，静态 CI 已通过、无冲突、**尚未合并**。
-- G5 ChatGPT 独立审计：`https://github.com/5788324/YANG-AGENT_CAD/issues/9#issuecomment-6646760886`。
-- 已验收 Quick ZIP SHA256 `ACA88A9440968411A2D7A014800AC70FE8E60C314ECBE936BBBC4037C5C79692`；AutoCAD DLL SHA256 `880329CF7E5C464078686FE56B0BB7070B4C2F7B7F482A91771D9C8`。
-
-## 分层状态
-
-| 范围 | 结论 | 限制 |
-|---|---|---|
-| G0/G1 源码身份、GitHub CI、STATIC | PASS | RC 文档增量仍须 CI 校验 |
-| G2/G3 AutoCAD 2024 Windows Build/Loaded | PASS（b6ff137） | 新业务代码修改必须重新追溯 |
-| G4 R00–R10 AutoCAD 2024 指定功能 | CONDITIONAL / SCOPE PASS | R06 是对象级 Undo；R07 批量为 PARTIAL |
-| G4 Release 74/37/67 正反向 | PASS（d520 + Windows PS5.1 日志） | Civil 67 是静态合同，不是 live |
-| G5 独立证据审查 | **AUTOCAD2024_SCOPE_PASS** | 不是所有年份/宿主稳定版 |
-| Civil 3D live 67 | **NOT_TESTED** | Object Enabler 不算宿主测试 |
-| Revit Native E2E | **NOT_TESTED** | MAP/ReaderVerifier 11/11 不等于真正生成 Revit 元素 |
-| 2024 以外 AutoCAD 宿主 | **NOT_TESTED_CURRENT_RC** | 历史旧版记录不可平移 |
-
-## 本版已验证功能与明确边界
-
-图层合并/显隐/冻结/锁定、**矩形**大样、比例转换、引线恢复与文字关联、PGP 快捷键、Ribbon/Palette、图片 OLE 和 Xref Bind、MCP、CAD→Revit MAP 均有 **AutoCAD 2024 特定样例** 的真实测试材料。R07 文件夹批量结果为 2 PASS、1 SKIP、1 FAIL，不是全成功；R06 标准模式跳过受检 INSERT；Undo 不是完整 DWG 字节级证明。详细证据见 `docs/RC_AUTOCAD2024_0.10.0.md`。
-
-未实现：闭合多段线任意边界提取、复杂跨界对象可选裁切、删除边界外、直线 Z 折断线；请不要在 GUI/MCP 说明中冒称已完成。
-
-## 当前动作
-
-已建立 **docs-only RC Draft PR #11** → `main`，静态 CI PASS，RC 与 d520 运行时代码无差异；`main` 不自动合并，保留旧版回退；后续按 `docs/RC_MERGE_PLAN.md` 处理堆叠 PR。**STATIC** 与 **WINDOWS** 状态必须分列记录。
+[当前验收任务](../tasks/CURRENT_TASK.md) · [RC1 历史记录](RC_AUTOCAD2024_0.10.0.md) · [历史实机矩阵](RUNTIME_TEST_MATRIX.md) · [项目日志](../WORKLOG.md)

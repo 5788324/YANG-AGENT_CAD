@@ -1,14 +1,35 @@
-# 当前任务 — 截图对应版本的 AutoCAD 2024 复测（2026-11-19）
+# Gemini 实机任务 — YangCAD 整合候选
 
-在 Windows AutoCAD 2024 用本分支的实际提交编译并加载 DLL，记录提交及加载的 DLL 路径和 SHA-256。
+## 取代码与构建
 
-1. 打开 YangCAD Ribbon，核对六个分组。在 100% 和常用 DPI 下分别检查下拉名称、图标和中文菜单。点菜单主体应展开列表，执行后组名保持。CAD 仍保留启动前选中的页签。
-2. 工具箱窄停靠，确认双列文字可读。右键改一个缩写，保存和应用一次。正在画线时点 Ribbon 或工具箱按钮，应提示先结束当前命令；原绘图命令继续等待输入。
-3. 用测试 DWG 点选板格，SLBP 只显示预览，SLB 才生成符号。用典型填充验证挖出并保留的两部分、原纹理位置和一次撤销。空结果或失败时核对图元无部分改写。圆弧或带内洞的填充需核对裁切结果；原生布尔失败且备用算法无法完整处理时应保留原图。裁切框完整覆盖原填充时，「挖出并保留」应无改动。
-4. 保存一份测试 DWG，画一条线但暂不保存。界面内嵌当前图纸和高级设置留空路径都应提示保存。保存后确认生成的是正确副本。
-5. 对其余新增工具先测一组代表性样本：文字左对齐与递增复制，梁柱尺寸标注，板受力符号。记录对象前后结果与一次撤销。
+从 [PR #20](https://github.com/5788324/YANG-AGENT_CAD/pull/20) 取 feature/ribbon-layout-20261119，记录 PR HEAD、git rev-parse HEAD 和 git status --short。在独立测试目录和 AutoCAD 2024 会话使用受控图纸。保留生产插件、配置和工程文件。
 
-6. 在同一封闭板格里放两个板符号和一个普通标记块，框选执行 SLBFIX。预期只修正、去重板符号，普通块的 Handle、定义、位置不变。单次撤销后两个原板符号恢复。另测只选普通块，图纸无变化。
+```powershell
+$acad = 'C:/Program Files/Autodesk/AutoCAD 2024' # 换为实际路径
+./tools/Build.ps1 -Year 2024 -AcadRoot $acad -SkipCivil
+./tools/Build-Setup.ps1
+Get-FileHash artifacts/bin/2024/AutoCAD/YangCAD.AutoCAD.dll
+```
+
+记录 AutoCAD 完整版本、PID、Build 日志和实际 NETLOAD 的完整路径与哈希。全程同一份 DLL。只有真实 Civil 3D 2024 时，在开跑 AutoCAD 测试前构建 Civil 版本，使用 -AcadRoot 和 -CivilRoot 并去掉 -SkipCivil。记录 Revit、Civil 或安装验收缺少的实际依赖。
+
+## 一次跑完的验收范围
+
+| 模块 | 用例与预期 |
+|---|---|
+| 构建、加载、GUI | 启动 CAD 页签保持，YangCAD 六组和双列工具箱，主题、停靠、显示比例、帮助和输出目录；运行 YANGCAD、YANGCAD_TOOLBOX、YGLAYER、YGDETAIL、BMK 等跨命令类入口，核对均能进入。 |
+| 图层、快捷键 | 测锁定／冻结／开关／合并及 Undo，PGP 创建和冲突提示，REINIT 后快捷命令可用。对工作图纸和原配置分别使用副本。 |
+| 大样与折断 | YGDETAIL 旧矩形交互；YGDETAILPOLY 的 Select / Draw、凹形、LINE／ARC／CIRCLE、弧段边界拒绝；YGBREAKLINE 保留端点和属性，2D／3D 与单次 Undo。详见 [多边形](DETAIL_POLYGON_WINDOWS_SMOKE_20261105.md) 与 [折断线](GEOMETRY_EDIT_V2_WINDOWS_SMOKE_20261105.md)。 |
+| 边界外裁切 | YGOUTSIDE 分别取消和确认；核对跨界 LINE／ARC、完全外部与锁层／外参保护、原边界、一次 Undo。使用 [边界外案例](OUTSIDE_WINDOWS_SMOKE_20261105.md)。 |
+| 比例、双线 | YGSCALE 1:1 和缩尺前后尺寸，锁层与 Undo；YGDL 直／弧段，YGDLW 保存中心线并改宽。 |
+| 文字与标注 | YGTL、YGINC、YGLEADERFIX、YGDIMTXT、YGSLOPE、YGTBOX；检查原文字、标注数值、引线生成、撤销。 |
+| 填充 | YGHCLIP、YGHCLIPSPLIT／YGHSPLIT、YGHUNION；用洞环、原纹理位置、整块覆盖、确认失败路径和 Undo。 |
+| 梁柱板 | BMK／CMK 检查受控尺寸；板符号跑下方 22 项 Core Console，并手测选点、预览、混选、嵌套板。 |
+| 内嵌、DWG 交换 | 未保存图纸提示；引用内嵌输出副本、原 DWG 哈希、移除原引用后重开；切到其他面板再返回可查进度；YGREVIT 的 MAP/JSON 与原图保持。Revit 原生重建单独记录。 |
+| MCP、Batch、Civil | 验证 GUI 与 MCP 启动、选中图纸会话、读操作与受控写权限；Batch audit/hygiene 确认输入哈希和输出副本。Civil 测试仅在真实 Civil 3D 2024 上执行。 |
+| 封包与安装 | 用本次构建产物执行 Package-Release.ps1 -Years 2024 -SkipBuild，再对产物目录执行 Verify-Release.ps1；记录每个宿主产物、MCP 合同和哈希。安装仅在测试环境验证。 |
+
+一个用例失败仍收完其他模块。输出 INDEX.md，每项标记 PASS / FAIL / BLOCKED / NOT_TESTED，附原始日志、图元前后、必要截图与 Undo 证据。回传现象及最小复现步骤，保持当前测试提交便于集中修复。
 
 ## 矩形板方向箭头
 
@@ -35,10 +56,10 @@ SLBFIX 有四个选项：Y 处理全部、传统模式保留原类型；N 处理
 
 ## Core Console 自动检查
 
-在 Windows AutoCAD 2024 打开上面的 DXF，原样另存成测试 DWG。在仓库目录执行下面一条命令。安装路径按本机调整。脚本会用该安装目录的 AutoCAD 库编译当前分支，然后用同一份 DLL 连跑两阶段实测。已有候选 DLL 时可把 --build 换成 --dll 加路径。
+在 Windows AutoCAD 2024 打开上面的 DXF，原样另存成测试 DWG。在仓库目录执行下面一条命令。安装路径按本机调整。用前面构建的 DLL 连跑两阶段实测。只测板符号时可用 --build 独立编译。
 
 ```powershell
-python tools/run_slab_core_console_smoke.py --core-console "C:/Program Files/Autodesk/AutoCAD 2024/accoreconsole.exe" --build --dwg "D:/CAD-Test/SLB_SUPPORT_DIRECTIONS.dwg"
+python tools/run_slab_core_console_smoke.py --core-console "$acad/accoreconsole.exe" --dll "artifacts/bin/2024/AutoCAD/YangCAD.AutoCAD.dll" --dwg "D:/CAD-Test/SLB_SUPPORT_DIRECTIONS.dwg"
 ```
 
 脚本检查九个板格、输入图元、符号总数、零支承移除、一次撤销、减一侧箭头和普通块保留。第一阶段在布置前重命名梁线图层并保存测试副本，第二阶段用独立 Core Console 进程重开并直接布置。在重开阶段还会创建 02 内板，先布置内板，再重布外板并批量修正，核对两块可同时保留、方向正确且 Handle 不变。同阶段还会混选原单向、原双向块分别运行 One 和 Two，核对筛选外块的属性没有变化。退出码 0 需要两阶段共 22 项全部通过。运行目录在 artifacts/slab-smoke-*，包含编译日志、候选 DLL、输入文件哈希、测试图副本、实际 SCR 和原始输出。若使用自定义板跨设置，须允许测试图的 4000–6000 mm 板跨。

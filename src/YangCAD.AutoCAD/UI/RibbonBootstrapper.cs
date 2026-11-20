@@ -47,7 +47,11 @@ namespace YangCAD.AutoCADHost.UI
             AddPanel(newTab, "常用工具",
                 Button("工具箱", "YANGCAD_TOOLBOX ", "ControlCenter32.png"),
                 Button("比例转换", "YGSCALE ", "ControlCenter32.png"),
-                Button("提取大样", "YGDETAIL ", "ControlCenter32.png"));
+                Button("提取大样", "YGDETAIL ", "ControlCenter32.png"),
+                Menu("边界编辑", "detail_extract",
+                    MenuItem("多边形大样", "YGDETAILPOLY ", "detail_extract"),
+                    MenuItem("直线折断", "YGBREAKLINE ", "scale_convert"),
+                    MenuItem("删除边界外", "YGOUTSIDE ", "hatch_clip")));
 
             AddPanel(newTab, "图层与填充",
                 Button("图层工具", "YGLAYER ", "ControlCenter32.png"),

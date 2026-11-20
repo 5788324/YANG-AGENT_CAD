@@ -2,8 +2,6 @@ using Autodesk.AutoCAD.ApplicationServices.Core;
 using Autodesk.AutoCAD.Runtime;
 using YangCAD.AutoCADHost.Services.Cad;
 
-[assembly: CommandClass(typeof(YangCAD.AutoCADHost.Commands.LspPortCommands))]
-
 namespace YangCAD.AutoCADHost.Commands
 {
     public sealed class LspPortCommands

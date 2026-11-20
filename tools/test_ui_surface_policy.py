@@ -29,6 +29,10 @@ layer_c=text('src/YangCAD.AutoCAD/UI/LayerQuickWindow.xaml.cs')
 
 buttons=re.findall(r'(?:Button|MenuItem)\("([^"]+)",\s*"([^"]+)"', ribbon)
 registered_commands = set(re.findall(r'CommandMethod\("([^"]+)"', commands))
+ok('all public CAD command classes are discoverable', not any(
+    '[assembly: CommandClass' in p.read_text(encoding='utf-8-sig')
+    for p in (root/'src/YangCAD.AutoCAD').rglob('*.cs')))
+ok('native CAD commands are unique', len(registered_commands) == len(re.findall(r'CommandMethod\("([^"]+)"', commands)))
 ok('ribbon panels put drawing before project and settings',
    re.findall(r'AddPanel\(newTab, "([^"]+)"', ribbon) == [
        '常用工具', '图层与填充', '文字与标注', '结构绘图', '图纸与引用', '连接与设置'])

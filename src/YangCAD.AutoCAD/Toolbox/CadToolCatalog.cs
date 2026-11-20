@@ -53,6 +53,12 @@ namespace YangCAD.AutoCADHost.Toolbox
                 "框选或点选图元，一键锁定/解锁所在图层"),
 
             // 修改
+            new CadToolItem("cad.detail.polygon", "修改", "多边形大样", "YGDETAILPOLY", "QGP", "detail_extract", false,
+                "选择闭合直边多段线或逐点画边界，提取副本，原图保留"),
+            new CadToolItem("cad.line.breakline", "修改", "直线折断", "YGBREAKLINE", "YBR", "scale_convert", false,
+                "点选原生直线，将其转换为带 Z 形折断符号的多段线"),
+            new CadToolItem("cad.boundary.outside", "修改", "删除边界外", "YGOUTSIDE", "YOUT", "hatch_clip", false,
+                "预览当前空间的边界外删除与裁切计划，确认后执行"),
             new CadToolItem("cad.detail.extract", "修改", "提取大样", "YGDETAIL", "QG", "detail_extract", true,
                 "框选区域提取大样副本并按倍数放大，自动记忆上次放大倍数"),
             new CadToolItem("cad.scale.convert", "修改", "比例转换", "YGSCALE", "SD", "scale_convert", true,

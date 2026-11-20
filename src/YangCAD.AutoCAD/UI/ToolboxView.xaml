@@ -39,7 +39,10 @@
       <StackPanel>
        <TextBlock Text="绘图与编辑" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource AccentBrush}" Margin="0,0,0,6"/>
        <UniformGrid Columns="2" Margin="0,0,-6,0">
-        <Button Content="提取大样" Tag="YGDETAIL" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>
+        <Button Content="矩形大样" Tag="YGDETAIL" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>
+        <Button Content="多边形大样" Tag="YGDETAILPOLY" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>
+        <Button Content="直线折断" Tag="YGBREAKLINE" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>
+        <Button Content="删除边界外" Tag="YGOUTSIDE" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>
         <Button Content="比例转换" Tag="YGSCALE" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>
         <Button Content="智能双线" Tag="YGDL" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>
         <Button Content="改双线宽度" Tag="YGDLW" Click="QuickNativeCommandClick" MouseRightButtonUp="QuickToolRightClick" Style="{StaticResource ToolboxCommandButton}"/>

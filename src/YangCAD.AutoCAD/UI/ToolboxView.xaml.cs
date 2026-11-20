@@ -29,7 +29,7 @@ namespace YangCAD.AutoCADHost.UI
         private static readonly string[] AllowedQuickCommands =
         {
             "YGLAYER", "YGLONOFF", "YGLMERGE", "YGLFREEZE", "YGLLOCK",
-            "YGDETAIL", "YGSCALE", "YGDL", "YGDLW",
+            "YGDETAIL", "YGDETAILPOLY", "YGBREAKLINE", "YGOUTSIDE", "YGSCALE", "YGDL", "YGDLW",
             "BMK", "BMKFIX", "CMK", "SLB", "SLBFIX", "SLBP", "SLBLAYER", "SLBSET",
             "YGLEADERFIX", "YGDIMTXT", "YGSLOPE", "YGTBOX",
             "DIMCHK", "DIMFIX", "DIMRE", "DIMFZ", "TXTUP", "DFSET", "TXAL",
@@ -263,6 +263,11 @@ namespace YangCAD.AutoCADHost.UI
             UpdateSelectedState();
             ToolListPane.Visibility = Visibility.Collapsed;
             ToolDetailPane.Visibility = Visibility.Visible;
+            if (_selected.Id == "project.image.embed")
+            {
+                _embedLastState = "";
+                EmbedStatusTick(this, EventArgs.Empty);
+            }
         }
 
         private void UpdateSelectedState()
@@ -282,6 +287,7 @@ namespace YangCAD.AutoCADHost.UI
         private void ShowList()
         {
             if (ToolListPane == null || ToolDetailPane == null) return;
+            _selected = null;
             ToolDetailPane.Visibility = Visibility.Collapsed;
             ToolListPane.Visibility = Visibility.Visible;
             RefreshTools();
@@ -479,9 +485,10 @@ namespace YangCAD.AutoCADHost.UI
                 var headline = terminal ? $"引用处理完成：{state}" : $"引用处理进行中：{state}";
                 var details = $"总数：{job.total_files}；成功：{job.passed}；部分成功：{job.partial}；失败：{job.failed}；跳过：{job.skipped}\n输出：{_embedOutputFolder}\n状态：{_embedStatusFile}";
                 if (!string.IsNullOrWhiteSpace(job.fatal_error)) details += "\n错误：" + job.fatal_error;
-                if (terminal || !string.Equals(_embedLastState, details, StringComparison.Ordinal))
+                if (_selected?.Id == "project.image.embed" &&
+                    (terminal || !string.Equals(_embedLastState, details, StringComparison.Ordinal)))
                 {
-                    ShowResult(state == "PASS" || !terminal, headline, details);
+                    ShowResult(state == "PASS" || !terminal, headline, details, showEmbedOutput: true);
                     _embedLastState = details;
                 }
                 if (terminal) StopEmbedStatusMonitor();
@@ -491,7 +498,8 @@ namespace YangCAD.AutoCADHost.UI
             {
                 StopEmbedStatusMonitor();
                 RuntimeLogger.Error("Image embed status monitor failed.", ex);
-                ShowResult(false, "无法解析任务状态", ex.Message + "\n状态文件：" + _embedStatusFile);
+                if (_selected?.Id == "project.image.embed")
+                    ShowResult(false, "无法解析任务状态", ex.Message + "\n状态文件：" + _embedStatusFile, showEmbedOutput: true);
             }
         }
 
@@ -509,11 +517,12 @@ namespace YangCAD.AutoCADHost.UI
             catch (System.Exception ex) { ShowResult(false, "打开输出目录失败", ex.Message); }
         }
 
-        private void ShowResult(bool success, string title, string text)
+        private void ShowResult(bool success, string title, string text, bool showEmbedOutput = false)
         {
             ResultTitleText.Text = title;
             ResultText.Text = string.IsNullOrWhiteSpace(text) ? (success ? "操作已完成。" : "未返回详细错误。") : text;
             ResultTitleText.SetResourceReference(TextBlock.ForegroundProperty, success ? "SuccessBrush" : "DangerBrush");
+            OpenEmbedOutputButton.Visibility = showEmbedOutput ? Visibility.Visible : Visibility.Collapsed;
             ResultBorder.Visibility = Visibility.Visible;
         }
 

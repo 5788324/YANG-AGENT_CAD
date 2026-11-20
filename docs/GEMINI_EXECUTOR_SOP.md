@@ -6,8 +6,8 @@ Gemini 是 Windows / AutoCAD 的执行器，不是最终验收员。不得从自
 
 ## 开始前
 
-1. 打开当前 GitHub `feature/product-foundation-v010-20261103` HEAD，记录**完整 Git SHA**，检查是否是 `0.10.0-dev`；不可运行旧 ZIP 或未提交本地修改。
-2. 读取 `tasks/GEMINI_WINDOWS_INTEGRATED_SMOKE_20261103.md`、`docs/QUALITY_GATES.md`、`docs/RUNTIME_TEST_MATRIX.md`。
+1. 打开当前 [PR #20](https://github.com/5788324/YANG-AGENT_CAD/pull/20) 的 HEAD，记录**完整 Git SHA**，检查是否是 `0.10.0-dev`；不可运行旧 ZIP 或未提交本地修改。
+2. 读取 `tasks/CURRENT_TASK.md`、`docs/QUALITY_GATES.md`、`docs/RUNTIME_TEST_MATRIX.md`。
 3. 检测 Windows/AutoCAD/Civil/Revit SDK 和宿主，不为了凑 100% PASS 伪装缺失环境。
 4. 使用独立临时 Profile/受控图纸。不得关闭或更改用户工作中的 AutoCAD 2021；非测试的 Autodesk 进程保持不动。
 
@@ -35,4 +35,4 @@ Gemini 是 Windows / AutoCAD 的执行器，不是最终验收员。不得从自
 
 ## 提交格式
 
-每个 R00–R10 产物目录含 `result.json`（测试 SHA、宿主 PID、操作时间、断言和证据相对路径）及适用的 raw log。最后提交 `INDEX.md` 汇总每项 PASS/FAIL/BLOCKED/NOT_TESTED，附 Google Drive 目录 URL，在 GitHub 任务 Issue 留言。不得在公开 GitHub 上传私人 DWG、隐私路径或密钥。
+每个实机模块产物目录含 `result.json`（测试 SHA、宿主 PID、操作时间、断言和证据相对路径）及适用的 raw log。最后提交 `INDEX.md` 汇总每项 PASS/FAIL/BLOCKED/NOT_TESTED，连同原始证据目录交回用户。不得在公开 GitHub 上传私人 DWG、隐私路径或密钥。
