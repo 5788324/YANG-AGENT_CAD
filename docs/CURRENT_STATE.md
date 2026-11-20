@@ -5,11 +5,12 @@
 | 领域 | 状态 |
 |---|---|
 | 源码、入口和测试契约 | STATIC，以 PR 最新 CI 为准 |
-| AutoCAD 2024 构建、加载、Core Console | Gemini 已测试整合基线，修复提交待 WINDOWS 复验 |
-| GUI、Civil 3D GUI、Revit 和安装实装 | Gemini 的测试会话无交互桌面，待验 |
+| AutoCAD 2024 | Gemini 在 `1120e805` 通过构建、板符号 22/22、YGHSPLIT、YGINC 8/8、封包、Ribbon 六组和双列工具箱停靠与主题同步。SLBP 验证进入预览及超范围拦截，Live MCP 验证 37 个工具及读写清理。 |
+| 图片内嵌 | `1120e805` 的普通 PNG 真实任务误判为已裁剪，源 DWG 哈希保持一致。后续候选已修正裁剪识别和 worker 版本选择，AutoCAD 2024 真实内嵌待 WINDOWS 复验。 |
+| Revit 原生重建、Civil 3D GUI/MCP、安装实装 | 未验，本轮范围外 |
 | 发布 | 尚未发布 |
 
-Gemini 实测基线为 `4b5e2466910a8e7414fe654088f4111c0390114b`。AutoCAD、真实 Civil 3D 2024、BatchWorker 和安装器均构建成功，AutoCAD 实测加载的 DLL SHA-256 为 `C814E5B51CE150C72012BF7316F5B7671063DDCBF8FAEFF8F1BAEDB44CC0BEAC`。基线验证覆盖命令注册、图层、大样、折断、边界外裁切、双线、DWG 交换、批处理与封包等。板符号在诊断脚本修正退出应答后使用该 DLL 通过 22/22 项。仓库现已修正板符号脚本、YGHSPLIT 选项和 YGINC 连字符编号，复验使用 PR 最新 HEAD 重新构建。
+`1120e80520718d8b8084fb511ed9d316629d0f4f` 复验时加载的 AutoCAD DLL SHA-256 为 `88F4C5909D8BC32F552D7B18ED49B4E1748BC603AC55B3E0E34E1B8079071272`。
 
 整合范围见 [功能目录](FEATURE_CATALOG.md)。折断、多边形大样、边界外裁切纳入本候选，多边形使用 YGDETAILPOLY，YGDETAIL 和原 MCP 矩形入口继续可用。
 

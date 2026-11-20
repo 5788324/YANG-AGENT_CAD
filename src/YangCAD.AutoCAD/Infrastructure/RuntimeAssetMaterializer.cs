@@ -66,7 +66,8 @@ namespace YangCAD.AutoCADHost.Infrastructure
 
         public static string EnsureImageEmbedWorker()
         {
-            var root = EnsureGroup("ImageEmbed", ImageEmbedAssets);
+            var buildId = Assembly.GetExecutingAssembly().ManifestModule.ModuleVersionId.ToString("N");
+            var root = EnsureGroup(Path.Combine("ImageEmbed", buildId), ImageEmbedAssets);
             return Path.Combine(root, "Start-YangCAD-ImageEmbed.ps1");
         }
 

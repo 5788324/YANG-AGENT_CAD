@@ -1,6 +1,15 @@
 # Gemini 实机任务 — YangCAD 整合候选
 
-## 取代码与构建
+## 本轮只复验图片内嵌
+
+本轮范围为 AutoCAD 2024 的 `project.image.embed`。如下方完整清单所列的其他场景，本轮可以跳过。
+
+1. 从 PR 最新提交只构建 AutoCAD 2024（`-SkipCivil`），在交互桌面加载该 DLL 并记录 DLL 哈希。使用测试目录与 `source_with_png.dwg`，保留已安装的旧 bundle 用于验证 worker 选择。
+2. 对普通未裁剪 PNG 执行真实 `project.image.embed`。核对返回的 `worker` 来自当前 DLL 解出的 `runtime/ImageEmbed/<buildId>/`，其 SHA-256 与同提交的仓库脚本一致。检查 `status.json` 完成且 `embedded_count=1`，原 DWG 哈希不变。
+3. 临时移走测试 PNG 后重新打开输出 DWG，核对图像可见且为独立 OLE，并恢复测试 PNG。
+4. 另用一个真的经 IMAGECLIP 裁剪的测试图重跑。默认 `require_all_images=true` 应保留源图、报告 `clipped_image_not_supported_v1` 并不发布输出 DWG。
+
+## 完整验收前的构建参考
 
 从 [PR #20](https://github.com/5788324/YANG-AGENT_CAD/pull/20) 取 feature/ribbon-layout-20261119，记录 PR HEAD、git rev-parse HEAD 和 git status --short。在独立测试目录和 AutoCAD 2024 会话使用受控图纸。保留生产插件、配置和工程文件。
 

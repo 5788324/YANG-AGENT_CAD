@@ -77,7 +77,46 @@ function Resolve-ImagePath([string]$ImageFile, [string]$DwgPath) {
     return [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetDirectoryName($DwgPath)) $ImageFile))
 }
 
-function Snapshot-Raster($Raster, [string]$LayoutName, [string]$DwgPath) {
+function Test-RasterClipped($Doc, $Raster) {
+    if (-not [bool]$Raster.ClippingEnabled) { return $false }
+
+    $handle = [string]$Raster.Handle
+    if ($handle -notmatch '^[0-9A-F]+$') { throw "Invalid raster handle: $handle" }
+
+    # IMAGE DXF stores an enabled whole-image clip as a two-corner pixel rectangle.
+    $expression = @'
+((lambda (/ data size points mode)
+   (setq data (entget (handent "{0}")))
+   (if (= (cdr (assoc 0 data)) "IMAGE")
+     (progn
+       (setq size (cdr (assoc 13 data))
+             points (mapcar 'cdr (vl-remove-if-not '(lambda (item) (= (car item) 14)) data))
+             mode (cdr (assoc 290 data)))
+       (setvar "USERI5"
+         (if (and (not (equal mode 1))
+                  (= (cdr (assoc 71 data)) 1)
+                  (= (length points) 2)
+                  (or (equal (car points) '(-0.5 -0.5) 0.000001)
+                      (equal (cadr points) '(-0.5 -0.5) 0.000001))
+                  (or (equal (car points) (list (- (car size) 0.5) (- (cadr size) 0.5)) 0.000001)
+                      (equal (cadr points) (list (- (car size) 0.5) (- (cadr size) 0.5)) 0.000001)))
+           0
+           1)))))
+'@
+    $saved = $Doc.GetVariable('USERI5')
+    try {
+        $Doc.SetVariable('USERI5', [int16]-1)
+        $Doc.SendCommand((($expression -f $handle) -replace '\r?\n', ' ') + "`r")
+        $result = [int]$Doc.GetVariable('USERI5')
+        if ($result -eq -1) { throw "Could not read raster clip boundary: $handle" }
+        return ($result -eq 1)
+    }
+    finally {
+        $Doc.SetVariable('USERI5', $saved)
+    }
+}
+
+function Snapshot-Raster($Doc, $Raster, [string]$LayoutName, [string]$DwgPath) {
     $imageFile = [string]$Raster.ImageFile
     $resolved = Resolve-ImagePath $imageFile $DwgPath
     $origin = @($Raster.Origin)
@@ -91,7 +130,7 @@ function Snapshot-Raster($Raster, [string]$LayoutName, [string]$DwgPath) {
         height = [double]$Raster.ImageHeight
         rotation = [double]$Raster.Rotation
         layer = [string]$Raster.Layer
-        clipping_enabled = [bool]$Raster.ClippingEnabled
+        clipped = (Test-RasterClipped $Doc $Raster)
         brightness = [int]$Raster.Brightness
         contrast = [int]$Raster.Contrast
         fade = [int]$Raster.Fade
@@ -155,7 +194,7 @@ function Convert-Raster($Acad, $Doc, $Layout, $RasterInfo, [int]$TimeoutSeconds)
     if (-not (Test-Path -LiteralPath $RasterInfo.resolved_path)) {
         return [ordered]@{ ok=$false; handle=$RasterInfo.handle; reason='missing_image_file'; path=$RasterInfo.resolved_path }
     }
-    if ($RasterInfo.clipping_enabled) {
+    if ($RasterInfo.clipped) {
         return [ordered]@{ ok=$false; handle=$RasterInfo.handle; reason='clipped_image_not_supported_v1'; path=$RasterInfo.resolved_path }
     }
     if ($RasterInfo.brightness -ne 50 -or $RasterInfo.contrast -ne 50 -or $RasterInfo.fade -ne 0) {
@@ -287,7 +326,7 @@ function Process-Drawing($Acad, $Item, $Job) {
                 try {
                     if ([string]$entity.ObjectName -eq 'AcDbRasterImage') {
                         try {
-                            [void]$rasters.Add((Snapshot-Raster $entity $layoutName $input))
+                            [void]$rasters.Add((Snapshot-Raster $doc $entity $layoutName $input))
                         }
                         catch {
                             $handle = $null
