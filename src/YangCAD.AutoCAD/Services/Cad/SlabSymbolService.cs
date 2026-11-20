@@ -344,7 +344,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (string.Equals(kr.StringResult, "One", StringComparison.OrdinalIgnoreCase)) typeFilter = "ONE";
             else if (string.Equals(kr.StringResult, "Two", StringComparison.OrdinalIgnoreCase)) typeFilter = "TWO";
 
-            int fixedCount = 0, removedUnsupported = 0, dup = 0, skipped = 0, skippedType = 0, bad = 0;
+            int fixedCount = 0, removedUnsupported = 0, dup = 0, skipped = 0, skippedType = 0, skippedLocked = 0, bad = 0;
             var doneCenters = new List<Point3d>();
             var doneOutlines = new HashSet<ObjectId>();
 
@@ -362,6 +362,12 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     if (!IsSymbolBlock(blockName))
                     {
                         skipped++;
+                        continue;
+                    }
+
+                    if (((LayerTableRecord)tr.GetObject(br.LayerId, OpenMode.ForRead)).IsLocked)
+                    {
+                        skippedLocked++;
                         continue;
                     }
 
@@ -430,7 +436,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 tr.Commit();
             }
 
-            ed.WriteMessage($"\n[SLBFIX] 完成: 修正 {fixedCount} 个, 移除无支承方向符号 {removedUnsupported} 个, 删除同板格重复 {dup} 个, 跳过非板符号 {skipped} 个, 跳过其他类型 {skippedType} 个, 失败 {bad} 个。");
+            ed.WriteMessage($"\n[SLBFIX] 完成: 修正 {fixedCount} 个, 移除无支承方向符号 {removedUnsupported} 个, 删除同板格重复 {dup} 个, 跳过非板符号 {skipped} 个, 跳过其他类型 {skippedType} 个, 跳过锁层 {skippedLocked} 个, 失败 {bad} 个。");
         }
 
         private static string? PlaceOrUpdateSymbol(Database db, SlabResult res)

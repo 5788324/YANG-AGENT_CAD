@@ -63,90 +63,90 @@ namespace YangCAD.AutoCADHost.Commands
         [CommandMethod("TXTINFO")]
         public void TxtInfo() => DimTextToolsService.RunTxtInfo(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("TXAL")]
-        [CommandMethod("YGTXAL")]
+        [CommandMethod("TXAL", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        [CommandMethod("YGTXAL", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextAlign() => DimTextToolsService.RunTextAlign(Application.DocumentManager.MdiActiveDocument);
 
         // ============================================================
         // 贱人工具箱经典文字增强 (对齐/递增/拆合/空格换行/大小写/标点/刷换/加框)
         // ============================================================
 
-        [CommandMethod("YGTL")]
+        [CommandMethod("YGTL", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextAlignLeft() => JianrenTextService.RunBoxAlign(Application.DocumentManager.MdiActiveDocument, "L");
 
-        [CommandMethod("YGTC")]
+        [CommandMethod("YGTC", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextAlignCenter() => JianrenTextService.RunBoxAlign(Application.DocumentManager.MdiActiveDocument, "C");
 
-        [CommandMethod("YGTR")]
+        [CommandMethod("YGTR", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextAlignRight() => JianrenTextService.RunBoxAlign(Application.DocumentManager.MdiActiveDocument, "R");
 
-        [CommandMethod("YGTT")]
+        [CommandMethod("YGTT", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextAlignTop() => JianrenTextService.RunBoxAlign(Application.DocumentManager.MdiActiveDocument, "T");
 
-        [CommandMethod("YGTB")]
+        [CommandMethod("YGTB", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextAlignBottom() => JianrenTextService.RunBoxAlign(Application.DocumentManager.MdiActiveDocument, "B");
 
-        [CommandMethod("YGTV")]
+        [CommandMethod("YGTV", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextAlignMiddle() => JianrenTextService.RunBoxAlign(Application.DocumentManager.MdiActiveDocument, "V");
 
-        [CommandMethod("YGTLINE")]
+        [CommandMethod("YGTLINE", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextAlignToLine() => JianrenTextService.RunAlignToLine(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGTARC")]
+        [CommandMethod("YGTARC", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextAlignToArc() => JianrenTextService.RunAlignToArc(Application.DocumentManager.MdiActiveDocument);
 
         [CommandMethod("YGINC")]
         public void TextIncrementCopy() => JianrenTextService.RunIncrementCopy(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGTJOIN")]
+        [CommandMethod("YGTJOIN", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextJoin() => JianrenTextService.RunJoinText(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGTS2M")]
+        [CommandMethod("YGTS2M", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextSingleToMulti() => JianrenTextService.RunSingleToMulti(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGTM2S")]
+        [CommandMethod("YGTM2S", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextMultiToSingle() => JianrenTextService.RunMultiToSingle(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGTEXP")]
+        [CommandMethod("YGTEXP", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextExplodeChars() => JianrenTextService.RunExplodeToChars(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGTSPACE")]
+        [CommandMethod("YGTSPACE", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextSpaceClean() => JianrenTextService.RunSpaceClean(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGTSPACEM")]
+        [CommandMethod("YGTSPACEM", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextSpaceCleanMulti() => JianrenTextService.RunSpaceClean(Application.DocumentManager.MdiActiveDocument, "M");
 
-        [CommandMethod("YGTNOLINE")]
+        [CommandMethod("YGTNOLINE", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextRemoveNewlines() => JianrenTextService.RunSpaceClean(Application.DocumentManager.MdiActiveDocument, "N");
 
-        [CommandMethod("YGTTRIMLINE")]
+        [CommandMethod("YGTTRIMLINE", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextTrimExtraNewlines() => JianrenTextService.RunSpaceClean(Application.DocumentManager.MdiActiveDocument, "L");
 
-        [CommandMethod("YGTCASE")]
+        [CommandMethod("YGTCASE", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextCaseConvert() => JianrenTextService.RunCaseConvert(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGTUPPER")]
+        [CommandMethod("YGTUPPER", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextCaseUpper() => JianrenTextService.RunCaseConvert(Application.DocumentManager.MdiActiveDocument, "U");
 
-        [CommandMethod("YGTLOWER")]
+        [CommandMethod("YGTLOWER", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextCaseLower() => JianrenTextService.RunCaseConvert(Application.DocumentManager.MdiActiveDocument, "L");
 
-        [CommandMethod("YGTTITLE")]
+        [CommandMethod("YGTTITLE", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextCaseTitle() => JianrenTextService.RunCaseConvert(Application.DocumentManager.MdiActiveDocument, "T");
 
-        [CommandMethod("YGTCAMEL")]
+        [CommandMethod("YGTCAMEL", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextCaseCamel() => JianrenTextService.RunCaseConvert(Application.DocumentManager.MdiActiveDocument, "C");
 
-        [CommandMethod("YGTPUNC")]
+        [CommandMethod("YGTPUNC", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextPunctuationSwitch() => JianrenTextService.RunPunctuationSwitch(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGTPUNCE")]
+        [CommandMethod("YGTPUNCE", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextPunctuationToEn() => JianrenTextService.RunPunctuationSwitch(Application.DocumentManager.MdiActiveDocument, "E");
 
-        [CommandMethod("YGTPUNCC")]
+        [CommandMethod("YGTPUNCC", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextPunctuationToCn() => JianrenTextService.RunPunctuationSwitch(Application.DocumentManager.MdiActiveDocument, "C");
 
-        [CommandMethod("YGTAFFIX")]
+        [CommandMethod("YGTAFFIX", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextAffix() => JianrenTextService.RunAffix(Application.DocumentManager.MdiActiveDocument);
 
         [CommandMethod("YGTBRUSH")]
@@ -155,13 +155,13 @@ namespace YangCAD.AutoCADHost.Commands
         [CommandMethod("YGTSWAP")]
         public void TextContentSwap() => JianrenTextService.RunContentSwap(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGTPROP")]
+        [CommandMethod("YGTPROP", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextPropertyBrush() => JianrenTextService.RunPropertyBrush(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGTBOXSLOT")]
+        [CommandMethod("YGTBOXSLOT", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextBoxSlot() => JianrenTextService.RunTextBoxAdvanced(Application.DocumentManager.MdiActiveDocument, true, false);
 
-        [CommandMethod("YGTBOXMASK")]
+        [CommandMethod("YGTBOXMASK", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextBoxMask() => JianrenTextService.RunTextBoxAdvanced(Application.DocumentManager.MdiActiveDocument, false, true);
 
         [CommandMethod("YGTSET")]
@@ -171,36 +171,36 @@ namespace YangCAD.AutoCADHost.Commands
         // 源泉设计风格填充图案增强工具 (HHJ / HHX / HHU / HHGL / HHB / HHI)
         // ============================================================
 
-        [CommandMethod("YGHCLIP")]
-        [CommandMethod("HHJ")]
+        [CommandMethod("YGHCLIP", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        [CommandMethod("HHJ", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void HatchClip() => YqHatchToolsService.RunHatchClip(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGHCLIPSPLIT")]
-        [CommandMethod("HHJK")]
+        [CommandMethod("YGHCLIPSPLIT", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        [CommandMethod("HHJK", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void HatchClipSplit() => YqHatchToolsService.RunHatchClip(Application.DocumentManager.MdiActiveDocument, "K");
 
-        [CommandMethod("YGHCLIPINT")]
-        [CommandMethod("HHJI")]
+        [CommandMethod("YGHCLIPINT", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        [CommandMethod("HHJI", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void HatchClipIntersect() => YqHatchToolsService.RunHatchClip(Application.DocumentManager.MdiActiveDocument, "I");
 
-        [CommandMethod("YGHSPLIT")]
-        [CommandMethod("HHX")]
+        [CommandMethod("YGHSPLIT", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        [CommandMethod("HHX", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void HatchSplit() => YqHatchToolsService.RunHatchSplit(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGHUNION")]
-        [CommandMethod("HHU")]
+        [CommandMethod("YGHUNION", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        [CommandMethod("HHU", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void HatchUnion() => YqHatchToolsService.RunHatchUnion(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGHDIS")]
-        [CommandMethod("HHGL")]
+        [CommandMethod("YGHDIS", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        [CommandMethod("HHGL", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void HatchDisassociate() => YqHatchToolsService.RunHatchDisassociate(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGHBOUND")]
-        [CommandMethod("HHB")]
+        [CommandMethod("YGHBOUND", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        [CommandMethod("HHB", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void HatchBoundary() => YqHatchToolsService.RunHatchBoundary(Application.DocumentManager.MdiActiveDocument);
 
-        [CommandMethod("YGHBASE")]
-        [CommandMethod("HHI")]
+        [CommandMethod("YGHBASE", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        [CommandMethod("HHI", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void HatchOrigin() => YqHatchToolsService.RunHatchOrigin(Application.DocumentManager.MdiActiveDocument);
     }
 }

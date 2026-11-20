@@ -378,8 +378,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
             }
 
             var filter = new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "TEXT,MTEXT") });
-            var sel = ed.GetSelection(new PromptSelectionOptions { MessageForAdding = "\n选择需要向下对齐的其余文字：" }, filter);
-            if (sel.Status != PromptStatus.OK || sel.Value == null) return;
+            var selected = GetOrPromptSelection(ed, filter, "\n选择需要向下对齐的其余文字：", "个对象");
+            if (selected == null) return;
 
             var others = new List<(double LocalY, ObjectId Id)>();
             Point3d p0;
@@ -387,16 +387,18 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
             using (var tr = db.TransactionManager.StartTransaction())
             {
+                var lt = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
                 var refEnt = (Entity)tr.GetObject(refId, OpenMode.ForRead);
                 p0 = GetTextAnchor(refEnt);
                 ang = GetTextAngle(refEnt);
                 var h = refEnt is DBText dt ? dt.Height : (refEnt is MText mt ? mt.TextHeight : 250.0);
                 sp = h * settings.TextAlignSpacing;
 
-                foreach (var id in sel.Value.GetObjectIds())
+                foreach (var id in selected)
                 {
                     if (id == refId) continue;
                     if (!(tr.GetObject(id, OpenMode.ForRead) is Entity ent)) continue;
+                    if (!(ent is DBText || ent is MText) || IsLayerLocked(tr, lt, ent.Layer)) continue;
                     var p = GetTextAnchor(ent);
                     var ly = (p.X - p0.X) * (-Math.Sin(ang)) + (p.Y - p0.Y) * Math.Cos(ang);
                     others.Add((ly, id));
@@ -415,7 +417,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
                 for (var n = 1; n <= others.Count; n++)
                 {
-                    var item = (Entity)tr.GetObject(others[n - 1].Id, OpenMode.ForWrite);
+                    var item = (Entity)tr.GetObject(others[n - 1].Id, OpenMode.ForRead);
+                    item.UpgradeOpen();
                     var tgt = new Point3d(p0.X + n * sp * dx, p0.Y + n * sp * dy, p0.Z);
 
                     if (item is DBText dtItem)

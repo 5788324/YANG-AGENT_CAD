@@ -72,8 +72,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (doc == null) return;
             var ed = doc.Editor;
             var db = doc.Database;
-            var filter = new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "TEXT,MTEXT") });
-            var ids = GetOrPromptTextEntities(ed, filter, "\n选择需要对齐的文字(可先选后点)：");
+            var ids = GetOrPromptTextEntities(ed, "TEXT,MTEXT", "\n选择需要对齐的文字(可先选后点)：");
             if (ids == null || ids.Length < 2)
             {
                 if (ids != null && ids.Length == 1) ed.WriteMessage("\n至少需要选择 2 个文字才能对齐。");
@@ -101,58 +100,34 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     return;
                 }
 
-                if (mode == "V")
+                double target = mode switch
                 {
-                    var sorted = items.OrderByDescending(x => (x.Ext.MinPoint.Y + x.Ext.MaxPoint.Y) * 0.5).ToList();
-                    var topCy = (sorted[0].Ext.MinPoint.Y + sorted[0].Ext.MaxPoint.Y) * 0.5;
-                    var botCy = (sorted[sorted.Count - 1].Ext.MinPoint.Y + sorted[sorted.Count - 1].Ext.MaxPoint.Y) * 0.5;
-                    var leftX = sorted[0].Ext.MinPoint.X;
-                    var stepY = (topCy - botCy) / (sorted.Count - 1);
+                    "L" => items.Min(x => x.Ext.MinPoint.X),
+                    "R" => items.Max(x => x.Ext.MaxPoint.X),
+                    "C" => items.OrderByDescending(x => x.Ext.MaxPoint.Y).Select(x => (x.Ext.MinPoint.X + x.Ext.MaxPoint.X) * 0.5).First(),
+                    "T" => items.Max(x => x.Ext.MaxPoint.Y),
+                    "B" => items.Min(x => x.Ext.MinPoint.Y),
+                    "V" => items.Average(x => (x.Ext.MinPoint.Y + x.Ext.MaxPoint.Y) * 0.5),
+                    _ => items.Min(x => x.Ext.MinPoint.X)
+                };
 
-                    for (var i = 0; i < sorted.Count; i++)
+                foreach (var (ent, ext) in items)
+                {
+                    double dx = 0, dy = 0;
+                    switch (mode)
                     {
-                        var (ent, ext) = sorted[i];
-                        var curCy = (ext.MinPoint.Y + ext.MaxPoint.Y) * 0.5;
-                        var tgtCy = topCy - i * stepY;
-                        var dx = leftX - ext.MinPoint.X;
-                        var dy = tgtCy - curCy;
-                        if (Math.Abs(dx) > 1e-6 || Math.Abs(dy) > 1e-6)
-                        {
-                            ent.UpgradeOpen();
-                            ent.TransformBy(Matrix3d.Displacement(new Vector3d(dx, dy, 0)));
-                            moved++;
-                        }
+                        case "L": dx = target - ext.MinPoint.X; break;
+                        case "R": dx = target - ext.MaxPoint.X; break;
+                        case "C": dx = target - (ext.MinPoint.X + ext.MaxPoint.X) * 0.5; break;
+                        case "T": dy = target - ext.MaxPoint.Y; break;
+                        case "B": dy = target - ext.MinPoint.Y; break;
+                        case "V": dy = target - (ext.MinPoint.Y + ext.MaxPoint.Y) * 0.5; break;
                     }
-                }
-                else
-                {
-                    double target = mode switch
+                    if (Math.Abs(dx) > 1e-6 || Math.Abs(dy) > 1e-6)
                     {
-                        "L" => items.Min(x => x.Ext.MinPoint.X),
-                        "R" => items.Max(x => x.Ext.MaxPoint.X),
-                        "C" => items.OrderByDescending(x => x.Ext.MaxPoint.Y).Select(x => (x.Ext.MinPoint.X + x.Ext.MaxPoint.X) * 0.5).First(),
-                        "T" => items.Max(x => x.Ext.MaxPoint.Y),
-                        "B" => items.Min(x => x.Ext.MinPoint.Y),
-                        _ => items.Min(x => x.Ext.MinPoint.X)
-                    };
-
-                    foreach (var (ent, ext) in items)
-                    {
-                        double dx = 0, dy = 0;
-                        switch (mode)
-                        {
-                            case "L": dx = target - ext.MinPoint.X; break;
-                            case "R": dx = target - ext.MaxPoint.X; break;
-                            case "C": dx = target - (ext.MinPoint.X + ext.MaxPoint.X) * 0.5; break;
-                            case "T": dy = target - ext.MaxPoint.Y; break;
-                            case "B": dy = target - ext.MinPoint.Y; break;
-                        }
-                        if (Math.Abs(dx) > 1e-6 || Math.Abs(dy) > 1e-6)
-                        {
-                            ent.UpgradeOpen();
-                            ent.TransformBy(Matrix3d.Displacement(new Vector3d(dx, dy, 0)));
-                            moved++;
-                        }
+                        ent.UpgradeOpen();
+                        ent.TransformBy(Matrix3d.Displacement(new Vector3d(dx, dy, 0)));
+                        moved++;
                     }
                 }
 
@@ -172,7 +147,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
             var ids = GetOrPromptTextEntities(
                 ed,
-                new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "TEXT,MTEXT") }),
+                "TEXT,MTEXT",
                 "\n选择需要按线对齐的文字：");
             if (ids == null || ids.Length == 0) return;
 
@@ -240,7 +215,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 var lt = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
                 foreach (var id in ids)
                 {
-                    if (!(tr.GetObject(id, OpenMode.ForWrite) is Entity ent)) continue;
+                    if (!(tr.GetObject(id, OpenMode.ForRead) is Entity ent)) continue;
                     if (!(ent is DBText || ent is MText)) continue;
                     if (IsLayerLocked(tr, lt, ent.Layer)) continue;
 
@@ -248,6 +223,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     var proj = (oldCenter.X - segPoint.X) * ux + (oldCenter.Y - segPoint.Y) * uy;
                     var tgt = new Point3d(segPoint.X + ux * proj + nx * offset, segPoint.Y + uy * proj + ny * offset, oldCenter.Z);
 
+                    ent.UpgradeOpen();
                     if (ent is DBText dt) dt.Rotation = segAngle;
                     else if (ent is MText mt) mt.Rotation = segAngle;
 
@@ -271,7 +247,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
             var ids = GetOrPromptTextEntities(
                 ed,
-                new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "TEXT,MTEXT") }),
+                "TEXT,MTEXT",
                 "\n选择需要沿弧环绕的文字(可选 1 句自动拆字，或选多个单字)：");
             if (ids == null || ids.Length == 0) return;
 
@@ -345,6 +321,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 var firstEnt = tr.GetObject(ids[0], OpenMode.ForRead) as Entity;
                 if (ids.Length == 1 && firstEnt != null)
                 {
+                    if (IsOnLockedLayer(tr, firstEnt)) return;
                     var rawText = ExtractPlainText(firstEnt);
                     if (string.IsNullOrEmpty(rawText))
                     {
@@ -408,9 +385,9 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 else
                 {
                     var textEnts = ids
-                        .Select(id => tr.GetObject(id, OpenMode.ForWrite) as Entity)
-                        .Where(e => e is DBText || e is MText)
-                        .Cast<Entity>()
+                        .Select(id => tr.GetObject(id, OpenMode.ForRead))
+                        .OfType<Entity>()
+                        .Where(e => (e is DBText || e is MText) && !IsOnLockedLayer(tr, e))
                         .OrderBy(e => TryGetCenter(e)?.X ?? GetAnchor(e).X)
                         .ToList();
 
@@ -427,6 +404,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         var pt = new Point3d(center.X + radius * Math.Cos(theta), center.Y + radius * Math.Sin(theta), elev);
                         var rot = inward ? theta - Math.PI * 0.5 : theta + Math.PI * 0.5;
 
+                        ent.UpgradeOpen();
                         if (ent is DBText dt) dt.Rotation = rot;
                         else if (ent is MText mt) mt.Rotation = rot;
 
@@ -675,16 +653,16 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var db = doc.Database;
             var ids = GetOrPromptTextEntities(
                 ed,
-                new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "TEXT") }),
+                "TEXT",
                 "\n选择要按顺序连接为一句的单行文字：");
             if (ids == null || ids.Length < 2) return;
 
             var joined = "";
             using (var tr = db.TransactionManager.StartTransaction())
             {
-                var texts = ids.Select(id => tr.GetObject(id, OpenMode.ForWrite) as DBText)
-                    .Where(t => t != null)
-                    .Cast<DBText>()
+                var texts = ids.Select(id => tr.GetObject(id, OpenMode.ForRead))
+                    .OfType<DBText>()
+                    .Where(t => !IsOnLockedLayer(tr, t))
                     .ToList();
                 if (texts.Count < 2) { tr.Commit(); return; }
 
@@ -699,8 +677,13 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 });
 
                 joined = string.Concat(texts.Select(t => t.TextString ?? ""));
+                texts[0].UpgradeOpen();
                 texts[0].TextString = joined;
-                for (var i = 1; i < texts.Count; i++) texts[i].Erase();
+                foreach (var source in texts.Skip(1))
+                {
+                    source.UpgradeOpen();
+                    source.Erase();
+                }
                 tr.Commit();
             }
 
@@ -714,16 +697,16 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var db = doc.Database;
             var ids = GetOrPromptTextEntities(
                 ed,
-                new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "TEXT") }),
+                "TEXT",
                 "\n框选要转为多行文字(MTEXT)的单行文字：");
             if (ids == null || ids.Length == 0) return;
 
             int lineCount;
             using (var tr = db.TransactionManager.StartTransaction())
             {
-                var texts = ids.Select(id => tr.GetObject(id, OpenMode.ForWrite) as DBText)
-                    .Where(t => t != null)
-                    .Cast<DBText>()
+                var texts = ids.Select(id => tr.GetObject(id, OpenMode.ForRead))
+                    .OfType<DBText>()
+                    .Where(t => !IsOnLockedLayer(tr, t))
                     .ToList();
                 if (texts.Count == 0) { tr.Commit(); return; }
 
@@ -767,7 +750,11 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 space.AppendEntity(mt);
                 tr.AddNewlyCreatedDBObject(mt, true);
 
-                foreach (var t in texts) t.Erase();
+                foreach (var t in texts)
+                {
+                    t.UpgradeOpen();
+                    t.Erase();
+                }
                 tr.Commit();
             }
 
@@ -781,7 +768,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var db = doc.Database;
             var ids = GetOrPromptTextEntities(
                 ed,
-                new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "MTEXT") }),
+                "MTEXT",
                 "\n选择要拆分为单行文字的多行文字(MTEXT)：");
             if (ids == null || ids.Length == 0) return;
 
@@ -791,7 +778,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 var space = (BlockTableRecord)tr.GetObject(db.CurrentSpaceId, OpenMode.ForWrite);
                 foreach (var id in ids)
                 {
-                    if (!(tr.GetObject(id, OpenMode.ForWrite) is MText mt)) continue;
+                    if (!(tr.GetObject(id, OpenMode.ForRead) is MText mt) || IsOnLockedLayer(tr, mt)) continue;
                     var raw = MTextFormatControlRegex.Replace(mt.Contents ?? "", "\n").Replace("\r\n", "\n");
                     var lines = raw.Split(new[] { '\n' }, StringSplitOptions.None);
                     var ang = mt.Rotation;
@@ -820,6 +807,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         tr.AddNewlyCreatedDBObject(dt, true);
                         created++;
                     }
+                    mt.UpgradeOpen();
                     mt.Erase();
                 }
                 tr.Commit();
@@ -835,7 +823,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var db = doc.Database;
             var ids = GetOrPromptTextEntities(
                 ed,
-                new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "TEXT") }),
+                "TEXT",
                 "\n选择要炸碎为单个字符的单行文字：");
             if (ids == null || ids.Length == 0) return;
 
@@ -845,7 +833,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 var space = (BlockTableRecord)tr.GetObject(db.CurrentSpaceId, OpenMode.ForWrite);
                 foreach (var id in ids)
                 {
-                    if (!(tr.GetObject(id, OpenMode.ForWrite) is DBText dt)) continue;
+                    if (!(tr.GetObject(id, OpenMode.ForRead) is DBText dt) || IsOnLockedLayer(tr, dt)) continue;
                     var text = dt.TextString ?? "";
                     if (text.Length <= 1) continue;
 
@@ -907,6 +895,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         tr.AddNewlyCreatedDBObject(ch, true);
                         totalChars++;
                     }
+                    dt.UpgradeOpen();
                     dt.Erase();
                 }
                 tr.Commit();
@@ -999,7 +988,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 settings.Save();
             }
 
-            var updated = ApplyTextTransform(ed, doc.Database, "\n选择要切换大小写的文字或标注：", raw => ConvertCase(raw, mode!));
+            var updated = ApplyTextTransform(ed, doc.Database, "\n选择要切换大小写的文字或标注：", raw => ConvertCase(raw, mode!), preserveParagraphs: true);
             ed.WriteMessage($"\n[大小写:{mode}] 已更新 {updated} 个对象。");
         }
 
@@ -1088,7 +1077,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 settings.Save();
             }
 
-            var updated = ApplyTextTransform(ed, doc.Database, "\n选择要切换中英文标点的文字/属性/标注：", raw => SwitchPunctuation(raw, mode!));
+            var updated = ApplyTextTransform(ed, doc.Database, "\n选择要切换中英文标点的文字/属性/标注：", raw => SwitchPunctuation(raw, mode!), preserveParagraphs: true);
             ed.WriteMessage($"\n[中英标点:{mode}] 已更新 {updated} 个对象。");
         }
 
@@ -1261,8 +1250,12 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     return;
                 }
 
-                WriteAnyTextContent(tr, e1, s2);
-                WriteAnyTextContent(tr, e2, s1);
+                if (IsOnLockedLayer(tr, e1) || IsOnLockedLayer(tr, e2) ||
+                    !WriteAnyTextContent(tr, e1, s2) || !WriteAnyTextContent(tr, e2, s1))
+                {
+                    ed.WriteMessage("\n[YGTSWAP] 有对象无法写入，已保留原内容。");
+                    return;
+                }
                 tr.Commit();
                 ed.WriteMessage($"\n[YGTSWAP] 已互换内容：\"{Truncate(s1, 18)}\" ⇄ \"{Truncate(s2, 18)}\"");
             }
@@ -1309,8 +1302,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 tr.Commit();
             }
 
-            var filter = new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "TEXT,MTEXT") });
-            var ids = GetOrPromptTextEntities(ed, filter, "\n框选需要统一字高/字体/图层/颜色的目标文字：");
+            var ids = GetOrPromptTextEntities(ed, "TEXT,MTEXT", "\n框选需要统一字高/字体/图层/颜色的目标文字：");
             if (ids == null || ids.Length == 0) return;
 
             var count = 0;
@@ -1352,8 +1344,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var db = doc.Database;
             var settings = UserSettings.Load();
 
-            var filter = new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "TEXT,MTEXT") });
-            var ids = GetOrPromptTextEntities(ed, filter, $"\n选择需要加{(slotShape ? "跑道框" : "遮罩矩形框")}的文字(留白 {settings.TextFrameMarginMm:0.##}mm)：");
+            var ids = GetOrPromptTextEntities(ed, "TEXT,MTEXT", $"\n选择需要加{(slotShape ? "跑道框" : "遮罩矩形框")}的文字(留白 {settings.TextFrameMarginMm:0.##}mm)：");
             if (ids == null || ids.Length == 0) return;
 
             var margin = settings.TextFrameMarginMm;
@@ -1469,13 +1460,14 @@ namespace YangCAD.AutoCADHost.Services.Cad
         }
 
         // ---------- Shared Helpers ----------
-        private static int ApplyTextTransform(Editor ed, Database db, string prompt, Func<string, string> transform)
+        private static int ApplyTextTransform(Editor ed, Database db, string prompt, Func<string, string> transform,
+            bool preserveParagraphs = false)
         {
-            var filter = new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "TEXT,MTEXT,DIMENSION,MULTILEADER,INSERT") });
-            var ids = GetOrPromptTextEntities(ed, filter, prompt);
+            var ids = GetOrPromptTextEntities(ed, "TEXT,MTEXT,DIMENSION,MULTILEADER,INSERT", prompt);
             if (ids == null || ids.Length == 0) return 0;
 
             var count = 0;
+            var skippedFormatting = 0;
             using (var tr = db.TransactionManager.StartTransaction())
             {
                 var lt = (LayerTable)tr.GetObject(db.LayerTableId, OpenMode.ForRead);
@@ -1488,8 +1480,13 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     {
                         foreach (ObjectId attId in br.AttributeCollection)
                         {
-                            if (!(tr.GetObject(attId, OpenMode.ForRead) is AttributeReference att)) continue;
+                            if (!(tr.GetObject(attId, OpenMode.ForRead) is AttributeReference att) || IsOnLockedLayer(tr, att)) continue;
                             var oldVal = att.TextString ?? "";
+                            if (att.IsMTextAttribute)
+                            {
+                                skippedFormatting++;
+                                continue;
+                            }
                             var nextVal = transform(oldVal);
                             if (!string.Equals(oldVal, nextVal, StringComparison.Ordinal))
                             {
@@ -1503,14 +1500,26 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     {
                         var oldVal = ReadAnyTextContent(tr, ent);
                         if (oldVal == null) continue;
-                        var nextVal = transform(oldVal);
+                        var formattedType = ent is MText || ent is MLeader || ent is Dimension;
+                        if (formattedType && HasInlineFormatting(oldVal))
+                        {
+                            skippedFormatting++;
+                            continue;
+                        }
+                        var nextVal = formattedType ? TransformParagraphs(oldVal) : transform(oldVal);
                         if (!string.Equals(oldVal, nextVal, StringComparison.Ordinal) && WriteAnyTextContent(tr, ent, nextVal))
                             count++;
                     }
                 }
                 tr.Commit();
             }
+            if (skippedFormatting > 0)
+                ed.WriteMessage($"\n已跳过 {skippedFormatting} 个多行属性或含内联格式、字段的文字。");
             return count;
+
+            string TransformParagraphs(string value) => preserveParagraphs
+                ? string.Join(@"\P", value.Split(new[] { @"\P" }, StringSplitOptions.None).Select(transform))
+                : transform(value);
         }
 
         private static string? ReadAnyTextContent(Transaction tr, Entity ent)
@@ -1546,8 +1555,10 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     return true;
                 }
                 if (ent is BlockReference br && br.AttributeCollection.Count > 0 &&
-                    tr.GetObject(br.AttributeCollection[0], OpenMode.ForWrite) is AttributeReference firstAtt)
+                    tr.GetObject(br.AttributeCollection[0], OpenMode.ForRead) is AttributeReference firstAtt &&
+                    !IsOnLockedLayer(tr, firstAtt))
                 {
+                    firstAtt.UpgradeOpen();
                     firstAtt.TextString = value;
                     return true;
                 }
@@ -1570,15 +1581,19 @@ namespace YangCAD.AutoCADHost.Services.Cad
             return cleaned.Replace(@"\~", " ").Replace("{", "").Replace("}", "");
         }
 
-        private static ObjectId[]? GetOrPromptTextEntities(Editor ed, SelectionFilter filter, string prompt)
+        private static ObjectId[]? GetOrPromptTextEntities(Editor ed, string dxfTypes, string prompt)
         {
             var implied = ed.SelectImplied();
             if (implied.Status == PromptStatus.OK && implied.Value != null && implied.Value.Count > 0)
             {
-                var ids = implied.Value.GetObjectIds();
+                var acceptedTypes = dxfTypes.Split(',');
+                var ids = implied.Value.GetObjectIds()
+                    .Where(id => acceptedTypes.Contains(id.ObjectClass.DxfName, StringComparer.OrdinalIgnoreCase))
+                    .ToArray();
                 ed.SetImpliedSelection(Array.Empty<ObjectId>());
-                return ids;
+                if (ids.Length > 0) return ids;
             }
+            var filter = new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, dxfTypes) });
             var sr = ed.GetSelection(new PromptSelectionOptions { MessageForAdding = prompt }, filter);
             if (sr.Status != PromptStatus.OK || sr.Value == null) return null;
             return sr.Value.GetObjectIds();
@@ -1616,6 +1631,12 @@ namespace YangCAD.AutoCADHost.Services.Cad
             else if (rad <= -Math.PI * 0.5 + 1e-4) rad += Math.PI;
             return rad;
         }
+
+        private static bool HasInlineFormatting(string value)
+            => Regex.IsMatch(value, @"\\(?:[^P]|$)|[{}]|%<|<>");
+
+        private static bool IsOnLockedLayer(Transaction tr, Entity entity)
+            => ((LayerTableRecord)tr.GetObject(entity.LayerId, OpenMode.ForRead)).IsLocked;
 
         private static bool IsLayerLocked(Transaction tr, LayerTable lt, string layerName)
             => lt.Has(layerName) && ((LayerTableRecord)tr.GetObject(lt[layerName], OpenMode.ForRead)).IsLocked;

@@ -82,23 +82,24 @@ function Test-RasterClipped($Doc, [string]$handle, [int]$TimeoutSeconds) {
 
     # IMAGE DXF stores an enabled whole-image clip as a two-corner pixel rectangle.
     $expression = @'
-((lambda (/ data size points mode)
-   (setq data (entget (handent "{0}")))
-   (if (= (cdr (assoc 0 data)) "IMAGE")
-     (progn
-       (setq size (cdr (assoc 13 data))
-             points (mapcar 'cdr (vl-remove-if-not '(lambda (item) (= (car item) 14)) data))
-             mode (cdr (assoc 290 data)))
-       (setvar "USERI5"
-         (if (and (not (equal mode 1))
-                  (= (cdr (assoc 71 data)) 1)
-                  (= (length points) 2)
-                  (or (equal (car points) '(-0.5 -0.5) 0.000001)
-                      (equal (cadr points) '(-0.5 -0.5) 0.000001))
-                  (or (equal (car points) (list (- (car size) 0.5) (- (cadr size) 0.5)) 0.000001)
-                      (equal (cadr points) (list (- (car size) 0.5) (- (cadr size) 0.5)) 0.000001)))
-           0
-           1)))))
+((lambda (/ entity data size points item p1 p2)
+   (setq entity (handent "{0}"))
+   (if entity (setq data (entget entity)))
+   (setq size (cdr (assoc 13 data)))
+   (foreach item data
+     (if (= (car item) 14) (setq points (cons (cdr item) points))))
+   (setq p1 (car points) p2 (cadr points))
+   (setvar "USERI5"
+     (cond
+       ((not (and (equal (cdr (assoc 0 data)) "IMAGE") size)) 2)
+       ((and (not (equal (cdr (assoc 290 data)) 1))
+             (equal (cdr (assoc 71 data)) 1)
+             (= (length points) 2)
+             (equal (min (car p1) (car p2)) -0.5 0.000001)
+             (equal (min (cadr p1) (cadr p2)) -0.5 0.000001)
+             (equal (max (car p1) (car p2)) (- (car size) 0.5) 0.000001)
+             (equal (max (cadr p1) (cadr p2)) (- (cadr size) 0.5) 0.000001)) 0)
+       (T 1)))))
 '@
     $saved = $Doc.GetVariable('USERI5')
     try {
@@ -107,7 +108,8 @@ function Test-RasterClipped($Doc, [string]$handle, [int]$TimeoutSeconds) {
         $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
         do {
             $result = [int]$Doc.GetVariable('USERI5')
-            if ($result -ne -1) { return ($result -eq 1) }
+            if ($result -eq 0 -or $result -eq 1) { return ($result -eq 1) }
+            if ($result -ne -1) { break }
             Start-Sleep -Milliseconds 100
         } while ([DateTime]::UtcNow -lt $deadline)
         throw "Could not read raster clip boundary: $handle"

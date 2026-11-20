@@ -966,18 +966,12 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
                     if (sideA.Area < AreaTol || sideB.Area < AreaTol) return 0;
 
-                    var createdPieces = 0;
-                    if (TryPopulateHatchFromRegion(tr, space, hatch, sideA, localOrigin,
-                        groupIntoSingleHatch: false, updateInPlace: hatch, out var piecesA))
-                    {
-                        createdPieces += piecesA.Count;
-                    }
-                    if (TryPopulateHatchFromRegion(tr, space, hatch, sideB, localOrigin,
-                        groupIntoSingleHatch: false, updateInPlace: null, out var piecesB))
-                    {
-                        createdPieces += piecesB.Count;
-                    }
-                    return createdPieces;
+                    if (!TryPopulateHatchFromRegion(tr, space, hatch, sideA, localOrigin,
+                        groupIntoSingleHatch: false, updateInPlace: hatch, out var piecesA, requireCompleteResult: true) ||
+                        !TryPopulateHatchFromRegion(tr, space, hatch, sideB, localOrigin,
+                        groupIntoSingleHatch: false, updateInPlace: null, out var piecesB, requireCompleteResult: true))
+                        throw new InvalidOperationException("无法完整重建两侧填充边界，已取消拆分。");
+                    return piecesA.Count + piecesB.Count;
                 }
 
                 using var slitReg = BuildSlitRegionFromPolyline(hatch.Normal, hatch.Elevation, cutPtsLocal);
@@ -1250,9 +1244,13 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         while (target.NumberOfLoops > 0) target.RemoveLoopAt(target.NumberOfLoops - 1);
                     }
 
-                    AppendPolylineAsLoop(target, records[kv.Key].Polyline, HatchLoopTypes.External, shiftBack);
+                    if (!AppendPolylineAsLoop(target, records[kv.Key].Polyline, HatchLoopTypes.External, shiftBack) && requireCompleteResult)
+                        throw new InvalidOperationException("无法重建填充外边界。");
                     foreach (var hi in kv.Value)
-                        AppendPolylineAsLoop(target, records[hi].Polyline, HatchLoopTypes.Default, shiftBack);
+                    {
+                        if (!AppendPolylineAsLoop(target, records[hi].Polyline, HatchLoopTypes.Default, shiftBack) && requireCompleteResult)
+                            throw new InvalidOperationException("无法重建填充内边界。");
+                    }
 
                     try { target.EvaluateHatch(false); } catch when (!requireCompleteResult) { }
 

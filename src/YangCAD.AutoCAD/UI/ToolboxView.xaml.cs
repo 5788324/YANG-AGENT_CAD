@@ -62,7 +62,7 @@ namespace YangCAD.AutoCADHost.UI
             InitializeComponent();
             ThemeManager.Apply(Resources, UserSettings.Load().Theme);
             RefreshTools();
-            Loaded += (_, __) => SetQuickButtonLabelsAndTooltips();
+            Loaded += (_, __) => SetQuickButtonTooltips();
             Unloaded += (_, __) => StopEmbedStatusMonitor();
         }
 
@@ -83,7 +83,7 @@ namespace YangCAD.AutoCADHost.UI
                 .ToList();
         }
 
-        private void SetQuickButtonLabelsAndTooltips()
+        private void SetQuickButtonTooltips()
         {
             if (ToolListPane == null) return;
             foreach (var button in FindVisualChildren<Button>(ToolListPane))
@@ -92,7 +92,6 @@ namespace YangCAD.AutoCADHost.UI
                 var item = CadToolCatalog.All.FirstOrDefault(x =>
                     string.Equals(x.Command, cmd, StringComparison.OrdinalIgnoreCase));
                 if (item == null) continue;
-                button.Content = item.Name;
                 button.ToolTip = $"{item.Description}\n命令：{item.Command}（推荐缩写：{item.DefaultAliasHint}）";
             }
         }
