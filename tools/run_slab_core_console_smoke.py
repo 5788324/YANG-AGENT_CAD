@@ -28,7 +28,7 @@ CHECKS = {
     "fixture", "symbol-count", "zero-support", "undo", "trim", "marker",
     *(f"case-{number}" for number, *_ in CASES),
 }
-REOPEN_CHECKS = {"reopen-input", "reopen-case", "nested-inner", "nested-outer", "nested-handles"}
+REOPEN_CHECKS = {"reopen-input", "reopen-case", "nested-inner", "nested-outer", "nested-handles", "type-one", "type-two"}
 LISP = """
 (defun ys-check (name passed)
   (prompt (strcat "\\nYANGCAD_SLAB_CHECK " (if passed "PASS " "FAIL ") name "\\n"))
@@ -60,6 +60,13 @@ LISP = """
           (if (equal q '(0.0 0.0 0.0) 0.00001)
             (setq tips (cons p tips)))))))
   (list lines tips))
+
+(defun ys-old-symbol (name point)
+  (entmake (list '(0 . "BLOCK") (cons 2 name) '(70 . 0) '(10 0.0 0.0 0.0)))
+  (entmake '((0 . "LINE") (10 0.0 0.0 0.0) (11 1.0 0.0 0.0)))
+  (entmake '((0 . "ENDBLK")))
+  (entmake (list '(0 . "INSERT") (cons 2 name) (cons 10 point)))
+  (entlast))
 
 (defun ys-symbol (point name rotation tips / item data geometry)
   (setq item (ys-at point))
@@ -142,6 +149,13 @@ def build_reopen_script(dll: Path) -> str:
         symbol_check("nested-inner", 13800, 22600, 2, 0),
         symbol_check("nested-outer", 15000, 23000, 9, 0),
         """(ys-check "nested-handles" (and ys-inner ys-outer (equal ys-inner (ys-at '(13800 22600 0))) (equal ys-outer (ys-at '(15000 23000 0))) (= 2 (ys-count (ys-set "INSERT" "SLB_SYMBOL")))))""",
+        """(setq ys-one (ys-old-symbol "YB5_ARM_X" '(25000.0 23000.0 0.0)) ys-two (ys-old-symbol "YB5_ARM_B" '(5000.0 14000.0 0.0)))""",
+        '(setq ys-two-before (entget ys-two))',
+        '(command "SLBFIX" ys-one ys-two "" "One")',
+        '(ys-check "type-one" (and (= "SLB_DIR_05" (cdr (assoc 2 (entget ys-one)))) (equal ys-two-before (entget ys-two))))',
+        '(setq ys-one-after (entget ys-one))',
+        '(command "SLBFIX" ys-one ys-two "" "Two")',
+        '(ys-check "type-two" (and (= "SLB_DIR_07" (cdr (assoc 2 (entget ys-two)))) (equal ys-one-after (entget ys-one))))',
         '(prompt "\\nYANGCAD_SLAB_SMOKE_DONE\\n")',
         '_.QUIT',
         '_No',

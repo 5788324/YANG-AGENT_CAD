@@ -332,16 +332,19 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 ids = sr.Value.GetObjectIds();
             }
 
-            var pko = new PromptKeywordOptions("\n保持符号原有的单向/双向类型? [是(Y)/否(N,按长短比重判)] <是>：", "Y N")
+            var pko = new PromptKeywordOptions("\n修正范围 [全部保留原类型(Y)/全部重判(N)/只修正原单向(One)/只修正原双向(Two)] <Y>：", "Y N One Two")
             {
                 AllowNone = true
             };
             pko.Keywords.Default = "Y";
             var kr = ed.GetKeywords(pko);
-            if (kr.Status == PromptStatus.Cancel) return;
+            if (kr.Status != PromptStatus.OK && kr.Status != PromptStatus.None) return;
             var keepOld = !string.Equals(kr.StringResult, "N", StringComparison.OrdinalIgnoreCase);
+            string? typeFilter = null;
+            if (string.Equals(kr.StringResult, "One", StringComparison.OrdinalIgnoreCase)) typeFilter = "ONE";
+            else if (string.Equals(kr.StringResult, "Two", StringComparison.OrdinalIgnoreCase)) typeFilter = "TWO";
 
-            int fixedCount = 0, removedUnsupported = 0, dup = 0, skipped = 0, bad = 0;
+            int fixedCount = 0, removedUnsupported = 0, dup = 0, skipped = 0, skippedType = 0, bad = 0;
             var doneCenters = new List<Point3d>();
             var doneOutlines = new HashSet<ObjectId>();
 
@@ -362,8 +365,15 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         continue;
                     }
 
+                    var oldType = InferOldType(blockName);
+                    if (typeFilter != null && oldType != typeFilter)
+                    {
+                        skippedType++;
+                        continue;
+                    }
+
                     var pt = new Point2d(br.Position.X, br.Position.Y);
-                    var forcedType = keepOld ? InferOldType(blockName) : null;
+                    var forcedType = keepOld ? oldType : null;
                     var outlineLink = ReadSymbolOutline(tr, br);
                     var analysis = AnalyzePoint(db, pt, settings, forcedType, br.Position.Z, outlineLink);
                     if (analysis == null)
@@ -420,7 +430,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 tr.Commit();
             }
 
-            ed.WriteMessage($"\n[SLBFIX] 完成: 修正 {fixedCount} 个, 移除无支承方向符号 {removedUnsupported} 个, 删除同板格重复 {dup} 个, 跳过非板符号 {skipped} 个, 失败 {bad} 个。");
+            ed.WriteMessage($"\n[SLBFIX] 完成: 修正 {fixedCount} 个, 移除无支承方向符号 {removedUnsupported} 个, 删除同板格重复 {dup} 个, 跳过非板符号 {skipped} 个, 跳过其他类型 {skippedType} 个, 失败 {bad} 个。");
         }
 
         private static string? PlaceOrUpdateSymbol(Database db, SlabResult res)
