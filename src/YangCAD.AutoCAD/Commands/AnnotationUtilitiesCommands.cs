@@ -250,17 +250,19 @@ namespace YangCAD.AutoCADHost.Commands
                 {
                     while (true)
                     {
-                        var shapeLabel = settings.TextFrameShape == "Circle" ? "圆形" : "矩形";
+                        var shapeLabel = settings.TextFrameShape == "Circle" ? "圆形" : settings.TextFrameShape == "Slot" ? "跑道形" : "矩形";
                         ed.WriteMessage(
-                            $"\n[YGTBOX] 当前默认：{shapeLabel}框 | 留白偏移 {settings.TextFrameMarginMm:0.##}mm\n");
+                            $"\n[YGTBOX] 当前默认：{shapeLabel}框 | 留白偏移 {settings.TextFrameMarginMm:0.##}mm | 遮罩 {(settings.TextFrameMask ? "开" : "关")}\n");
 
                         var pendingKey = "";
                         var opts = new PromptSelectionOptions
                         {
-                            MessageForAdding = "\n请框选需要加框的文字 [矩形(R)/圆形(C)/改留白偏移(O)]："
+                            MessageForAdding = "\n请框选需要加框的文字 [矩形(R)/圆形(C)/跑道(S)/遮罩(M)/改留白偏移(O)]："
                         };
                         opts.Keywords.Add("R", "R", "矩形(R)");
                         opts.Keywords.Add("C", "C", "圆形(C)");
+                        opts.Keywords.Add("S", "S", "跑道(S)");
+                        opts.Keywords.Add("M", "M", "遮罩(M)");
                         opts.Keywords.Add("O", "O", "偏移(O)");
                         opts.KeywordInput += (_, args) =>
                         {
@@ -287,6 +289,18 @@ namespace YangCAD.AutoCADHost.Commands
                                 Persist(settings, ed);
                                 continue;
                             }
+                            if (string.Equals(pendingKey, "S", StringComparison.OrdinalIgnoreCase))
+                            {
+                                settings.TextFrameShape = "Slot";
+                                Persist(settings, ed);
+                                continue;
+                            }
+                            if (string.Equals(pendingKey, "M", StringComparison.OrdinalIgnoreCase))
+                            {
+                                settings.TextFrameMask = !settings.TextFrameMask;
+                                Persist(settings, ed);
+                                continue;
+                            }
                             if (string.Equals(pendingKey, "O", StringComparison.OrdinalIgnoreCase))
                             {
                                 var margin = Numeric(ed, "文字外框留白偏移", settings.TextFrameMarginMm, true);
@@ -307,6 +321,14 @@ namespace YangCAD.AutoCADHost.Commands
 
                 if (ids.Length > 2000)
                     throw new InvalidOperationException("一次最多给 2000 个文字加框，请分批选择。");
+
+                if (settings.TextFrameMask || settings.TextFrameShape == "Slot")
+                {
+                    ed.SetImpliedSelection(Array.Empty<ObjectId>());
+                    JianrenTextService.RunTextBoxAdvanced(doc, settings.TextFrameShape == "Slot",
+                        settings.TextFrameMask, ids, circle: settings.TextFrameShape == "Circle");
+                    return;
+                }
 
                 var skipped = 0;
                 var frames = CadTransactionRunner.WriteContext(doc, false, ctx =>

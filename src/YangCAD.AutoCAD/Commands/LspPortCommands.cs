@@ -1,3 +1,5 @@
+using Autodesk.AutoCAD.EditorInput;
+using YangCAD.AutoCADHost.Infrastructure;
 using Autodesk.AutoCAD.ApplicationServices.Core;
 using Autodesk.AutoCAD.Runtime;
 using YangCAD.AutoCADHost.Services.Cad;
@@ -66,6 +68,103 @@ namespace YangCAD.AutoCADHost.Commands
         [CommandMethod("TXAL", CommandFlags.Modal | CommandFlags.UsePickSet)]
         [CommandMethod("YGTXAL", CommandFlags.Modal | CommandFlags.UsePickSet)]
         public void TextAlign() => DimTextToolsService.RunTextAlign(Application.DocumentManager.MdiActiveDocument);
+
+        [CommandMethod("YGTALIGN", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        public void AlignText()
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            var settings = UserSettings.Load();
+            var mode = ChooseMode(doc.Editor, "文字对齐", settings.TextBoxAlignMode,
+                ("L", "左"), ("R", "右"), ("T", "顶"), ("B", "底"),
+                ("C", "水平中"), ("V", "垂直中"), ("P", "段落"), ("S", "设置"));
+            if (mode == null) return;
+            if (mode == "S")
+            {
+                JianrenTextService.RunTextSettings(doc);
+                return;
+            }
+            settings.TextBoxAlignMode = mode;
+            settings.Save();
+            if (mode == "P") DimTextToolsService.RunTextAlign(doc);
+            else JianrenTextService.RunBoxAlign(doc, mode);
+        }
+
+        [CommandMethod("YGTALONG", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        public void AlignAlongCurve()
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc != null) JianrenTextService.RunAlignAlongCurve(doc);
+        }
+
+        [CommandMethod("YGTSPLITJOIN", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        public void SplitJoinText()
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc != null) JianrenTextService.RunTextSplitJoin(doc);
+        }
+
+        [CommandMethod("YGTCLEAN", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        public void CleanText()
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            switch (ChooseMode(doc.Editor, "文字清洗", "S", ("S", "空格换行"), ("C", "大小写"), ("P", "中英标点"), ("O", "设置")))
+            {
+                case "S": JianrenTextService.RunSpaceClean(doc); break;
+                case "C": JianrenTextService.RunCaseConvert(doc); break;
+                case "P": JianrenTextService.RunPunctuationSwitch(doc); break;
+                case "O": JianrenTextService.RunTextSettings(doc); break;
+            }
+        }
+
+        [CommandMethod("YGTCONTENT", CommandFlags.Modal)]
+        public void TransferTextContent()
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            switch (ChooseMode(doc.Editor, "文字刷换", "B", ("B", "刷内容"), ("S", "互换内容"), ("P", "刷文字特性")))
+            {
+                case "B": JianrenTextService.RunContentBrush(doc); break;
+                case "S": JianrenTextService.RunContentSwap(doc); break;
+                case "P": JianrenTextService.RunPropertyBrush(doc); break;
+            }
+        }
+
+        [CommandMethod("YGDIMCHECK", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        public void CheckDimensions()
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            switch (ChooseMode(doc.Editor, "标注检查", "N", ("N", "异常尾数"), ("T", "改过文字"), ("S", "设置")))
+            {
+                case "N": DimTextToolsService.RunDimCheck(doc); break;
+                case "T": new AnnotationUtilitiesCommands().SelectOverriddenDimensions(); break;
+                case "S": DimTextToolsService.RunDimSet(doc); break;
+            }
+        }
+
+        [CommandMethod("YGDIMEDIT", CommandFlags.Modal | CommandFlags.UsePickSet)]
+        public void EditDimensions()
+        {
+            var doc = Application.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            switch (ChooseMode(doc.Editor, "标注修值", null, ("F", "尾数取整"), ("R", "恢复原值")))
+            {
+                case "F": DimTextToolsService.RunDimFix(doc); break;
+                case "R": DimTextToolsService.RunDimRestore(doc); break;
+            }
+        }
+
+        private static string? ChooseMode(Editor ed, string message, string? fallback, params (string Key, string Label)[] modes)
+        {
+            var prompt = new PromptKeywordOptions("\n" + message + "：") { AllowNone = fallback != null };
+            foreach (var (key, label) in modes) prompt.Keywords.Add(key, key, $"{label}({key})");
+            if (fallback != null) prompt.Keywords.Default = fallback;
+            var result = ed.GetKeywords(prompt);
+            if (result.Status == PromptStatus.None) return fallback;
+            return result.Status == PromptStatus.OK ? result.StringResult : null;
+        }
 
         // ============================================================
         // 贱人工具箱经典文字增强 (对齐/递增/拆合/空格换行/大小写/标点/刷换/加框)

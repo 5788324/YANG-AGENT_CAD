@@ -69,36 +69,50 @@ namespace YangCAD.AutoCADHost.Commands
                 var multiplier = DualLineService.MillimetersPerDrawingUnit(doc.Database);
                 if (Convert.ToInt32(doc.Database.Insunits) == 0)
                     ed.WriteMessage("\n[YangCAD] 图纸 INSUNITS=0，暂按毫米单位解释；请确保模型单位一致。\n");
-                var mode = AskKeyword(ed, "绘制类型 [Double(双线)/Pipe(管道三线)]",
-                    new[] { "Double", "Pipe" }, settings.DoubleLineMode);
-                if (mode.Length == 0) return;
-                var width = AskWidth(ed, settings.DoubleLineWidthMm, "实际双线宽度 / 管径");
-                if (!width.HasValue) return;
-                var alignment = AskKeyword(ed,
-                    "轴线对齐 [Center(中心)/Left(左侧)/Right(右侧)]",
-                    new[] { "Center", "Left", "Right" }, settings.DoubleLineAlignment);
-                if (alignment.Length == 0) return;
-                var corner = AskKeyword(ed,
-                    "转角处理 [Miter(斜接)/Bevel(倒角)/Round(圆弧弯头)]",
-                    new[] { "Miter", "Bevel", "Round" }, settings.DoubleLineCorner);
-                if (corner.Length == 0) return;
-                var extension = mode == "Pipe"
-                    ? AskExtension(ed, settings.DoubleLineCenterExtensionMm) : 0;
-                if (!extension.HasValue) return;
+                var mode = settings.DoubleLineMode;
+                double? width = settings.DoubleLineWidthMm;
+                var alignment = settings.DoubleLineAlignment;
+                var corner = settings.DoubleLineCorner;
+                double? extension = mode == "Pipe" ? settings.DoubleLineCenterExtensionMm : 0;
 
                 var total = 0;
                 while (true)
                 {
-                    var firstOpt = new PromptPointOptions(
-                        "\n起点 [Width(改变下段宽度)/Exit(完成命令)]，回车退出：") {
-                        AllowNone = true
-                    };
-                    firstOpt.Keywords.Add("Width");
-                    firstOpt.Keywords.Add("Exit");
+                    var firstOpt = new PromptPointOptions($"\n起点（宽 {width:0.###} mm），回车结束：") { AllowNone = true };
+                    firstOpt.Keywords.Add("W", "W", "改已有双线宽度(W)");
+                    firstOpt.Keywords.Add("D", "D", "设置绘制参数(D)");
+                    firstOpt.Keywords.Add("N", "N", "改下一段宽度(N)");
+                    firstOpt.Keywords.Add("Exit", "Exit", "结束(Exit)");
                     var first = ed.GetPoint(firstOpt);
                     if (first.Status == PromptStatus.Keyword)
                     {
-                        if (string.Equals(first.StringResult, "Width", StringComparison.OrdinalIgnoreCase))
+                        if (first.StringResult == "W")
+                        {
+                            ChangeDoubleLineWidth();
+                            break;
+                        }
+                        if (first.StringResult == "D")
+                        {
+                            mode = AskKeyword(ed, "绘制类型 [Double(双线)/Pipe(管道三线)]",
+                                new[] { "Double", "Pipe" }, settings.DoubleLineMode);
+                            if (mode.Length == 0) return;
+                            width = AskWidth(ed, settings.DoubleLineWidthMm, "实际双线宽度 / 管径");
+                            if (!width.HasValue) return;
+                            alignment = AskKeyword(ed,
+                                "轴线对齐 [Center(中心)/Left(左侧)/Right(右侧)]",
+                                new[] { "Center", "Left", "Right" }, settings.DoubleLineAlignment);
+                            if (alignment.Length == 0) return;
+                            corner = AskKeyword(ed,
+                                "转角处理 [Miter(斜接)/Bevel(倒角)/Round(圆弧弯头)]",
+                                new[] { "Miter", "Bevel", "Round" }, settings.DoubleLineCorner);
+                            if (corner.Length == 0) return;
+                            extension = mode == "Pipe"
+                                ? AskExtension(ed, settings.DoubleLineCenterExtensionMm) : 0;
+                            if (!extension.HasValue) return;
+
+                            continue;
+                        }
+                        if (first.StringResult == "N")
                         {
                             var changed = AskWidth(ed, width.Value, "下一段双线宽度");
                             if (changed.HasValue) width = changed.Value;

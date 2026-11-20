@@ -93,6 +93,7 @@ namespace YangCAD.AutoCADHost.UI
             var terms = query.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
             var catalog = CadToolCatalog.All.Where(tool => tool.Command != "YANGCAD_TOOLBOX");
             var visible = catalog.Where(tool =>
+                (!tool.IsSecondary || terms.Length > 0) &&
                 terms.All(term => $"{tool.Name} {tool.ShortName} {tool.Command} {tool.DefaultAliasHint} {tool.Category}"
                     .IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0)).ToList();
             var groups = new List<ToolGroup>();
@@ -199,7 +200,7 @@ namespace YangCAD.AutoCADHost.UI
             if (!((sender as Button)?.Tag is string command)) return;
             e.Handled = true;
             var descriptorId = command == "YGREVIT" ? "project.revit.prepare" :
-                command == "YGEMBED" || command == "YGEMBEDBATCH" ? "project.image.embed" : null;
+                command == "YGREFEMBED" || command == "YGEMBED" || command == "YGEMBEDBATCH" ? "project.image.embed" : null;
             if (descriptorId != null && sender is Button button)
             {
                 var menu = new ContextMenu { PlacementTarget = button };

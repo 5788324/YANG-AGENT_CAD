@@ -21,7 +21,15 @@ namespace YangCAD.AutoCADHost.Commands
                 var defaultFactor = settings.DetailScaleFactor > 0 ? settings.DetailScaleFactor : 1.0;
 
                 ed.WriteMessage("\n[YangCAD] 框出需要提取的大样范围（原图保留不动）。\n");
-                var first = ed.GetPoint("\n大样裁切框第一个角点：");
+                var start = new PromptPointOptions("\n大样裁切框第一个角点：");
+                start.Keywords.Add("S", "S", "选闭合多段线(S)");
+                start.Keywords.Add("D", "D", "逐点多边形(D)");
+                var first = ed.GetPoint(start);
+                if (first.Status == PromptStatus.Keyword)
+                {
+                    PolygonDetailCommands.ExtractDetail(doc, first.StringResult == "S" ? "Select" : "Draw");
+                    return;
+                }
                 if (first.Status != PromptStatus.OK) return;
                 var secondOpt = new PromptCornerOptions("\n对角点：", first.Value);
                 var second = ed.GetCorner(secondOpt);

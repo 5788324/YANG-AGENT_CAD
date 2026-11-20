@@ -253,6 +253,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var settings = UserSettings.Load();
             var filter = new SelectionFilter(new[] { new TypedValue((int)DxfCode.Start, "DIMENSION,TEXT,MTEXT,INSERT") });
 
+            var forceAll = false;
             ObjectId[]? ids = null;
             var implied = ed.SelectImplied();
             if (implied.Status == PromptStatus.OK && implied.Value != null && implied.Value.Count > 0)
@@ -268,9 +269,10 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     var key = "";
                     var opts = new PromptSelectionOptions
                     {
-                        MessageForAdding = $"\n选择文字/标注/属性块(向上参考={(settings.UpwardRef == "W" ? "世界坐标" : "当前屏幕")}) [切换参考(R)]："
+                        MessageForAdding = $"\n选择文字/标注/属性块(向上参考={(settings.UpwardRef == "W" ? "世界坐标" : "当前屏幕")}) [切换参考(R)/全部翻转(F)]："
                     };
                     opts.Keywords.Add("R", "R", "切换参考(R)");
+                    opts.Keywords.Add("F", "F", forceAll ? "恢复自动翻正(F)" : "全部翻转180度(F)");
                     opts.KeywordInput += (_, args) =>
                     {
                         key = args.Input ?? "";
@@ -281,8 +283,13 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     try { sr = ed.GetSelection(opts, filter); }
                     catch (Autodesk.AutoCAD.Runtime.Exception) when (!string.IsNullOrEmpty(key))
                     {
-                        settings.UpwardRef = settings.UpwardRef == "W" ? "S" : "W";
-                        settings.Save();
+                        if (string.Equals(key, "F", StringComparison.OrdinalIgnoreCase))
+                            forceAll = !forceAll;
+                        else
+                        {
+                            settings.UpwardRef = settings.UpwardRef == "W" ? "S" : "W";
+                            settings.Save();
+                        }
                         continue;
                     }
 
@@ -308,25 +315,25 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     if (!(tr.GetObject(id, OpenMode.ForRead) is Entity ent)) continue;
                     if (ent is Dimension dim)
                     {
-                        RecordOutcome(TryFlipDim(tr, lt, dim, false, twist), ref done, ref ok, ref skip, ref fail);
+                        RecordOutcome(TryFlipDim(tr, lt, dim, forceAll, twist), ref done, ref ok, ref skip, ref fail);
                     }
                     else if (ent is DBText || ent is MText)
                     {
-                        RecordOutcome(TryUprightText(tr, lt, ent, twist), ref done, ref ok, ref skip, ref fail);
+                        RecordOutcome(TryUprightText(tr, lt, ent, twist, forceAll), ref done, ref ok, ref skip, ref fail);
                     }
                     else if (ent is BlockReference br)
                     {
                         foreach (ObjectId attId in br.AttributeCollection)
                         {
                             if (tr.GetObject(attId, OpenMode.ForRead) is AttributeReference att)
-                                RecordOutcome(TryUprightText(tr, lt, att, twist), ref done, ref ok, ref skip, ref fail);
+                                RecordOutcome(TryUprightText(tr, lt, att, twist, forceAll), ref done, ref ok, ref skip, ref fail);
                         }
                     }
                 }
                 tr.Commit();
             }
 
-            ed.WriteMessage($"\n[TXTUP] 已将 {done} 个倒置/反向文字转向上；{ok} 个本来已向上" +
+            ed.WriteMessage($"\n[TXTUP] 已将 {done} 个文字翻转180度；{ok} 个本来已向上" +
                             (skip > 0 ? $"; 跳过 {skip} 个" : "") +
                             (fail > 0 ? $"; 失败 {fail} 个" : "") + "。");
         }
@@ -548,7 +555,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             }
         }
 
-        private static OpOutcome TryUprightText(Transaction tr, LayerTable lt, Entity ent, double twist)
+        private static OpOutcome TryUprightText(Transaction tr, LayerTable lt, Entity ent, double twist, bool forceAll = false)
         {
             if (IsLayerLocked(tr, lt, ent.Layer)) return OpOutcome.Fail;
 
@@ -570,7 +577,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 double? rot = ent is DBText t ? t.Rotation : (ent is MText m ? m.Rotation : (double?)null);
                 if (!rot.HasValue) return modified ? OpOutcome.Done : OpOutcome.Skip;
 
-                if (IsWrongReadingDir(NormAngle(rot.Value + twist)))
+                if (forceAll || IsWrongReadingDir(NormAngle(rot.Value + twist)))
                 {
                     var center = TryCenter(ent);
                     if (!center.HasValue) return OpOutcome.Fail;

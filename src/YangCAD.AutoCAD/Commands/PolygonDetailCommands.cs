@@ -23,21 +23,29 @@ namespace YangCAD.AutoCADHost.Commands
         public void ExtractDetail()
         {
             var doc = Autodesk.AutoCAD.ApplicationServices.Core.Application.DocumentManager.MdiActiveDocument;
-            if (doc == null) return;
+            if (doc != null) ExtractDetail(doc, null);
+        }
+
+        internal static void ExtractDetail(Document doc, string? initialMode)
+        {
             var ed = doc.Editor;
             try
             {
-                var mode = new PromptKeywordOptions(
-                    "\n多边形大样 [Select(选择闭合多段线)/Draw(逐点绘制)] <Select>：");
-                mode.Keywords.Add("Select");
-                mode.Keywords.Add("Draw");
-                mode.Keywords.Default = "Select";
-                mode.AllowNone = true;
-                var selectedMode = ed.GetKeywords(mode);
-                if (selectedMode.Status != PromptStatus.OK &&
-                    selectedMode.Status != PromptStatus.None) return;
-                var name = selectedMode.Status == PromptStatus.None
-                    ? "Select" : selectedMode.StringResult;
+                var name = initialMode;
+                if (name == null)
+                {
+                    var mode = new PromptKeywordOptions(
+                        "\n多边形大样 [Select(选择闭合多段线)/Draw(逐点绘制)] <Select>：");
+                    mode.Keywords.Add("Select");
+                    mode.Keywords.Add("Draw");
+                    mode.Keywords.Default = "Select";
+                    mode.AllowNone = true;
+                    var selectedMode = ed.GetKeywords(mode);
+                    if (selectedMode.Status != PromptStatus.OK &&
+                        selectedMode.Status != PromptStatus.None) return;
+                    name = selectedMode.Status == PromptStatus.None
+                        ? "Select" : selectedMode.StringResult;
+                }
 
                 var input = string.Equals(name, "Select", StringComparison.OrdinalIgnoreCase)
                     ? SelectBoundary(doc) : DrawBoundary(ed);

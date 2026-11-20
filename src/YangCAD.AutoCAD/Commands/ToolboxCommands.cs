@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using AcApp = Autodesk.AutoCAD.ApplicationServices.Core.Application;
 using Autodesk.AutoCAD.Runtime;
+using Autodesk.AutoCAD.EditorInput;
 using YangCAD.AutoCADHost.Infrastructure;
 using YangCAD.AutoCADHost.Services.Cad;
 using YangCAD.AutoCADHost.UI;
@@ -51,6 +52,22 @@ namespace YangCAD.AutoCADHost.Commands
                 RuntimeLogger.Error("YGREVIT failed.", ex);
                 ed.WriteMessage("\n[YangCAD] Revit 预处理失败：" + ex.Message + "\n");
             }
+        }
+
+        [CommandMethod("YGREFEMBED", CommandFlags.Modal)]
+        public void EmbedReferences()
+        {
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            var options = new PromptKeywordOptions("\n引用内嵌 <当前图纸>：") { AllowNone = true };
+            options.Keywords.Add("C", "C", "当前图纸(C)");
+            options.Keywords.Add("B", "B", "批量文件夹(B)");
+            options.Keywords.Default = "C";
+            var mode = doc.Editor.GetKeywords(options);
+            if (mode.Status == PromptStatus.None || (mode.Status == PromptStatus.OK && mode.StringResult == "C"))
+                EmbedCurrentDrawing();
+            else if (mode.Status == PromptStatus.OK && mode.StringResult == "B")
+                EmbedFolderBatch();
         }
 
         [CommandMethod("YGEMBED", CommandFlags.Modal)]

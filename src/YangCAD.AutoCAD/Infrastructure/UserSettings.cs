@@ -17,6 +17,8 @@ namespace YangCAD.AutoCADHost.Infrastructure
         public double SlopeTextHeightMm { get; set; } = 250;
         public double SlopeOffsetMm { get; set; } = 100;
         public string TextFrameShape { get; set; } = "Rectangle";
+        public bool TextFrameMask { get; set; }
+        public string TextBoxAlignMode { get; set; } = "L";
         public double TextFrameMarginMm { get; set; } = 50;
         public double DetailScaleFactor { get; set; } = 2.0;
         public string LastScaleMode { get; set; } = "Standard";
@@ -140,7 +142,10 @@ namespace YangCAD.AutoCADHost.Infrastructure
                 SlopeTextHeightMm <= 0 || SlopeTextHeightMm > 1e7) SlopeTextHeightMm = 250;
             if (double.IsNaN(SlopeOffsetMm) || double.IsInfinity(SlopeOffsetMm) ||
                 SlopeOffsetMm < 0 || SlopeOffsetMm > 1e7) SlopeOffsetMm = 100;
-            if (TextFrameShape != "Circle" && TextFrameShape != "Rectangle")
+            if (TextBoxAlignMode != "L" && TextBoxAlignMode != "R" && TextBoxAlignMode != "T" &&
+                TextBoxAlignMode != "B" && TextBoxAlignMode != "C" && TextBoxAlignMode != "V" && TextBoxAlignMode != "P")
+                TextBoxAlignMode = "L";
+            if (TextFrameShape != "Circle" && TextFrameShape != "Rectangle" && TextFrameShape != "Slot")
                 TextFrameShape = "Rectangle";
             if (double.IsNaN(TextFrameMarginMm) || double.IsInfinity(TextFrameMarginMm) ||
                 TextFrameMarginMm < 0 || TextFrameMarginMm > 1e7) TextFrameMarginMm = 50;

@@ -137,8 +137,60 @@ namespace YangCAD.AutoCADHost.Services.Cad
             ed.WriteMessage($"\n[文字对齐] 已精确对齐 {moved} 个文字。");
         }
 
+        public static void RunAlignAlongCurve(Document doc)
+        {
+            var ed = doc.Editor;
+            var options = new PromptEntityOptions("\n点选直线、多段线、圆或圆弧：");
+            options.SetRejectMessage("\n请选择直线、多段线、圆或圆弧。");
+            foreach (var type in new[] { typeof(Line), typeof(Polyline), typeof(Circle), typeof(Arc) })
+                options.AddAllowedClass(type, true);
+            var pick = ed.GetEntity(options);
+            if (pick.Status != PromptStatus.OK) return;
+
+            var kind = pick.ObjectId.ObjectClass.DxfName;
+            if (kind == "CIRCLE" || kind == "ARC")
+                RunAlignToArc(doc, pick.ObjectId);
+            else
+                RunAlignToLine(doc, pick);
+        }
+
+        public static void RunTextSplitJoin(Document doc)
+        {
+            var ed = doc.Editor;
+            var ids = GetOrPromptTextEntities(ed, "TEXT,MTEXT", "\n选择要拆合的文字：");
+            if (ids == null || ids.Length == 0) return;
+
+            var singles = ids.Where(id => id.ObjectClass.DxfName == "TEXT").ToArray();
+            var multis = ids.Where(id => id.ObjectClass.DxfName == "MTEXT").ToArray();
+            if (singles.Length == 0)
+            {
+                RunMultiToSingle(doc, multis);
+                return;
+            }
+            if (singles.Length == 1 && multis.Length == 0)
+            {
+                RunExplodeToChars(doc, singles);
+                return;
+            }
+
+            var options = new PromptKeywordOptions("\n文字拆合：");
+            if (singles.Length > 1) options.Keywords.Add("J", "J", "连接成一行(J)");
+            options.Keywords.Add("M", "M", "合并为多行(M)");
+            if (multis.Length > 0) options.Keywords.Add("S", "S", "将多行拆为单行(S)");
+            if (singles.Length == 1) options.Keywords.Add("E", "E", "拆成单字(E)");
+            var mode = ed.GetKeywords(options);
+            if (mode.Status != PromptStatus.OK) return;
+            switch (mode.StringResult)
+            {
+                case "J": RunJoinText(doc, singles); break;
+                case "M": RunSingleToMulti(doc, singles); break;
+                case "S": RunMultiToSingle(doc, multis); break;
+                case "E": RunExplodeToChars(doc, singles); break;
+            }
+        }
+
         // ---------- 2. 按线对齐 ----------
-        public static void RunAlignToLine(Document doc)
+        public static void RunAlignToLine(Document doc, PromptEntityResult? reference = null)
         {
             if (doc == null) return;
             var ed = doc.Editor;
@@ -159,7 +211,8 @@ namespace YangCAD.AutoCADHost.Services.Cad
             {
                 var peo = new PromptEntityOptions($"\n点选参照直线/多段线 [改偏移距(O)={settings.TextLineAlignOffset:0.#}mm]：");
                 peo.Keywords.Add("O", "O", "偏移距(O)");
-                var per = ed.GetEntity(peo);
+                var per = reference ?? ed.GetEntity(peo);
+                reference = null;
                 if (per.Status == PromptStatus.Cancel || per.Status == PromptStatus.None) return;
                 if (per.Status == PromptStatus.Keyword)
                 {
@@ -238,7 +291,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
         }
 
         // ---------- 3. 按弧环绕文字 ----------
-        public static void RunAlignToArc(Document doc)
+        public static void RunAlignToArc(Document doc, ObjectId pickedArc = default)
         {
             if (doc == null) return;
             var ed = doc.Editor;
@@ -251,7 +304,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 "\n选择需要沿弧环绕的文字(可选 1 句自动拆字，或选多个单字)：");
             if (ids == null || ids.Length == 0) return;
 
-            ObjectId arcId = ObjectId.Null;
+            ObjectId arcId = pickedArc;
             while (arcId.IsNull)
             {
                 var peo = new PromptEntityOptions($"\n点选圆弧或圆 [朝向={(settings.TextArcInward ? "向心(I)" : "背心(O)")}/偏移={settings.TextArcOffset:0.#}(D)]：");
@@ -646,12 +699,12 @@ namespace YangCAD.AutoCADHost.Services.Cad
         }
 
         // ---------- 5. 连接文字 / 单转多 / 多转单 / 炸碎 ----------
-        public static void RunJoinText(Document doc)
+        public static void RunJoinText(Document doc, ObjectId[]? selected = null)
         {
             if (doc == null) return;
             var ed = doc.Editor;
             var db = doc.Database;
-            var ids = GetOrPromptTextEntities(
+            var ids = selected ?? GetOrPromptTextEntities(
                 ed,
                 "TEXT",
                 "\n选择要按顺序连接为一句的单行文字：");
@@ -690,12 +743,12 @@ namespace YangCAD.AutoCADHost.Services.Cad
             ed.WriteMessage($"\n[YGTJOIN] 已合并为：{joined}");
         }
 
-        public static void RunSingleToMulti(Document doc)
+        public static void RunSingleToMulti(Document doc, ObjectId[]? selected = null)
         {
             if (doc == null) return;
             var ed = doc.Editor;
             var db = doc.Database;
-            var ids = GetOrPromptTextEntities(
+            var ids = selected ?? GetOrPromptTextEntities(
                 ed,
                 "TEXT",
                 "\n框选要转为多行文字(MTEXT)的单行文字：");
@@ -761,12 +814,12 @@ namespace YangCAD.AutoCADHost.Services.Cad
             ed.WriteMessage($"\n[YGTS2M] 已将 {lineCount} 条单行文字合并为 1 个 MTEXT。");
         }
 
-        public static void RunMultiToSingle(Document doc)
+        public static void RunMultiToSingle(Document doc, ObjectId[]? selected = null)
         {
             if (doc == null) return;
             var ed = doc.Editor;
             var db = doc.Database;
-            var ids = GetOrPromptTextEntities(
+            var ids = selected ?? GetOrPromptTextEntities(
                 ed,
                 "MTEXT",
                 "\n选择要拆分为单行文字的多行文字(MTEXT)：");
@@ -816,12 +869,12 @@ namespace YangCAD.AutoCADHost.Services.Cad
             ed.WriteMessage($"\n[YGTM2S] 已拆分为 {created} 条单行文字。");
         }
 
-        public static void RunExplodeToChars(Document doc)
+        public static void RunExplodeToChars(Document doc, ObjectId[]? selected = null)
         {
             if (doc == null) return;
             var ed = doc.Editor;
             var db = doc.Database;
-            var ids = GetOrPromptTextEntities(
+            var ids = selected ?? GetOrPromptTextEntities(
                 ed,
                 "TEXT",
                 "\n选择要炸碎为单个字符的单行文字：");
@@ -1337,17 +1390,18 @@ namespace YangCAD.AutoCADHost.Services.Cad
         }
 
         // ---------- 11. 跑道框 / 带消隐遮罩(Wipeout)文字框 ----------
-        public static void RunTextBoxAdvanced(Document doc, bool slotShape, bool withWipeout)
+        public static void RunTextBoxAdvanced(Document doc, bool slotShape, bool withWipeout,
+            ObjectId[]? selected = null, bool circle = false)
         {
             if (doc == null) return;
             var ed = doc.Editor;
             var db = doc.Database;
             var settings = UserSettings.Load();
 
-            var ids = GetOrPromptTextEntities(ed, "TEXT,MTEXT", $"\n选择需要加{(slotShape ? "跑道框" : "遮罩矩形框")}的文字(留白 {settings.TextFrameMarginMm:0.##}mm)：");
+            var ids = selected ?? GetOrPromptTextEntities(ed, "TEXT,MTEXT", $"\n选择需要加{(slotShape ? "跑道框" : "遮罩矩形框")}的文字(留白 {settings.TextFrameMarginMm:0.##}mm)：");
             if (ids == null || ids.Length == 0) return;
 
-            var margin = settings.TextFrameMarginMm;
+            var margin = settings.TextFrameMarginMm / AnnotationUtilitiesService.MillimetersPerUnit(db);
             var created = 0;
 
             using (var tr = db.TransactionManager.StartTransaction())
@@ -1358,7 +1412,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
                 foreach (var id in ids)
                 {
-                    if (!(tr.GetObject(id, OpenMode.ForRead) is Entity ent)) continue;
+                    if (!(tr.GetObject(id, OpenMode.ForRead) is Entity ent) || IsOnLockedLayer(tr, ent)) continue;
                     if (!TryGetExtents(ent, out var ext)) continue;
 
                     var minX = ext.MinPoint.X - margin;
@@ -1367,14 +1421,34 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     var maxY = ext.MaxPoint.Y + margin;
                     var z = ext.MinPoint.Z;
 
+                    var centerX = (minX + maxX) * 0.5;
+                    var centerY = (minY + maxY) * 0.5;
+                    var circleRadius = Math.Sqrt(Math.Pow((ext.MaxPoint.X - ext.MinPoint.X) * 0.5, 2) +
+                                                 Math.Pow((ext.MaxPoint.Y - ext.MinPoint.Y) * 0.5, 2)) + margin;
+
                     if (withWipeout)
                     {
-                        var woPts = BuildWipeoutLoop(minX, maxX, minY, maxY, slotShape);
+                        var woPts = circle ? BuildCircularWipeout(centerX, centerY, circleRadius) :
+                            BuildWipeoutLoop(minX, maxX, minY, maxY, slotShape);
                         var wo = new Wipeout { Layer = ent.Layer };
                         wo.SetFrom(woPts, Vector3d.ZAxis);
+                        if (z != 0) wo.TransformBy(Matrix3d.Displacement(new Vector3d(0, 0, z)));
                         space.AppendEntity(wo);
                         tr.AddNewlyCreatedDBObject(wo, true);
                         textTopIds.Add(ent.ObjectId);
+                    }
+
+                    if (circle)
+                    {
+                        var roundFrame = new Circle(new Point3d(centerX, centerY, z), Vector3d.ZAxis, circleRadius)
+                        {
+                            Layer = ent.Layer
+                        };
+                        space.AppendEntity(roundFrame);
+                        tr.AddNewlyCreatedDBObject(roundFrame, true);
+                        if (withWipeout) textTopIds.Add(roundFrame.ObjectId);
+                        created++;
+                        continue;
                     }
 
                     var pl = new Polyline { Closed = true, Elevation = z, Layer = ent.Layer };
@@ -1410,6 +1484,19 @@ namespace YangCAD.AutoCADHost.Services.Cad
             }
 
             ed.WriteMessage($"\n[文字加框] 已为 {created} 个文字生成边框" + (withWipeout ? "(含背景消隐遮罩)。" : "。"));
+        }
+
+        private static Point2dCollection BuildCircularWipeout(double x, double y, double radius)
+        {
+            const int segments = 48;
+            var points = new Point2dCollection();
+            for (var i = 0; i < segments; i++)
+            {
+                var angle = i * 2 * Math.PI / segments;
+                points.Add(new Point2d(x + radius * Math.Cos(angle), y + radius * Math.Sin(angle)));
+            }
+            points.Add(points[0]);
+            return points;
         }
 
         private static Point2dCollection BuildWipeoutLoop(double minX, double maxX, double minY, double maxY, bool slot)

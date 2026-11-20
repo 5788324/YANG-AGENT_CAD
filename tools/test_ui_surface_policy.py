@@ -38,7 +38,10 @@ ok('ribbon panels put drawing before project and settings',
        '常用工具', '图层与填充', '文字与标注', '结构绘图', '图纸与引用', '连接与设置'])
 ok('ribbon commands have command methods', bool(buttons) and all(cmd.strip() in registered_commands for _,cmd in buttons))
 ok('ribbon menus keep their category labels', 'IsSplit = false' in ribbon and 'IsSynchronizedWithCurrentItem = false' in ribbon)
-ok('ribbon labels slab preview according to its actual command', ('预览板格', 'SLBP ') in buttons)
+ribbon_commands = {cmd.strip() for _, cmd in buttons}
+ok('slab placement and repair are visible while old slab modes remain callable',
+   {'SLB','SLBFIX'} <= ribbon_commands and not {'SLBP','SLBLAYER','SLBSET'} & ribbon_commands
+   and {'SLBP','SLBLAYER','SLBSET'} <= registered_commands)
 ok('ribbon and toolbox preserve active CAD commands', all(r'\x03' not in ui for ui in [ribbon, tb_c]))
 ok('toolbox command buttons all route to registered commands',
    set(re.findall(r'Tag="([A-Z][A-Z0-9_]+)"', tb_x)) <= registered_commands)
@@ -51,6 +54,14 @@ catalog_commands, hints, icon_keys = (list(col) for col in zip(*rows))
 icons = set(re.findall(r'case "([^"]+)"', text('src/YangCAD.AutoCAD/UI/RibbonIcons.cs')))
 ok('catalog commands are unique and registered', len(catalog_commands) == len(set(catalog_commands)) and set(catalog_commands) <= registered_commands)
 ok('catalog alias hints are unique', len(hints) == len({hint.upper() for hint in hints}))
+catalog_entries = re.findall(r'new CadToolItem\([^\n]+\n[^\n]+', catalog)
+primary = {cmd for cmd, line in zip(catalog_commands, catalog_entries)
+           if 'secondary: true' not in line and cmd != 'YANGCAD_TOOLBOX'}
+ok('default toolbox keeps a compact primary catalog', 30 <= len(primary) <= 36)
+ok('new combined commands appear in both main surfaces',
+   {'YGTALIGN','YGTALONG','YGTSPLITJOIN','YGTCLEAN','YGTCONTENT','YGDIMCHECK','YGDIMEDIT','YGREFEMBED'}
+   <= (primary & ribbon_commands))
+ok('secondary tools are discoverable by search', '(!tool.IsSecondary || terms.Length > 0)' in tb_c)
 ok('catalog icon keys exist', set(icon_keys) <= icons)
 ok('toolbox renders catalog short labels and commands', all(x in tb_x for x in ['{Binding ShortName}', '{Binding Command}', 'ToolGroups']))
 ok('four frequent tools are direct Ribbon buttons', all(re.search(r'(?<!MenuItem)Button\("[^"]+", "'+cmd+r' ', ribbon) for cmd in ('YGHCLIP','YGLEADERFIX','YGINC','YGDL')))
