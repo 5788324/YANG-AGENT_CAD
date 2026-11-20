@@ -77,10 +77,7 @@ function Resolve-ImagePath([string]$ImageFile, [string]$DwgPath) {
     return [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetDirectoryName($DwgPath)) $ImageFile))
 }
 
-function Test-RasterClipped($Doc, $Raster) {
-    if (-not [bool]$Raster.ClippingEnabled) { return $false }
-
-    $handle = [string]$Raster.Handle
+function Test-RasterClipped($Doc, [string]$handle, [int]$TimeoutSeconds) {
     if ($handle -notmatch '^[0-9A-F]+$') { throw "Invalid raster handle: $handle" }
 
     # IMAGE DXF stores an enabled whole-image clip as a two-corner pixel rectangle.
@@ -107,16 +104,20 @@ function Test-RasterClipped($Doc, $Raster) {
     try {
         $Doc.SetVariable('USERI5', [int16]-1)
         $Doc.SendCommand((($expression -f $handle) -replace '\r?\n', ' ') + "`r")
-        $result = [int]$Doc.GetVariable('USERI5')
-        if ($result -eq -1) { throw "Could not read raster clip boundary: $handle" }
-        return ($result -eq 1)
+        $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+        do {
+            $result = [int]$Doc.GetVariable('USERI5')
+            if ($result -ne -1) { return ($result -eq 1) }
+            Start-Sleep -Milliseconds 100
+        } while ([DateTime]::UtcNow -lt $deadline)
+        throw "Could not read raster clip boundary: $handle"
     }
     finally {
         $Doc.SetVariable('USERI5', $saved)
     }
 }
 
-function Snapshot-Raster($Doc, $Raster, [string]$LayoutName, [string]$DwgPath) {
+function Snapshot-Raster($Raster, [string]$LayoutName, [string]$DwgPath) {
     $imageFile = [string]$Raster.ImageFile
     $resolved = Resolve-ImagePath $imageFile $DwgPath
     $origin = @($Raster.Origin)
@@ -130,7 +131,7 @@ function Snapshot-Raster($Doc, $Raster, [string]$LayoutName, [string]$DwgPath) {
         height = [double]$Raster.ImageHeight
         rotation = [double]$Raster.Rotation
         layer = [string]$Raster.Layer
-        clipped = (Test-RasterClipped $Doc $Raster)
+        clipping_enabled = [bool]$Raster.ClippingEnabled
         brightness = [int]$Raster.Brightness
         contrast = [int]$Raster.Contrast
         fade = [int]$Raster.Fade
@@ -194,7 +195,7 @@ function Convert-Raster($Acad, $Doc, $Layout, $RasterInfo, [int]$TimeoutSeconds)
     if (-not (Test-Path -LiteralPath $RasterInfo.resolved_path)) {
         return [ordered]@{ ok=$false; handle=$RasterInfo.handle; reason='missing_image_file'; path=$RasterInfo.resolved_path }
     }
-    if ($RasterInfo.clipped) {
+    if ($RasterInfo.clipping_enabled -and (Test-RasterClipped $Doc $RasterInfo.handle $TimeoutSeconds)) {
         return [ordered]@{ ok=$false; handle=$RasterInfo.handle; reason='clipped_image_not_supported_v1'; path=$RasterInfo.resolved_path }
     }
     if ($RasterInfo.brightness -ne 50 -or $RasterInfo.contrast -ne 50 -or $RasterInfo.fade -ne 0) {
@@ -326,7 +327,7 @@ function Process-Drawing($Acad, $Item, $Job) {
                 try {
                     if ([string]$entity.ObjectName -eq 'AcDbRasterImage') {
                         try {
-                            [void]$rasters.Add((Snapshot-Raster $doc $entity $layoutName $input))
+                            [void]$rasters.Add((Snapshot-Raster $entity $layoutName $input))
                         }
                         catch {
                             $handle = $null
@@ -581,7 +582,11 @@ try {
         }
         Write-Status $statusPath $status
     }
-    $status.state = if ($status.failed -eq 0 -and $status.partial -eq 0) { 'PASS' } elseif ($status.passed -gt 0 -or $status.partial -gt 0) { 'PARTIAL' } else { 'FAIL' }
+    $status.state = if ($status.failed -eq 0 -and $status.partial -eq 0) {
+        if ($status.passed -gt 0) { 'PASS' } else { 'SKIPPED' }
+    }
+    elseif ($status.passed -gt 0 -or $status.partial -gt 0) { 'PARTIAL' }
+    else { 'FAIL' }
 }
 catch {
     $status.state = 'FAIL'
@@ -596,4 +601,5 @@ finally {
 
 if ($status.state -eq 'PASS') { exit 0 }
 if ($status.state -eq 'PARTIAL') { exit 3 }
+if ($status.state -eq 'SKIPPED') { exit 4 }
 exit 1

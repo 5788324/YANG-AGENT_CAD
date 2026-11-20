@@ -13,7 +13,7 @@ checks={
     'current default input': 'currentDrawingPath ?? ""' in registry,
     'worker launch not advertised as complete': '任务已启动（尚未完成）' in ui and 'started = true' in service,
     'source not overwritten': '输出路径不能与输入 DWG 相同' in service and 'Move-Item -LiteralPath $workPath -Destination $output' in worker,
-    'relative raster uses ORIGINAL dwg': 'Snapshot-Raster $doc $entity $layoutName $input' in worker and 'Snapshot-Raster $doc $entity $layoutName $workPath' not in worker,
+    'relative raster uses ORIGINAL dwg': 'Snapshot-Raster $entity $layoutName $input' in worker and 'Snapshot-Raster $entity $layoutName $workPath' not in worker,
     'per file exceptions isolated': "reason='per_file_exception'" in worker,
     'UI polls final Worker state': 'DispatcherTimer' in ui and 'EmbedStatusTick' in ui and 'StartEmbedStatusMonitor(embed)' in ui,
     'UI opens output directory': 'OpenEmbedOutputClick' in ui and 'OpenEmbedOutputClick' in xaml,

@@ -62,7 +62,7 @@ namespace YangCAD.AutoCADHost.UI
             InitializeComponent();
             ThemeManager.Apply(Resources, UserSettings.Load().Theme);
             RefreshTools();
-            Loaded += (_, __) => SetQuickButtonTooltips();
+            Loaded += (_, __) => SetQuickButtonLabelsAndTooltips();
             Unloaded += (_, __) => StopEmbedStatusMonitor();
         }
 
@@ -83,7 +83,7 @@ namespace YangCAD.AutoCADHost.UI
                 .ToList();
         }
 
-        private void SetQuickButtonTooltips()
+        private void SetQuickButtonLabelsAndTooltips()
         {
             if (ToolListPane == null) return;
             foreach (var button in FindVisualChildren<Button>(ToolListPane))
@@ -92,6 +92,7 @@ namespace YangCAD.AutoCADHost.UI
                 var item = CadToolCatalog.All.FirstOrDefault(x =>
                     string.Equals(x.Command, cmd, StringComparison.OrdinalIgnoreCase));
                 if (item == null) continue;
+                button.Content = item.Name;
                 button.ToolTip = $"{item.Description}\n命令：{item.Command}（推荐缩写：{item.DefaultAliasHint}）";
             }
         }
@@ -481,7 +482,7 @@ namespace YangCAD.AutoCADHost.UI
                 var job = JsonCodec.Deserialize<EmbedStatusDto>(File.ReadAllText(_embedStatusFile));
                 if (job == null || string.IsNullOrWhiteSpace(job.state)) return;
                 var state = job.state.Trim().ToUpperInvariant();
-                var terminal = state == "PASS" || state == "PARTIAL" || state == "FAIL";
+                var terminal = state == "PASS" || state == "PARTIAL" || state == "FAIL" || state == "SKIPPED";
                 var headline = terminal ? $"引用处理完成：{state}" : $"引用处理进行中：{state}";
                 var details = $"总数：{job.total_files}；成功：{job.passed}；部分成功：{job.partial}；失败：{job.failed}；跳过：{job.skipped}\n输出：{_embedOutputFolder}\n状态：{_embedStatusFile}";
                 if (!string.IsNullOrWhiteSpace(job.fatal_error)) details += "\n错误：" + job.fatal_error;

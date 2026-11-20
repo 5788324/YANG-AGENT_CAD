@@ -88,23 +88,14 @@ namespace YangCAD.AutoCADHost.UI
                     MenuItem("互换文字内容", "YGTSWAP ", "text_swap"),
                     MenuItem("复制文字特性", "YGTPROP ", "text_prop"),
                     MenuItem("选择大小写转换方式", "YGTCASE ", "text_case"),
-                    MenuItem("全大写", "YGTUPPER ", "text_case"),
-                    MenuItem("全小写", "YGTLOWER ", "text_case"),
-                    MenuItem("首字母大写", "YGTTITLE ", "text_case"),
-                    MenuItem("驼峰命名", "YGTCAMEL ", "text_case"),
                     MenuItem("智能互转中英标点", "YGTPUNC ", "text_punc"),
-                    MenuItem("全部转为英文标点", "YGTPUNCE ", "text_punc"),
-                    MenuItem("全部转为中文标点", "YGTPUNCC ", "text_punc"),
                     MenuItem("文字排版设置", "YGTSET ", "text_settings")),
                 Menu("拆合与清理", "text_join",
                     MenuItem("连接文字", "YGTJOIN ", "text_join"),
                     MenuItem("单行转多行", "YGTS2M ", "text_join"),
                     MenuItem("多行转单行", "YGTM2S ", "text_join"),
                     MenuItem("拆成单字", "YGTEXP ", "text_join"),
-                    MenuItem("选择空格或换行清理方式", "YGTSPACE ", "text_space"),
-                    MenuItem("去除多余空格", "YGTSPACEM ", "text_space"),
-                    MenuItem("去换行并拼接", "YGTNOLINE ", "text_space"),
-                    MenuItem("去除多余空行", "YGTTRIMLINE ", "text_space")),
+                    MenuItem("选择空格或换行清理方式", "YGTSPACE ", "text_space")),
                 Menu("标注工具", "dim_check",
                     MenuItem("引线修复", "YGLEADERFIX ", "leader_fix"),
                     MenuItem("筛选改字标注", "YGDIMTXT ", "dim_override"),
@@ -269,6 +260,10 @@ namespace YangCAD.AutoCADHost.UI
                 }
             }
 
+            var trimmed = command.Trim();
+            var catalog = CadToolCatalog.All.FirstOrDefault(x =>
+                string.Equals(x.Command, trimmed, StringComparison.OrdinalIgnoreCase));
+            text = catalog?.Name ?? text;
             var button = new RibbonButton
             {
                 Name = text,
@@ -280,16 +275,13 @@ namespace YangCAD.AutoCADHost.UI
                 Image = small,
                 LargeImage = large,
                 CommandHandler = new Handler(command),
-                ToolTip = BuildToolTip(text, command)
+                ToolTip = BuildToolTip(text, trimmed, catalog)
             };
             return button;
         }
 
-        private static RibbonToolTip BuildToolTip(string text, string command)
+        private static RibbonToolTip BuildToolTip(string text, string trimmed, CadToolItem? catalog)
         {
-            var trimmed = (command ?? "").Trim();
-            var catalog = CadToolCatalog.All.FirstOrDefault(x =>
-                string.Equals(x.Command, trimmed, StringComparison.OrdinalIgnoreCase));
             var content = catalog?.Description ?? ("执行 YangCAD 命令：" + trimmed);
             var hint = catalog != null ? $"推荐缩写：{catalog.DefaultAliasHint}" : "";
             return new RibbonToolTip

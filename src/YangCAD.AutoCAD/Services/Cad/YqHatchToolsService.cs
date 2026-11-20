@@ -273,8 +273,10 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 var editable = new List<Hatch>();
                 foreach (var id in sel)
                 {
-                    if (tr.GetObject(id, OpenMode.ForWrite) is Hatch h && !IsLayerLocked(tr, lt, h.Layer))
-                        editable.Add(h);
+                    if (!(tr.GetObject(id, OpenMode.ForRead) is Hatch h) || IsLayerLocked(tr, lt, h.Layer))
+                        continue;
+                    h.UpgradeOpen();
+                    editable.Add(h);
                 }
 
                 if (editable.Count < 2)
@@ -291,7 +293,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
                 foreach (var h in editable)
                 {
-                    if (TryBuildHatchCompositeRegion(h, localOrigin, out var hReg) && hReg != null)
+                    if (TryBuildHatchCompositeRegion(h, localOrigin, out var hReg, requireAllLoops: true) && hReg != null)
                     {
                         if (unionRegion == null)
                         {
@@ -324,7 +326,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     using (unionRegion)
                     {
                         if (TryPopulateHatchFromRegion(tr, space, template, unionRegion, localOrigin,
-                            groupIntoSingleHatch: true, updateInPlace: template, out _))
+                            groupIntoSingleHatch: true, updateInPlace: template, out _, requireCompleteResult: true))
                         {
                             for (var i = 1; i < editable.Count; i++) editable[i].Erase();
                             tr.Commit();
@@ -346,27 +348,21 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     var h = editable[i];
                     for (var li = 0; li < h.NumberOfLoops; li++)
                     {
-                        try
+                        using var poly = ConvertLoopToPolyline(h, h.GetLoopAt(li));
+                        var loopType = (h.LoopTypeAt(li) & HatchLoopTypes.External) != 0
+                            ? HatchLoopTypes.External
+                            : HatchLoopTypes.Default;
+                        if (poly == null || !AppendPolylineAsLoop(template, poly, loopType, new Vector2d(0.0, 0.0)))
                         {
-                            var poly = ConvertLoopToPolyline(h, h.GetLoopAt(li));
-                            if (poly != null)
-                            {
-                                using (poly)
-                                {
-                                    var ltFlag = (h.LoopTypeAt(li) & HatchLoopTypes.External) != 0
-                                        ? HatchLoopTypes.External
-                                        : HatchLoopTypes.Default;
-                                    AppendPolylineAsLoop(template, poly, ltFlag, new Vector2d(0.0, 0.0));
-                                    addedLoops++;
-                                }
-                            }
+                            ed.WriteMessage("\n[合并填充] 有边界无法完整转换，已保留原填充。");
+                            return;
                         }
-                        catch { }
+                        addedLoops++;
                     }
-                    h.Erase();
                 }
 
-                try { template.EvaluateHatch(false); } catch { }
+                template.EvaluateHatch(false);
+                for (var i = 1; i < editable.Count; i++) editable[i].Erase();
                 tr.Commit();
                 ed.WriteMessage($"\n[合并填充] 已合并 {editable.Count} 个填充图案（追加 {addedLoops} 条边界环）。");
             }
@@ -1222,9 +1218,13 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
                     foreach (var kv in islands)
                     {
-                        AppendPolylineAsLoop(target, records[kv.Key].Polyline, HatchLoopTypes.External, shiftBack);
+                        if (!AppendPolylineAsLoop(target, records[kv.Key].Polyline, HatchLoopTypes.External, shiftBack) && requireCompleteResult)
+                            throw new InvalidOperationException("无法重建填充外边界。");
                         foreach (var hi in kv.Value)
-                            AppendPolylineAsLoop(target, records[hi].Polyline, HatchLoopTypes.Default, shiftBack);
+                        {
+                            if (!AppendPolylineAsLoop(target, records[hi].Polyline, HatchLoopTypes.Default, shiftBack) && requireCompleteResult)
+                                throw new InvalidOperationException("无法重建填充内边界。");
+                        }
                     }
 
                     try { target.EvaluateHatch(false); } catch when (!requireCompleteResult) { }
@@ -1389,12 +1389,13 @@ namespace YangCAD.AutoCADHost.Services.Cad
             return dst;
         }
 
-        private static void AppendPolylineAsLoop(Hatch hatch, Polyline poly, HatchLoopTypes baseType, Vector2d offset)
+        private static bool AppendPolylineAsLoop(Hatch hatch, Polyline poly, HatchLoopTypes baseType, Vector2d offset)
         {
             var (pts, bulges) = ExtractVertices2d(poly, offset);
-            if (pts.Count < 2) return;
-            if (pts.Count == 2 && Math.Abs(bulges[0]) < 1e-5 && Math.Abs(bulges[1]) < 1e-5) return;
+            if (pts.Count < 2) return false;
+            if (pts.Count == 2 && Math.Abs(bulges[0]) < 1e-5 && Math.Abs(bulges[1]) < 1e-5) return false;
             hatch.AppendLoop(baseType | HatchLoopTypes.Polyline, pts, bulges);
+            return true;
         }
 
         private static (Point2dCollection Pts, DoubleCollection Bulges) ExtractVertices2d(Polyline poly, Vector2d offset)
