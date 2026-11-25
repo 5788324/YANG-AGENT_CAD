@@ -14,8 +14,8 @@
 
 1. 从 PR 最新提交只构建 AutoCAD 2024（`-SkipCivil`），在交互桌面加载该 DLL 并记录 DLL 哈希。使用测试目录与 `source_with_png.dwg`，保留已安装的旧 bundle 用于验证 worker 选择。
 2. 对普通未裁剪 PNG 执行真实 `project.image.embed`。核对返回的 `worker` 来自当前 DLL 解出的 `runtime/ImageEmbed/<buildId>/`，其 SHA-256 与同提交的仓库脚本一致。检查 `status.json` 完成且 `embedded_count=1`，原 DWG 哈希不变。
-3. 临时移走测试 PNG 后重新打开输出 DWG，核对图像可见且为独立 OLE，并恢复测试 PNG。
-4. 另用一个真的经 IMAGECLIP 裁剪的测试图重跑。默认 `require_all_images=true` 应保留源图、报告 `clipped_image_not_supported_v1` 并不发布输出 DWG。
+3. 分别用模型空间和非默认布局的未旋转测试图片，核对 OLE 的 WCS 左上点等于原图片左下点加图形高度，宽、高和原图层一致。临时移走 PNG 后重新打开输出 DWG，核对图像可见且为独立 OLE，并恢复测试 PNG。
+4. 另用一个真的经 IMAGECLIP 裁剪的测试图重跑。默认 `require_all_images=true` 应保留源图、报告 `clipped_image_not_supported_v1` 并不发布输出 DWG。用旋转 30° 的图片再跑一份，核对 `rotated_image_not_supported_v1`、原图哈希不变且无输出。
 
 5. 重复运行且输出已存在时，核对整批状态为 SKIPPED，工具箱结束进度轮询，已有副本保持不变。
 6. 若桌面可用，在测试图混选锁层和两处可编辑填充，确认只合并可编辑对象并可一次撤销。能复现边界重建失败时，核对全部原填充保留。抽看 Ribbon 和工具箱的相同命令标签。
@@ -42,7 +42,7 @@
 - 混选普通文字、锁层文字、格式化 MText 和其他图元。确认 YGTV 只调整 Y，YGTCASE 和 YGTPUNC 保留普通 MText 的换行，批处理提示跳过内联格式、字段与多行属性。预选过滤与手动框选一致。
 - 在锁定文字和可写文字间运行 YGTSWAP，确认原内容都保留。解锁重试，核对两侧同时成功且可撤销。用锁层和可写符号混选复验 SLBFIX。
 - 复跑带洞 ANSI31 的 YGHSPLIT 两点切分。若无法生成两侧完整边界，原填充应保留。
-- 如要确认 ActiveX Bind 参数，使用宿主与外参各含同名图层但颜色不同的图纸。核对副本实际生成的符号名及颜色，记录 AutoCAD 版本。
+- 验证 ActiveX `Bind($false)` 时，用宿主与外参各含同名图层但颜色不同的图纸。核对副本中的外参图层保留绑定前的颜色且名称有前缀。
 
 ## 完整验收前的构建参考
 
