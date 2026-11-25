@@ -15,6 +15,7 @@ namespace YangCAD.AutoCADHost.Commands
         private sealed class PolygonInput
         {
             public List<Point2d> Vertices { get; set; } = new List<Point2d>();
+            public List<double>? Bulges { get; set; }
             public ObjectId SourceId { get; set; } = ObjectId.Null;
             public double Elevation { get; set; }
         }
@@ -52,8 +53,8 @@ namespace YangCAD.AutoCADHost.Commands
                 if (input == null) return;
                 // Validation is required before any write; self-intersection and degenerate
                 // polygons must never partially modify the drawing.
-                var boundary = new PolygonBoundary2d(input.Vertices);
-                ed.WriteMessage("\n边界确认：" + boundary.Count + " 条直边；原图不会删除。\n");
+                var boundary = new PolygonBoundary2d(input.Vertices, input.Bulges);
+                ed.WriteMessage("\n边界确认：" + boundary.Count + " 条边；原图不会删除。\n");
                 var destination = ed.GetPoint("\n大样放置位置：");
                 if (destination.Status != PromptStatus.OK) return;
                 var factor = AskFactor(ed);
@@ -61,6 +62,7 @@ namespace YangCAD.AutoCADHost.Commands
                 var request = new PolygonDetailExtractService.Request
                 {
                     Vertices = input.Vertices,
+                    Bulges = input.Bulges,
                     BoundaryId = input.SourceId,
                     BoundaryElevation = input.Elevation,
                     Destination = destination.Value.TransformBy(ed.CurrentUserCoordinateSystem),
@@ -98,7 +100,7 @@ namespace YangCAD.AutoCADHost.Commands
         private static PolygonInput? SelectBoundary(Document doc)
         {
             var ed = doc.Editor;
-            var opts = new PromptEntityOptions("\n选择已闭合的二维多段线（仅直线边界）：");
+            var opts = new PromptEntityOptions("\n选择已闭合的二维多段线（可含圆弧）：");
             opts.SetRejectMessage("\n请选择 LWPOLYLINE，不接受块、外参或普通 LINE。");
             opts.AddAllowedClass(typeof(Polyline), true);
             var picked = ed.GetEntity(opts);
@@ -109,21 +111,21 @@ namespace YangCAD.AutoCADHost.Commands
                     picked.ObjectId, OpenMode.ForRead, false);
                 if (poly.OwnerId != ctx.Database.CurrentSpaceId)
                     throw new InvalidOperationException("只能选择当前空间的独立多段线。");
-                if (!poly.Closed || poly.NumberOfVertices < 3)
-                    throw new ArgumentException("请选择已闭合且至少三个顶点的多段线。");
+                if (!poly.Closed || poly.NumberOfVertices < 2)
+                    throw new ArgumentException("请选择已闭合且至少两个顶点的多段线。");
                 if (poly.Normal.GetNormal().DotProduct(Vector3d.ZAxis) < 0.999999)
                     throw new NotSupportedException("当前仅支持 WCS XY 平面的多段线边界。");
                 if (poly.HasWidth)
                     throw new NotSupportedException("边界不能有线宽，请使用零宽度闭合多段线。");
                 var points = new List<Point2d>();
+                var bulges = new List<double>();
                 for (var i = 0; i < poly.NumberOfVertices; i++)
                 {
-                    if (Math.Abs(poly.GetBulgeAt(i)) > 1e-10)
-                        throw new NotSupportedException("检测到 bulge 弧段边界；当前版本不作直线近似，请改用直边多段线。");
                     points.Add(poly.GetPoint2dAt(i));
+                    bulges.Add(poly.GetBulgeAt(i));
                 }
                 return new PolygonInput {
-                    Vertices = points, SourceId = picked.ObjectId, Elevation = poly.Elevation
+                    Vertices = points, Bulges = bulges, SourceId = picked.ObjectId, Elevation = poly.Elevation
                 };
             });
         }

@@ -31,7 +31,7 @@
 ## 合并入口复验
 
 - 打开工具箱，核对空搜索有 30 个分类入口。右键置顶常用，重开后确认常用、最近使用和折叠状态保留。搜索 YGDETAILPOLY、HHJK、SLBP、YGEMBEDBATCH，确认旧工具可搜到，命令行及现有 PGP 仍可调用。
-- YGDETAIL 默认框矩形，S 选择闭合直边，D 逐点。YGHCLIP 用 S/K/I 实测并核对上次模式。SLB 的 L/S/P 与 SLBFIX 分别验证。
+- YGDETAIL 默认框矩形，S 选择闭合多段线，可含弧段，D 逐点。YGHCLIP 用 S/K/I 实测并核对上次模式。SLB 的 L/S/P 与 SLBFIX 分别验证。
 - YGTBOX 测矩形、圆形、跑道和遮罩，修改留白并检查单位换算。确认原文字保留、遮罩在文字下方且可撤销。预选文字使用已保存样式。
 - 验证文字对齐的上次模式、沿线排字自动分流、单/多 TEXT 和 MTEXT 的拆合、文字清洗和刷换。先用检查命令高亮检查结果，再用修值命令取整或恢复。
 - TXTUP 默认自动翻正，无预选时可用 F 强制翻转和 R 切换参考。YGDL 首点可直接开始，用 D 设置参数、W 改已有宽度、N 改下一段宽度。
@@ -75,14 +75,14 @@ Get-FileHash artifacts/bin/2024/AutoCAD/YangCAD.AutoCAD.dll
 |---|---|
 | 构建、加载、GUI | 启动 CAD 页签保持，YangCAD 六组和双列工具箱，主题、停靠、显示比例、帮助和输出目录；运行 YANGCAD、YANGCAD_TOOLBOX、YGLAYER、YGDETAIL、BMK 等跨命令类入口，核对均能进入。 |
 | 图层、快捷键 | 测锁定／冻结／开关／合并及 Undo，PGP 创建和冲突提示，REINIT 后快捷命令可用。对工作图纸和原配置分别使用副本。 |
-| 大样与折断 | YGDETAIL 旧矩形交互；YGDETAILPOLY 的 Select / Draw、凹形、LINE／ARC／CIRCLE、弧段边界拒绝；YGBREAKLINE 保留端点和属性，2D／3D 与单次 Undo。详见 [多边形](DETAIL_POLYGON_WINDOWS_SMOKE_20261105.md) 与 [折断线](GEOMETRY_EDIT_V2_WINDOWS_SMOKE_20261105.md)。 |
+| 大样与折断 | YGDETAIL 旧矩形交互；YGDETAILPOLY 的 Select / Draw、凹形、LINE／ARC／CIRCLE、圆弧边界精确裁切；YGBREAKLINE 保留端点和属性，2D／3D 与单次 Undo。详见 [多边形](DETAIL_POLYGON_WINDOWS_SMOKE_20261105.md) 与 [折断线](GEOMETRY_EDIT_V2_WINDOWS_SMOKE_20261105.md)。 |
 | 边界外裁切 | YGOUTSIDE 分别在第二角点前 Esc 取消，以及完成边界后直接执行；核对跨界 LINE／ARC、完全外部与锁层／外参保护、原边界、一次 Undo。使用 [边界外案例](OUTSIDE_WINDOWS_SMOKE_20261105.md)。 |
 | 比例、双线 | YGSCALE 1:1 和缩尺前后尺寸，锁层与 Undo；YGDL 直／弧段，YGDLW 保存中心线并改宽。 |
 | 文字与标注 | YGTL、YGINC、YGLEADERFIX、YGDIMTXT、YGSLOPE、YGTBOX；检查原文字、标注数值、引线生成、撤销。 |
 | 填充 | YGHCLIP、YGHCLIPSPLIT／YGHSPLIT、YGHUNION；用洞环、原纹理位置、整块覆盖、确认失败路径和 Undo。 |
 | 梁柱板 | BMK／CMK 检查受控尺寸；板符号跑下方 22 项 Core Console，并手测选点、预览、混选、嵌套板。 |
 | 内嵌、DWG 交换 | 未保存图纸提示；引用内嵌输出副本、原 DWG 哈希、移除原引用后重开；切到其他面板再返回可查进度；YGREVIT 的 MAP/JSON 与原图保持。Revit 原生重建单独记录。 |
-| MCP、Batch、Civil | 验证 GUI 与 MCP 启动、选中图纸会话、读操作与受控写权限；Batch audit/hygiene 确认输入哈希和输出副本。Civil 测试仅在真实 Civil 3D 2024 上执行。 |
+| MCP、Batch、Civil | 对 `cad.drawing.audit` 传入 `include_layouts=true` 和 `dimension_step=5`，核对标注覆盖、尾数、外参状态及外链图片和底图。验证前后图纸不变。验证 GUI 与 MCP 启动、选中图纸会话、读操作与受控写权限；Batch audit/hygiene 确认输入哈希和输出副本。Civil 测试仅在真实 Civil 3D 2024 上执行。 |
 | 封包与安装 | 用本次构建产物执行 Package-Release.ps1 -Years 2024 -SkipBuild，再对产物目录执行 Verify-Release.ps1；记录每个宿主产物、MCP 合同和哈希。安装仅在测试环境验证。 |
 
 一个用例失败仍收完其他模块。输出 INDEX.md，每项标记 PASS / FAIL / BLOCKED / NOT_TESTED，附原始日志、图元前后、必要截图与 Undo 证据。回传现象及最小复现步骤，保持当前测试提交便于集中修复。

@@ -295,12 +295,16 @@ def cad_drawing_audit(
     entity_limit: int = 100000,
     issue_limit: int = 1000,
     tolerance: float = 1e-6,
+    include_layouts: bool = False,
+    dimension_step: float = 5.0,
 ) -> dict[str, Any]:
-    """只读扫描模型空间，汇总实体/图层/块以及零长线、空文字、Polyline 零长段等常见问题。"""
+    """只读检查图纸的几何、尺寸文字覆盖和尾数、DWG 外参、图片及底图。可同时扫描布局。"""
     return call("cad.drawing.audit", {
         "entity_limit": entity_limit,
         "issue_limit": issue_limit,
         "tolerance": tolerance,
+        "include_layouts": include_layouts,
+        "dimension_step": dimension_step,
     })
 
 

@@ -16,6 +16,7 @@ namespace YangCAD.AutoCADHost.Commands
         private sealed class BoundaryInput
         {
             public List<Point2d> Vertices { get; } = new List<Point2d>();
+            public List<double>? Bulges { get; set; }
             public ObjectId SourceId { get; set; } = ObjectId.Null;
         }
 
@@ -32,6 +33,7 @@ namespace YangCAD.AutoCADHost.Commands
                 var request = new OutsideBoundaryService.Request
                 {
                     Vertices = boundary.Vertices,
+                    Bulges = boundary.Bulges,
                     BoundaryId = boundary.SourceId
                 };
                 var result = CadTransactionRunner.WriteContext(doc, false,
@@ -74,7 +76,7 @@ namespace YangCAD.AutoCADHost.Commands
         private static BoundaryInput? SelectBoundary(Document doc)
         {
             var ed = doc.Editor;
-            var opt = new PromptEntityOptions("\n选择当前空间的闭合直边 LWPOLYLINE：");
+            var opt = new PromptEntityOptions("\n选择当前空间的闭合 LWPOLYLINE：");
             opt.SetRejectMessage("\n请选择闭合二维多段线，而不是块或外部参照。");
             opt.AddAllowedClass(typeof(Polyline), true);
             var picked = ed.GetEntity(opt);
@@ -85,21 +87,21 @@ namespace YangCAD.AutoCADHost.Commands
                     picked.ObjectId, OpenMode.ForRead, false);
                 if (poly.OwnerId != ctx.Database.CurrentSpaceId)
                     throw new InvalidOperationException("边界必须是当前模型或布局空间的独立对象。");
-                if (!poly.Closed || poly.NumberOfVertices < 3)
-                    throw new ArgumentException("边界必须闭合并有至少三个顶点。");
+                if (!poly.Closed || poly.NumberOfVertices < 2)
+                    throw new ArgumentException("边界必须闭合并有至少两个顶点。");
                 if (poly.Normal.Length < 1e-8 ||
                     poly.Normal.GetNormal().DotProduct(Vector3d.ZAxis) < 0.999999)
                     throw new NotSupportedException("当前仅支持 WCS XY 平面边界。");
                 if (poly.HasWidth)
                     throw new NotSupportedException("不能使用带线宽的多段线作为边界。");
                 var input = new BoundaryInput { SourceId = picked.ObjectId };
+                var bulges = new List<double>();
                 for (var i = 0; i < poly.NumberOfVertices; i++)
                 {
-                    if (Math.Abs(poly.GetBulgeAt(i)) > 1e-10)
-                        throw new NotSupportedException(
-                            "检测到 bulge 圆弧边界。此版本不作直线化近似，已安全取消。");
                     input.Vertices.Add(poly.GetPoint2dAt(i));
+                    bulges.Add(poly.GetBulgeAt(i));
                 }
+                input.Bulges = bulges;
                 return input;
             });
         }

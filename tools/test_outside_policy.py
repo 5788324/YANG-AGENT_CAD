@@ -22,16 +22,16 @@ check("rectangle default with draw and select modes", all(x in command for x in
       ['GetCorner(', 'Keywords.Add("Select",', 'Keywords.Add("Draw",', 'RectangleCornersInWorld(']))
 check("select current-space closed polyline", 'poly.Closed' in command and
       'poly.OwnerId != ctx.Database.CurrentSpaceId' in command)
-check("reject bulge source boundary", "poly.GetBulgeAt(i)" in command and "不作直线化近似" in command)
+check("selected arc bulges preserve exact geometry", "poly.GetBulgeAt(i)" in command and "GetBulge(i)" in service)
 check("source boundary protected", 'id == request.BoundaryId' in service)
 check("completed boundary writes directly in one transaction",
       command.index('ReadBoundary(doc)') < command.index('CadTransactionRunner.WriteContext(doc, false')
       and command.count('CadTransactionRunner.WriteContext(') == 1
       and 'OutsideBoundaryService.Preview' not in command and 'previewFingerprint' not in service)
-check("shared concave polygon geometry", "new PolygonBoundary2d(request.Vertices)" in service and
+check("shared concave polygon geometry", "new PolygonBoundary2d(request.Vertices, request.Bulges)" in service and
       "inside = !inside" in geometry)
 check("bbox complete-disjoint proof", "DefinitelyOutside" in service and
-      "EdgesTouch(a, b, corners[k]" in service and "corners.Any(boundary.Contains)" in service)
+      "boundary.SideTouches(i, corners[k]" in service and "corners.Any(boundary.Contains)" in service)
 check("line clipping returns true fragments", "boundary.ClipLine(" in service)
 check("arc/circle analytic splitting", "boundary.ClipArc(" in service)
 check("polyline explode for curve segments", "poly.Explode(exploded)" in service)

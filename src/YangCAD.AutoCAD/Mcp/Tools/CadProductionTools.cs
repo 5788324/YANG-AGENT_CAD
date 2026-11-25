@@ -242,7 +242,7 @@ namespace YangCAD.AutoCADHost.Mcp.Tools
         public ToolDescriptor Descriptor { get; } = new ToolDescriptor
         {
             Name = "cad.drawing.audit",
-            Description = "只读扫描模型空间，汇总实体/图层/块及常见几何与文字质量问题。"
+            Description = "只读体检图纸，检查几何、标注覆盖和尾数、外参、图片及底图。"
         };
 
         public object Execute(CadToolContext context)
@@ -250,12 +250,16 @@ namespace YangCAD.AutoCADHost.Mcp.Tools
             var entityLimit = ToolJson.Int(context.Args, "entity_limit") ?? 100000;
             var issueLimit = ToolJson.Int(context.Args, "issue_limit") ?? 1000;
             var tolerance = CadProductionHelpers.Tolerance(context.Args);
+            var includeLayouts = ToolJson.Bool(context.Args, "include_layouts") ?? false;
+            var dimensionStep = ToolJson.Double(context.Args, "dimension_step") ?? 5;
+            if (double.IsNaN(dimensionStep) || double.IsInfinity(dimensionStep) || dimensionStep <= 0)
+                throw new ArgumentOutOfRangeException("dimension_step", "尺寸基准倍数必须为有限正数。");
             if (entityLimit < 1 || entityLimit > 1000000) throw new ArgumentOutOfRangeException("entity_limit", "entity_limit 必须在 1..1000000。");
             if (issueLimit < 1 || issueLimit > 10000) throw new ArgumentOutOfRangeException("issue_limit", "issue_limit 必须在 1..10000。");
 
             return CadTransactionRunner.Read(context.Document, tr =>
             {
-                return DrawingAuditService.Audit(context.Database, tr, context.Document.Name, entityLimit, issueLimit, tolerance);
+                return DrawingAuditService.Audit(context.Database, tr, context.Document.Name, entityLimit, issueLimit, tolerance, includeLayouts, dimensionStep);
             });
         }
     }

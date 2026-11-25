@@ -22,6 +22,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
         public sealed class Request
         {
             public IReadOnlyList<Point2d> Vertices { get; set; } = Array.Empty<Point2d>();
+            internal IReadOnlyList<double>? Bulges { get; set; }
             public ObjectId BoundaryId { get; set; } = ObjectId.Null;
         }
 
@@ -67,29 +68,6 @@ namespace YangCAD.AutoCADHost.Services.Cad
             if (warnings.Count < 16) warnings.Add(text);
         }
 
-        private static bool OnSegment(Point2d a, Point2d b, Point2d p)
-        {
-            var dx = b.X - a.X; var dy = b.Y - a.Y;
-            var area = dx * (p.Y - a.Y) - dy * (p.X - a.X);
-            return Math.Abs(area) <= Eps * Math.Max(1, Math.Sqrt(dx * dx + dy * dy)) &&
-                   p.X >= Math.Min(a.X, b.X) - Eps && p.X <= Math.Max(a.X, b.X) + Eps &&
-                   p.Y >= Math.Min(a.Y, b.Y) - Eps && p.Y <= Math.Max(a.Y, b.Y) + Eps;
-        }
-
-        private static bool EdgesTouch(Point2d a, Point2d b, Point2d c, Point2d d)
-        {
-            var dx = b.X - a.X; var dy = b.Y - a.Y;
-            var sx = d.X - c.X; var sy = d.Y - c.Y;
-            var p = dx * (c.Y - a.Y) - dy * (c.X - a.X);
-            var q = dx * (d.Y - a.Y) - dy * (d.X - a.X);
-            var r = sx * (a.Y - c.Y) - sy * (a.X - c.X);
-            var s = sx * (b.Y - c.Y) - sy * (b.X - c.X);
-            if (((p > Eps && q < -Eps) || (p < -Eps && q > Eps)) &&
-                ((r > Eps && s < -Eps) || (r < -Eps && s > Eps))) return true;
-            return OnSegment(a, b, c) || OnSegment(a, b, d) ||
-                   OnSegment(c, d, a) || OnSegment(c, d, b);
-        }
-
         /// <summary>
         /// AABB definitely disjoint from a polygon (including its boundary).
         /// Negative => possibly intersects, so a complex object must be skipped.
@@ -107,12 +85,11 @@ namespace YangCAD.AutoCADHost.Services.Cad
             for (var i = 0; i < boundary.Count; i++)
             {
                 var a = boundary.GetVertex(i);
-                var b = boundary.GetVertex((i + 1) % boundary.Count);
                 if (a.X >= left - Eps && a.X <= right + Eps &&
                     a.Y >= bottom - Eps && a.Y <= top + Eps)
                     return false;
                 for (var k = 0; k < 4; k++)
-                    if (EdgesTouch(a, b, corners[k], corners[(k + 1) % 4]))
+                    if (boundary.SideTouches(i, corners[k], corners[(k + 1) % 4]))
                         return false;
             }
             return true;
@@ -222,7 +199,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
         private static Plan MakePlan(CadExecutionContext ctx, Request request)
         {
             if (request == null) throw new ArgumentNullException(nameof(request));
-            var boundary = new PolygonBoundary2d(request.Vertices);
+            var boundary = new PolygonBoundary2d(request.Vertices, request.Bulges);
             var tr = ctx.Transaction;
             var space = (BlockTableRecord)tr.GetObject(ctx.Database.CurrentSpaceId, OpenMode.ForRead);
             if (!space.IsLayout)
@@ -236,7 +213,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     throw new InvalidOperationException("边界对象已变化，请重新选择。");
                 for (int i = 0; i < boundary.Count; i++)
                 {
-                    if (Math.Abs(bound.GetBulgeAt(i)) > Eps ||
+                    if (Math.Abs(bound.GetBulgeAt(i) - boundary.GetBulge(i)) > Eps ||
                         bound.GetPoint2dAt(i).GetDistanceTo(boundary.GetVertex(i)) > Eps)
                         throw new InvalidOperationException("边界已变化，请重新选择。");
                 }
@@ -287,7 +264,9 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         change = new Change { Id = id, Action = Kind.Erase };
                     else
                     {
-                        var parts = Clip(entity, boundary);
+                        var parts = entity is Hatch hatch
+                            ? YqHatchToolsService.ClipForBoundary(tr, space, hatch, boundary)?.Cast<Entity>().ToList()
+                            : Clip(entity, boundary);
                         if (parts == null)
                         {
                             plan.Summary.skipped++;

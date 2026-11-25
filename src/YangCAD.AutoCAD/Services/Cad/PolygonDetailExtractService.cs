@@ -18,6 +18,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
         public sealed class Request
         {
             public IReadOnlyList<Point2d> Vertices { get; set; } = Array.Empty<Point2d>();
+            internal IReadOnlyList<double>? Bulges { get; set; }
             public ObjectId BoundaryId { get; set; } = ObjectId.Null;
             public double BoundaryElevation { get; set; }
             public Point3d Destination { get; set; }
@@ -64,6 +65,15 @@ namespace YangCAD.AutoCADHost.Services.Cad
         private static void Warn(List<string> warnings, string message)
         {
             if (warnings.Count < 16) warnings.Add(message);
+        }
+
+        private static bool CanCopyAttribute(Transaction tr, AttributeReference attribute, PolygonBoundary2d boundary)
+        {
+            if (((LayerTableRecord)tr.GetObject(attribute.LayerId, OpenMode.ForRead)).IsLocked)
+                return false;
+            if (attribute.Invisible || string.IsNullOrEmpty(attribute.TextString)) return true;
+            if (!(attribute.Bounds is Extents3d extents)) return false;
+            return boundary.ContainsBox(extents.MinPoint.X, extents.MinPoint.Y, extents.MaxPoint.X, extents.MaxPoint.Y);
         }
 
         private static void AddClippedCurve(List<Entity> output, Entity part,
@@ -119,7 +129,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 !Finite(request.Destination.X) || !Finite(request.Destination.Y) ||
                 !Finite(request.Destination.Z))
                 throw new ArgumentException("大样比例、标高或插入点无效。");
-            var boundary = new PolygonBoundary2d(request.Vertices);
+            var boundary = new PolygonBoundary2d(request.Vertices, request.Bulges);
             var tr = ctx.Transaction;
             var space = (BlockTableRecord)tr.GetObject(ctx.Database.CurrentSpaceId, OpenMode.ForRead);
             if (!space.IsLayout) throw new InvalidOperationException("只支持当前模型空间或布局空间。");
@@ -128,6 +138,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
             var move = Matrix3d.Displacement(request.Destination - origin);
             var result = new Result { success = true, dry_run = dryRun };
             var parts = new List<Entity>();
+            var attributedBlocks = new List<ObjectId>();
             var handles = new List<string>();
             var warnings = new List<string>();
 
@@ -175,10 +186,10 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     {
                         var def = tr.GetObject(block.BlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
                         if (def == null || def.IsFromExternalReference || def.IsFromOverlayReference ||
-                            block.IsDynamicBlock || block.AttributeCollection.Count > 0)
+                            block.IsDynamicBlock)
                         {
                             result.skipped_sources++;
-                            Warn(warnings, "外参/动态块/含属性图块安全跳过：" + source.Handle);
+                            Warn(warnings, "外参/动态块已跳过：" + source.Handle);
                             continue;
                         }
                     }
@@ -198,12 +209,35 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     var completelyInside = boundary.ContainsBox(
                         extents.MinPoint.X, extents.MinPoint.Y,
                         extents.MaxPoint.X, extents.MaxPoint.Y);
+                    if (source is BlockReference attributed && attributed.AttributeCollection.Count > 0)
+                    {
+                        if (completelyInside && attributed.AttributeCollection.Cast<ObjectId>().All(attId =>
+                            tr.GetObject(attId, OpenMode.ForRead) is AttributeReference att &&
+                            CanCopyAttribute(tr, att, boundary)))
+                        {
+                            if (parts.Count + attributedBlocks.Count >= 20000)
+                                throw new InvalidOperationException("提取结果超过 2 万图元，操作已取消。");
+                            attributedBlocks.Add(id);
+                        }
+                        else
+                        {
+                            result.skipped_sources++;
+                            Warn(warnings, "跨界或锁层的含属性块已跳过：" + source.Handle);
+                        }
+                        continue;
+                    }
                     var newParts = new List<Entity>();
                     try
                     {
                         if (completelyInside)
                         {
                             newParts.Add((Entity)source.Clone());
+                        }
+                        else if (source is Hatch crossingHatch)
+                        {
+                            var hatchParts = YqHatchToolsService.ClipForBoundary(tr, space, crossingHatch, boundary);
+                            if (hatchParts == null) throw new NotSupportedException("无法完整裁切填充边界。");
+                            newParts.AddRange(hatchParts);
                         }
                         else if (source is Line || source is Arc || source is Circle)
                         {
@@ -245,7 +279,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         throw;
                     }
                     if (newParts.Count == 0) { result.skipped_sources++; continue; }
-                    if (parts.Count + newParts.Count > 20000)
+                    if (parts.Count + attributedBlocks.Count + newParts.Count > 20000)
                     {
                         foreach (var item in newParts) item.Dispose();
                         throw new InvalidOperationException("提取结果超过 2 万图元，操作已取消。");
@@ -268,18 +302,14 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     parts.AddRange(newParts);
                     if (!completelyInside) result.clipped_sources++;
                 }
-                result.copied_entities = parts.Count;
-                if (parts.Count == 0)
+                result.copied_entities = parts.Count + attributedBlocks.Count;
+                if (result.copied_entities == 0)
                     throw new InvalidOperationException("边界内没有可安全提取的内容，未创建空白大样。");
 
                 if (request.DrawFrame)
                 {
-                    var frame = new Polyline(boundary.Count) {
-                        Closed = true, Elevation = request.BoundaryElevation
-                    };
+                    var frame = boundary.CreatePolyline(request.BoundaryElevation);
                     frame.SetDatabaseDefaults();
-                    for (int i = 0; i < boundary.Count; i++)
-                        frame.AddVertexAt(i, boundary.GetVertex(i), 0, 0, 0);
                     frame.TransformBy(scale);
                     frame.TransformBy(move);
                     parts.Add(frame);
@@ -289,6 +319,21 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 if (!dryRun)
                 {
                     space.UpgradeOpen();
+                    if (attributedBlocks.Count > 0)
+                    {
+                        using var mapping = new IdMapping();
+                        ctx.Database.DeepCloneObjects(new ObjectIdCollection(attributedBlocks.ToArray()), space.ObjectId, mapping, false);
+                        foreach (var original in attributedBlocks)
+                        {
+                            var pair = mapping[original];
+                            if (!pair.IsCloned || pair.Value.IsNull)
+                                throw new InvalidOperationException("无法完整复制含属性的图块。");
+                            var clone = (BlockReference)tr.GetObject(pair.Value, OpenMode.ForWrite);
+                            clone.TransformBy(scale);
+                            clone.TransformBy(move);
+                            handles.Add(clone.Handle.ToString());
+                        }
+                    }
                     foreach (var item in parts)
                     {
                         space.AppendEntity(item);
