@@ -77,7 +77,7 @@ namespace YangCAD.AutoCADHost.UI
             {
                 var name = ShortcutAliasService.Save(_pgpPath, Selected.Command, AliasBox.Text, OverrideBox.IsChecked == true);
                 CurrentText.Text = "已保存：" + name + " → " + Selected.Command;
-                StatusText.Text = "保存成功（已有原 PGP 备份）。点击“应用到 CAD”即可在当前会话使用。";
+                ApplySavedAlias("已保存并应用快捷键。");
                 UpdateCollision();
             }
             catch (Exception ex) { StatusText.Text = "保存失败：" + ex.Message; }
@@ -88,17 +88,30 @@ namespace YangCAD.AutoCADHost.UI
             try
             {
                 var removed = ShortcutAliasService.Remove(_pgpPath, Selected.Command);
-                StatusText.Text = removed ? "已移除 YangCAD 管理的快捷键。点击“应用到 CAD”重新加载。" : "这个功能没有 YangCAD 管理的快捷键。";
+                if (removed) ApplySavedAlias("已清除并重新加载快捷键。");
+                else StatusText.Text = "这个功能没有 YangCAD 管理的快捷键。";
                 RefreshFeature();
             }
             catch (Exception ex) { StatusText.Text = ex.Message; }
         }
-        private void ReloadClick(object sender, RoutedEventArgs e)
+        private void ApplySavedAlias(string success)
         {
-            MessageBox.Show("接下来会打开 CAD 的“重新初始化”窗口，勾选“PGP 文件”后点击确定。", "应用快捷键", MessageBoxButton.OK, MessageBoxImage.Information);
-            Close();
-            // Let native AutoCAD reload the active profile's PGP. Never simulate clicks into the dialog.
-            AcApp.DocumentManager.MdiActiveDocument?.SendStringToExecute("_.REINIT ", true, false, false);
+            var doc = AcApp.DocumentManager.MdiActiveDocument;
+            if (doc == null) return;
+            if (ShortcutAliasService.TryReloadActivePgp())
+            {
+                StatusText.Text = success;
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(Convert.ToString(AcApp.GetSystemVariable("CMDNAMES"))))
+            {
+                StatusText.Text = "已保存。结束当前命令后重新保存以加载快捷键。";
+                return;
+            }
+
+            doc.Editor.WriteMessage("\n[YangCAD] 请在重新初始化窗口勾选“PGP 文件”。");
+            doc.SendStringToExecute("_.REINIT ", true, false, false);
         }
         private void OpenCuiClick(object sender, RoutedEventArgs e)
         {

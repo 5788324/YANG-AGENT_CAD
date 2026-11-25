@@ -1,3 +1,5 @@
+using YangCAD.AutoCADHost.Toolbox;
+using YangCAD.AutoCADHost.Infrastructure;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -30,26 +32,24 @@ namespace YangCAD.AutoCADHost.Services.Cad
             public override string ToString() => Name + "  (" + Command + ")";
         }
 
-        public static IReadOnlyList<Feature> Features { get; } = new[]
+        public static IReadOnlyList<Feature> Features { get; } = CadToolCatalog.All
+            .Select(item => new Feature(item.Name, item.Command))
+            .Concat(new[] { new Feature("工具箱快捷呼出", "YY") })
+            .ToArray();
+
+        public static bool TryReloadActivePgp()
         {
-            new Feature("工具箱", "YANGCAD_TOOLBOX"),
-            new Feature("图层工具", "YGLAYER"),
-            new Feature("合并图层", "YGLMERGE"),
-            new Feature("图层开关", "YGLONOFF"),
-            new Feature("图层冻结", "YGLFREEZE"),
-            new Feature("图层锁定", "YGLLOCK"),
-            new Feature("切割提取大样", "YGDETAIL"),
-            new Feature("智能双线/管道", "YGDL"),
-            new Feature("修正双线宽度", "YGDLW"),
-            new Feature("选改过文字的标注", "YGDIMTXT"),
-            new Feature("标注坡度", "YGSLOPE"),
-            new Feature("文字加矩形圆框", "YGTBOX"),
-            new Feature("图纸比例转换", "YGSCALE"),
-            new Feature("引线修复及关联文字", "YGLEADERFIX"),
-            new Feature("MCP", "YANGCAD_MCP"),
-            new Feature("控制中心", "YANGCAD"),
-            new Feature("快捷键设置", "YGKEYS")
-        };
+            try
+            {
+                Autodesk.AutoCAD.ApplicationServices.Core.Application.SetSystemVariable("RE-INIT", (short)16);
+                return true;
+            }
+            catch (Autodesk.AutoCAD.Runtime.Exception ex)
+            {
+                RuntimeLogger.Error("静默重载 PGP 失败。", ex);
+                return false;
+            }
+        }
 
         public static string FindActivePgpPath(Database database)
         {

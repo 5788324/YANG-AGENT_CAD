@@ -32,7 +32,7 @@ check("about link action",'OpenProjectClick' in xaml and 'https://github.com/578
 check("about displays preview not release",'开发预览版' in xaml)
 tool=txt("src/YangCAD.AutoCAD/UI/ToolboxView.xaml")
 back=txt("src/YangCAD.AutoCAD/UI/ToolboxView.xaml.cs")
-check("quick tool buttons",all(f'Tag="{cmd}"' in tool for cmd in ['YGLAYER','YGDETAIL','YGSCALE','YGLEADERFIX','YGKEYS']))
+check("quick tool buttons",'Tag="{Binding Command}"' in tool and all(f'"{cmd}"' in txt("src/YangCAD.AutoCAD/Toolbox/CadToolCatalog.cs") for cmd in ['YGLAYER','YGDETAIL','YGSCALE','YGLEADERFIX','YGKEYS']))
 check("quick command handler present",'QuickNativeCommandClick' in back)
 ribbon=txt("src/YangCAD.AutoCAD/UI/RibbonBootstrapper.cs")
 check("ribbon separated and native focus preserved",all(x in ribbon for x in ['常用工具','连接与设置','previousTab','ribbon.ActiveTab']))

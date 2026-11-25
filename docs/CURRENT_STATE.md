@@ -1,43 +1,20 @@
-## 2026-11-13 — YangCAD 双线 + 标注工具整合
+# YangCAD 当前状态（2026-11-20）
 
-按用户确认，整理已单独通过 AutoCAD 2024 Core Console G5 的 PR #16 和 PR #17：`YGDL`、`YGDLW`、`YGDIMTXT`、`YGSLOPE`、`YGTBOX`。保留双线/坡度/文字框全部个人设置、Toolbox 按钮、快捷键。**GUI 及联合程序集 Windows Build 未验收**，不代表已安装发布。PR #13/#14/#15 与综合审查 PR #18 不包含在本次主线合并中。完整说明 `docs/INTEGRATION_PR16_PR17_20261113.md`。
+[PR #20](https://github.com/5788324/YANG-AGENT_CAD/pull/20) 汇总当前整合源码。DLL、MCP 与安装包使用 0.10.0-dev 对应的版本体系。验收以 PR HEAD 完整 SHA 为准。
 
----
+| 领域 | 状态 |
+|---|---|
+| 源码、入口和测试契约 | STATIC，以 PR 最新 CI 为准 |
+| AutoCAD 2024 | Gemini 在 `1120e805` 通过构建、板符号 22/22、YGHSPLIT、YGINC 8/8、封包、Ribbon 六组和双列工具箱停靠与主题同步。SLBP 验证进入预览及超范围拦截，Live MCP 验证 37 个工具及读写清理。 |
+| 图片内嵌 | `1120e805` 的普通 PNG 真实任务误判为已裁剪，源 DWG 哈希保持一致。后续候选修正裁剪识别与 worker 版本选择，增加裁剪判定等待和整批跳过状态。新改动校正未旋转图像的 OLE 锚点，并明确拒绝旋转图片。AutoCAD 2024 真实内嵌及移走源图后的重开仍待复验。 |
+| 文字、两点拆分与工具箱 | 文字大小写及标点批改保留常用内联格式，格式化多行块属性与文字引线共用同一处理。含字段的对象保持原样。待 WINDOWS AutoCAD 2024 图纸复验。 |
+| Revit 原生重建、Civil 3D GUI/MCP、安装实装 | 未验，本轮范围外 |
+| 工具箱和 Ribbon | 工具箱从命令目录生成双列，支持搜索、常用、最近使用及记忆折叠。工具箱默认显示 30 个入口，变体可搜索；高频命令直达，界面和合并命令待 AutoCAD 实测。 |
+| 圆弧裁切与图纸体检 | YGDETAILPOLY／YGOUTSIDE 支持圆弧边界及直线／圆弧环的非关联填充裁切。大样可复制完整入框的含属性普通块。MCP 图纸体检可检查标注和引用。AutoCAD 2024 实机待复验。 |
+| 发布 | 尚未发布 |
 
-# YangCAD 当前事实（2026-11-05）
+`1120e80520718d8b8084fb511ed9d316629d0f4f` 复验时加载的 AutoCAD DLL SHA-256 为 `88F4C5909D8BC32F552D7B18ED49B4E1748BC603AC55B3E0E34E1B8079071272`。
 
-**当前发布管理标记：`0.10.0-rc.1`（AutoCAD 2024 Quick 范围） / `G5_AUTOCAD2024_SCOPE_PASS`。**
+整合范围见 [功能目录](FEATURE_CATALOG.md)。折断、多边形大样、边界外裁切纳入本候选，多边形使用 YGDETAILPOLY，YGDETAIL 和原 MCP 矩形入口继续可用。
 
-源码中的编译与 Python/Bundled 版本仍为 **`0.10.0` / `0.10.0-dev`**；此次 RC 分支未重新编译、更换 DLL 或改变业务行为。产品可运行不等于跨宿主正式 Release。
-
-## Git 与证据
-
-- `main`：旧稳定回退 SHA `396a79408bfb38d374871fb030b54012748be8b6`，**尚不含 0.10 RC**。
-- R00–R10 AutoCAD 2024 实机基线：`b6ff1370b0ed48e5e50fec43d2a5a2e14ca5ec54`。
-- 修复发布契约且 Windows PS5.1 定点验收：`d5200c57a75b1fd228713dc67b606126a5c04924`。
-- 唯一 RC 文档集成分支：`release/autocad2024-0.10.0-rc1`，基于 d520；[Draft PR #11](https://github.com/5788324/YANG-AGENT_CAD/pull/11) → `main`，静态 CI 已通过、无冲突、**尚未合并**。
-- G5 ChatGPT 独立审计：`https://github.com/5788324/YANG-AGENT_CAD/issues/9#issuecomment-6646760886`。
-- 已验收 Quick ZIP SHA256 `ACA88A9440968411A2D7A014800AC70FE8E60C314ECBE936BBBC4037C5C79692`；AutoCAD DLL SHA256 `880329CF7E5C464078686FE56B0BB7070B4C2F7B7F482A91771D9C8`。
-
-## 分层状态
-
-| 范围 | 结论 | 限制 |
-|---|---|---|
-| G0/G1 源码身份、GitHub CI、STATIC | PASS | RC 文档增量仍须 CI 校验 |
-| G2/G3 AutoCAD 2024 Windows Build/Loaded | PASS（b6ff137） | 新业务代码修改必须重新追溯 |
-| G4 R00–R10 AutoCAD 2024 指定功能 | CONDITIONAL / SCOPE PASS | R06 是对象级 Undo；R07 批量为 PARTIAL |
-| G4 Release 74/37/67 正反向 | PASS（d520 + Windows PS5.1 日志） | Civil 67 是静态合同，不是 live |
-| G5 独立证据审查 | **AUTOCAD2024_SCOPE_PASS** | 不是所有年份/宿主稳定版 |
-| Civil 3D live 67 | **NOT_TESTED** | Object Enabler 不算宿主测试 |
-| Revit Native E2E | **NOT_TESTED** | MAP/ReaderVerifier 11/11 不等于真正生成 Revit 元素 |
-| 2024 以外 AutoCAD 宿主 | **NOT_TESTED_CURRENT_RC** | 历史旧版记录不可平移 |
-
-## 本版已验证功能与明确边界
-
-图层合并/显隐/冻结/锁定、**矩形**大样、比例转换、引线恢复与文字关联、PGP 快捷键、Ribbon/Palette、图片 OLE 和 Xref Bind、MCP、CAD→Revit MAP 均有 **AutoCAD 2024 特定样例** 的真实测试材料。R07 文件夹批量结果为 2 PASS、1 SKIP、1 FAIL，不是全成功；R06 标准模式跳过受检 INSERT；Undo 不是完整 DWG 字节级证明。详细证据见 `docs/RC_AUTOCAD2024_0.10.0.md`。
-
-未实现：闭合多段线任意边界提取、复杂跨界对象可选裁切、删除边界外、直线 Z 折断线；请不要在 GUI/MCP 说明中冒称已完成。
-
-## 当前动作
-
-已建立 **docs-only RC Draft PR #11** → `main`，静态 CI PASS，RC 与 d520 运行时代码无差异；`main` 不自动合并，保留旧版回退；后续按 `docs/RC_MERGE_PLAN.md` 处理堆叠 PR。**STATIC** 与 **WINDOWS** 状态必须分列记录。
+[当前验收任务](../tasks/CURRENT_TASK.md) · [RC1 历史记录](RC_AUTOCAD2024_0.10.0.md) · [历史实机矩阵](RUNTIME_TEST_MATRIX.md) · [项目日志](../WORKLOG.md)

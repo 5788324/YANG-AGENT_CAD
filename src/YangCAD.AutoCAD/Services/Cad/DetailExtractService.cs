@@ -114,12 +114,28 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         { result.skipped_sources++; if (warnings.Count < 12) warnings.Add("含属性图块需要深克隆，当前安全跳过：" + source.Handle); continue; }
                         // Associative hatch boundary reactors must not continue referencing
                         // the original detail after an independent copy is transformed.
+                        // Clone and detach associativity so detail fills are preserved safely.
                         if (source is Hatch hatch && hatch.Associative)
-                        { result.skipped_sources++; if (warnings.Count < 12) warnings.Add("关联填充需独立边界重建，当前安全跳过：" + source.Handle); continue; }
-                        // Do not silently scale annotative dimensions into incorrect measurements.
-                        if (source is Dimension && Math.Abs(request.Factor - 1) > Tolerance && !HasDimlfac(source))
-                        { result.skipped_sources++; if (warnings.Count < 12) warnings.Add("标注不支持 Dimlfac 读取，未放大：" + source.Handle); continue; }
-                        newParts.Add((Entity)source.Clone());
+                        {
+                            try
+                            {
+                                var detached = (Hatch)hatch.Clone();
+                                detached.Associative = false;
+                                newParts.Add(detached);
+                            }
+                            catch
+                            {
+                                result.skipped_sources++;
+                                if (warnings.Count < 12) warnings.Add("关联填充无法脱离原边界，已跳过：" + source.Handle);
+                            }
+                        }
+                        else
+                        {
+                            // Do not silently scale annotative dimensions into incorrect measurements.
+                            if (source is Dimension && Math.Abs(request.Factor - 1) > Tolerance && !HasDimlfac(source))
+                            { result.skipped_sources++; if (warnings.Count < 12) warnings.Add("标注不支持 Dimlfac 读取，未放大：" + source.Handle); continue; }
+                            newParts.Add((Entity)source.Clone());
+                        }
                     }
                     else if (source is Line line)
                     {
@@ -130,8 +146,9 @@ namespace YangCAD.AutoCADHost.Services.Cad
                         newParts.AddRange(TrimArc(arc.Center, arc.Radius, arc.StartAngle, arc.EndAngle, box, arc));
                     else if (source is Circle circle && IsWorldXY(circle.Normal))
                         newParts.AddRange(TrimArc(circle.Center, circle.Radius, 0, TwoPi, box, circle));
-                    else if (source is Polyline poly && IsWorldXY(poly.Normal) && !poly.HasWidth)
+                    else if (source is Polyline poly && IsWorldXY(poly.Normal))
                     {
+                        var width = poly.HasWidth ? poly.ConstantWidth : 0.0;
                         var exploded = new DBObjectCollection();
                         poly.Explode(exploded);
                         try
@@ -141,7 +158,22 @@ namespace YangCAD.AutoCADHost.Services.Cad
                                 if (dbObject is Line seg)
                                 {
                                     var trimmed = TrimLine(seg.StartPoint, seg.EndPoint, box, poly);
-                                    if (trimmed != null) newParts.Add(trimmed);
+                                    if (trimmed != null)
+                                    {
+                                        if (width > Tolerance)
+                                        {
+                                            var pl = new Polyline(2) { Elevation = trimmed.StartPoint.Z };
+                                            pl.SetPropertiesFrom(poly);
+                                            pl.AddVertexAt(0, new Point2d(trimmed.StartPoint.X, trimmed.StartPoint.Y), 0, width, width);
+                                            pl.AddVertexAt(1, new Point2d(trimmed.EndPoint.X, trimmed.EndPoint.Y), 0, width, width);
+                                            trimmed.Dispose();
+                                            newParts.Add(pl);
+                                        }
+                                        else
+                                        {
+                                            newParts.Add(trimmed);
+                                        }
+                                    }
                                 }
                                 else if (dbObject is Arc segArc)
                                     newParts.AddRange(TrimArc(segArc.Center, segArc.Radius, segArc.StartAngle, segArc.EndAngle, box, poly));

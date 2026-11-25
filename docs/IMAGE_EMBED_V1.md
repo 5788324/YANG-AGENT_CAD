@@ -26,7 +26,7 @@ job.json
   ↓
 Clipboard + PASTECLIP → AcDbOle2Frame
   ↓
-校正尺寸/旋转/图层
+校正位置、尺寸和图层
   ↓
 确认新 OLE 后删除对应 RasterImage
   ↓
@@ -55,16 +55,15 @@ Live YangCAD `acad.exe` 不负责循环打开几百张图。
 转换前显式切换目标空间：ModelSpace 使用 model；PaperSpace/Layout 使用 paper space 且退出浮动 viewport (`MSpace=false`)。
 
 转换后尝试保持：
-- insertion/origin；
-- drawing-unit width / height；
-- rotation；
-- layer。
+- 图片占用范围。以光栅左下角加图形高度，得到 OLE 左上角的 WCS 插入点。
+- 图形单位的宽、高以及原图层。
 
 ## 5. V1 明确拒绝/降级
 
 为避免视觉失真，V1 不假装完整支持：
 
-- `ClippingEnabled=true`；
+- 实际裁剪或反向裁剪。普通整幅图的默认裁剪框可转换。
+- 旋转图片（`rotated_image_not_supported_v1`）；
 - brightness != 50；
 - contrast != 50；
 - fade != 0；
@@ -77,7 +76,7 @@ Live YangCAD `acad.exe` 不负责循环打开几百张图。
 
 关闭该选项时可以产生 `PARTIAL`，但绝不标 PASS。
 
-Xref 单独统计；V1 不修改 Xref 文件。
+DWG 外参可绑定到副本。ActiveX `Bind($false)` 保留符号前缀，避免同名图层或样式被宿主覆盖。外参源文件不修改。
 
 ## 6. 无图片 DWG
 
@@ -132,7 +131,7 @@ source RasterImage exists
 - ModelSpace JPG/PNG；
 - PaperSpace 图片；
 - missing source path FAIL；
-- clipped image FAIL；
+- 实际裁剪或旋转图片 FAIL；
 - output exists no overwrite；
 - multi-DWG batch continues after one file FAIL；
 - 0 unhandled exception。

@@ -240,9 +240,20 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 throw new InvalidOperationException("引线包含零长度片段。");
             if (pieces.Count == 1) return pieces[0];
 
+            // Try strict topological tolerance first, then fall back to 1.0 drawing-unit gap tolerance
+            // for hand-drawn exploded leader lines with slight snap offsets.
+            try { return StitchPieces(pieces, Tolerance); }
+            catch (InvalidOperationException)
+            {
+                return StitchPieces(pieces, 1.0);
+            }
+        }
+
+        private static Point3d[] StitchPieces(List<Point3d[]> pieces, double stitchTol)
+        {
             // Strict topological chain; reject branched and disconnected selections.
             var ends = pieces.SelectMany((p, idx) => new[] { (Point: p[0], Piece: idx), (Point: p[p.Length - 1], Piece: idx) }).ToArray();
-            var tips = ends.Where(e => ends.Count(other => e.Point.DistanceTo(other.Point) < Tolerance) == 1).ToArray();
+            var tips = ends.Where(e => ends.Count(other => e.Point.DistanceTo(other.Point) <= stitchTol) == 1).ToArray();
             if (tips.Length != 2) throw new InvalidOperationException("线段无法构成一条单一路径；可能存在断点、交叉或分叉。");
             var used = new HashSet<int>();
             var path = new List<Point3d> { tips[0].Point };
@@ -251,10 +262,10 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 var end = path.Last();
                 var candidates = pieces.Select((p, i) => (P: p, Index: i))
                     .Where(e => !used.Contains(e.Index) &&
-                        (e.P[0].DistanceTo(end) < Tolerance || e.P[e.P.Length - 1].DistanceTo(end) < Tolerance)).ToArray();
+                        (e.P[0].DistanceTo(end) <= stitchTol || e.P[e.P.Length - 1].DistanceTo(end) <= stitchTol)).ToArray();
                 if (candidates.Length != 1) throw new InvalidOperationException("连接处不是唯一后续线段，已安全终止。");
                 var next = candidates[0];
-                var forward = next.P[0].DistanceTo(end) < Tolerance;
+                var forward = next.P[0].DistanceTo(end) <= next.P[next.P.Length - 1].DistanceTo(end);
                 var nodes = forward ? next.P : next.P.Reverse().ToArray();
                 path.AddRange(nodes.Skip(1));
                 used.Add(next.Index);

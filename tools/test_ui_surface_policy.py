@@ -27,13 +27,45 @@ scale_c=text('src/YangCAD.AutoCAD/UI/ScaleConvertWindow.xaml.cs')
 layer_x=text('src/YangCAD.AutoCAD/UI/LayerQuickWindow.xaml')
 layer_c=text('src/YangCAD.AutoCAD/UI/LayerQuickWindow.xaml.cs')
 
-buttons=re.findall(r'Button\("([^"]+)",\s*"([^"]+)"', ribbon)
-ok('ribbon groups primary CAD tools before MCP/settings', [x[0] for x in buttons] == ['工具箱','比例转换','图层工具','提取大样','MCP','控制中心'])
-ok('ribbon commands have command methods', all(cmd.strip() in commands for _,cmd in buttons))
+buttons=re.findall(r'(?:Button|MenuItem)\("([^"]+)",\s*"([^"]+)"', ribbon)
+registered_commands = set(re.findall(r'CommandMethod\("([^"]+)"', commands))
+ok('all public CAD command classes are discoverable', not any(
+    '[assembly: CommandClass' in p.read_text(encoding='utf-8-sig')
+    for p in (root/'src/YangCAD.AutoCAD').rglob('*.cs')))
+ok('native CAD commands are unique', len(registered_commands) == len(re.findall(r'CommandMethod\("([^"]+)"', commands)))
+ok('ribbon panels put drawing before project and settings',
+   re.findall(r'AddPanel\(newTab, "([^"]+)"', ribbon) == [
+       '常用工具', '图层与填充', '文字与标注', '结构绘图', '图纸与引用', '连接与设置'])
+ok('ribbon commands have command methods', bool(buttons) and all(cmd.strip() in registered_commands for _,cmd in buttons))
+ok('ribbon menus keep their category labels', 'IsSplit = false' in ribbon and 'IsSynchronizedWithCurrentItem = false' in ribbon)
+ribbon_commands = {cmd.strip() for _, cmd in buttons}
+ok('slab placement and repair are visible while old slab modes remain callable',
+   {'SLB','SLBFIX'} <= ribbon_commands and not {'SLBP','SLBLAYER','SLBSET'} & ribbon_commands
+   and {'SLBP','SLBLAYER','SLBSET'} <= registered_commands)
+ok('ribbon and toolbox cancel active commands only for editor tools',
+   all('CanInterruptActiveCommand' in ui and r'\u0003\u0003' in ui for ui in [ribbon, tb_c]))
+ok('toolbox command buttons all route to registered commands',
+   set(re.findall(r'Tag="([A-Z][A-Z0-9_]+)"', tb_x)) <= registered_commands)
 ok('control center has no visible MCP controls', all(x not in cc_x for x in ['MCP 状态','复制 MCP 配置','允许 MCP 修改当前 DWG','Tag="MCP"']))
 ok('mcp window has no duplicate theme selector', all(x not in mcp_x for x in ['墨曜 · Obsidian','月瓷 · Porcelain','雾蓝 · Mist']))
 ok('toolbox registry is exactly two descriptors', re.findall(r'Id\s*=\s*"([^"]+)"', registry) == ['project.revit.prepare','project.image.embed'])
-ok('toolbox has no system/planning navigation', all(x not in tb_x for x in ['系统','规划','CategoryList','SearchBox','收藏','最近']))
+catalog = text('src/YangCAD.AutoCAD/Toolbox/CadToolCatalog.cs')
+rows = re.findall(r'new CadToolItem\("[^"]+",\s*"[^"]+",\s*"[^"]+",\s*"([^"]+)",\s*"([^"]+)",\s*"([^"]+)"', catalog)
+catalog_commands, hints, icon_keys = (list(col) for col in zip(*rows))
+icons = set(re.findall(r'case "([^"]+)"', text('src/YangCAD.AutoCAD/UI/RibbonIcons.cs')))
+ok('catalog commands are unique and registered', len(catalog_commands) == len(set(catalog_commands)) and set(catalog_commands) <= registered_commands)
+ok('catalog alias hints are unique', len(hints) == len({hint.upper() for hint in hints}))
+catalog_entries = re.findall(r'new CadToolItem\([^\n]+\n[^\n]+', catalog)
+primary = {cmd for cmd, line in zip(catalog_commands, catalog_entries)
+           if 'secondary: true' not in line and cmd != 'YANGCAD_TOOLBOX'}
+ok('default toolbox keeps a compact primary catalog', len(primary) == 30)
+ok('new combined commands appear in both main surfaces',
+   {'YGTALIGN','YGTSPLITJOIN','YGTCLEAN','YGDIMCHECK','YGDIMEDIT','YGREFEMBED'}
+   <= (primary & ribbon_commands) and {'YGTALONG','YGTCONTENT'} <= ribbon_commands)
+ok('secondary tools are discoverable by search', '(!tool.IsSecondary || terms.Length > 0)' in tb_c)
+ok('catalog icon keys exist', set(icon_keys) <= icons)
+ok('toolbox renders catalog short labels and commands', all(x in tb_x for x in ['{Binding ShortName}', '{Binding Command}', 'ToolGroups']))
+ok('four frequent tools are direct Ribbon buttons', all(re.search(r'(?<!MenuItem)Button\("[^"]+", "'+cmd+r' ', ribbon) for cmd in ('YGHCLIP','YGLEADERFIX','YGINC','YGDL')))
 
 for label,x,c in [('control center',cc_x,cc_c),('mcp window',mcp_x,mcp_c),('toolbox',tb_x,tb_c),('scale converter',scale_x,scale_c),('layer quick',layer_x,layer_c)]:
     missing=handlers(x)-methods(c)

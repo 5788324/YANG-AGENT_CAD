@@ -87,10 +87,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
         public static Result Start(Request request)
         {
             var plan = BuildPlan(request, createOutputDirectory: true);
-            var worker = ResolveInstalledWorker();
-            if (string.IsNullOrWhiteSpace(worker) || !File.Exists(worker))
-                worker = RuntimeAssetMaterializer.EnsureImageEmbedWorker();
-            if (!File.Exists(worker)) throw new FileNotFoundException("未找到 YangCAD 图片内嵌 worker。", worker);
+            var worker = RuntimeAssetMaterializer.EnsureImageEmbedWorker();
 
             var jobId = DateTime.UtcNow.ToString("yyyyMMddTHHmmssZ", CultureInfo.InvariantCulture) + "-" + Guid.NewGuid().ToString("N").Substring(0, 8);
             var jobRoot = Path.Combine(
@@ -231,14 +228,6 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
         private static string AppendDirectorySeparator(string path)
             => path.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal) ? path : path + Path.DirectorySeparatorChar;
-
-        private static string ResolveInstalledWorker()
-        {
-            var installed = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Autodesk", "ApplicationPlugins", "YangCADAgent.bundle", "Contents", "ImageEmbed", "Start-YangCAD-ImageEmbed.ps1");
-            return installed;
-        }
 
         private static string Quote(string value) => "\"" + value.Replace("\"", "\\\"") + "\"";
 

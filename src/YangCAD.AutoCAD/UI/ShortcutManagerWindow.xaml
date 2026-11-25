@@ -48,7 +48,6 @@
   <Grid Grid.Row="4">
    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <TextBlock x:Name="StatusText" VerticalAlignment="Center" Style="{StaticResource MutedText}" Text="仅管理 YangCAD 自己的配置区块" TextWrapping="Wrap"/>
-   <Button Grid.Column="1" Content="应用到 CAD" Style="{StaticResource SecondaryButton}" Click="ReloadClick" Margin="0,0,10,0"/>
    <Button Grid.Column="2" Content="关闭" Style="{StaticResource PrimaryButton}" Click="CloseClick"/>
   </Grid>
  </Grid>

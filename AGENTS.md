@@ -17,7 +17,7 @@
 
 - `main`：稳定回退基线，不允许把未经实机验收的功能当作已发布。
 - `feature/*`：开发候选；Draft PR 用于审查与 Windows 验收。**查看分支/PR 的最新 HEAD，不从日期猜。**
-- 2026-11-03 当前开发线上最新增量以 `tasks/CURRENT_TASK.md` 为准；旧 PR 可能是父分支，提交前确认基点。
+- 当前开发候选以 `tasks/CURRENT_TASK.md` 为准；旧 PR 可能是父分支，提交前确认基点。
 - 用户允许覆盖仓库，但常规开发不要无理由 force push；任何版本发布必须明确 SHA 和状态。
 
 ## 代码与安全边界
@@ -37,4 +37,4 @@
 
 ## 当前统一测试约束
 
-所有 AI 必须按 `docs/AI_START_HERE.md` 确认 GitHub 真实 HEAD；Gemini 按 `docs/GEMINI_EXECUTOR_SOP.md`、`tasks/GEMINI_WINDOWS_INTEGRATED_SMOKE_20261103.md` 运行。禁止仅用 SUMMARY/静态结果升级 Runtime GO。
+所有 AI 必须按 `docs/AI_START_HERE.md` 确认 GitHub 真实 HEAD；Gemini 按 `docs/GEMINI_EXECUTOR_SOP.md`、`tasks/CURRENT_TASK.md` 运行。禁止仅用 SUMMARY/静态结果升级 Runtime GO。

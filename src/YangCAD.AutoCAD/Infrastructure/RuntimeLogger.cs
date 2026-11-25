@@ -8,9 +8,11 @@ namespace YangCAD.AutoCADHost.Infrastructure
     {
         private static readonly object Sync = new object();
         private static readonly Regex BearerRegex = new Regex(@"Bearer\s+[A-Za-z0-9+/=_-]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private static string LogPath => Path.Combine(
+        internal static string LogDirectory => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "YangCADAgent", "logs", "runtime.log");
+            "YangCADAgent", "logs");
+
+        private static string LogPath => Path.Combine(LogDirectory, "runtime.log");
 
         public static void Info(string message) => Write("INFO", message);
 

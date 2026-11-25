@@ -2,6 +2,7 @@
 from pathlib import Path
 import xml.etree.ElementTree as ET
 root = Path(__file__).resolve().parents[1]
+catalog = (root/"src/YangCAD.AutoCAD/Toolbox/CadToolCatalog.cs").read_text(encoding="utf-8-sig")
 def src(path): return (root/path).read_text(encoding="utf-8-sig")
 s = src("src/YangCAD.AutoCAD/Services/Cad/AnnotationUtilitiesService.cs")
 c = src("src/YangCAD.AutoCAD/Commands/AnnotationUtilitiesCommands.cs")
@@ -39,8 +40,8 @@ test("batch frames one transaction", 'foreach (var id in ids)' in c and "CadTran
 test("current layer sanity", "layer.IsLocked || layer.IsFrozen || layer.IsOff" in s)
 test("mm unit conversion", "MillimetersPerUnit" in s and "case 6: return 1000;" in s)
 test("personal slope/frame parameter memory", "SlopeBasis" in u and "SlopeTextHeightMm" in u and "TextFrameMarginMm" in u and "settings.Save()" in c)
-test("toolbox three buttons and whitelist", all('Tag="'+x+'"' in ui for x in ("YGDIMTXT","YGSLOPE","YGTBOX")) and all('"'+x+'"' in uics for x in ("YGDIMTXT","YGSLOPE","YGTBOX")))
-test("PGP aliases", all('new Feature(' in alias and '"'+x+'"' in alias for x in ("YGDIMTXT","YGSLOPE","YGTBOX")))
+test("toolbox three buttons and whitelist", 'Tag="{Binding Command}"' in ui and all('"'+x+'"' in catalog for x in ("YGDIMTXT","YGSLOPE","YGTBOX")) and "CadToolCatalog.All" in uics)
+test("PGP aliases", "CadToolCatalog.All" in alias and "new Feature(item.Name, item.Command)" in alias)
 test("documentation and windows test", "WINDOWS_NOT_TESTED" in doc and "_.U" in task and "DimensionText" in task)
 for name,good in checks: print(("PASS" if good else "FAIL")+": "+name)
 print(f"annotation source checks {sum(ok for _,ok in checks)}/{len(checks)} PASS (STATIC ONLY)")

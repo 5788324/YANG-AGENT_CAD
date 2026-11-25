@@ -77,6 +77,48 @@ function Resolve-ImagePath([string]$ImageFile, [string]$DwgPath) {
     return [System.IO.Path]::GetFullPath((Join-Path ([System.IO.Path]::GetDirectoryName($DwgPath)) $ImageFile))
 }
 
+function Test-RasterClipped($Doc, [string]$handle, [int]$TimeoutSeconds) {
+    if ($handle -notmatch '^[0-9A-F]+$') { throw "Invalid raster handle: $handle" }
+
+    # IMAGE DXF stores an enabled whole-image clip as a two-corner pixel rectangle.
+    $expression = @'
+((lambda (/ entity data size points item p1 p2)
+   (setq entity (handent "{0}"))
+   (if entity (setq data (entget entity)))
+   (setq size (cdr (assoc 13 data)))
+   (foreach item data
+     (if (= (car item) 14) (setq points (cons (cdr item) points))))
+   (setq p1 (car points) p2 (cadr points))
+   (setvar "USERI5"
+     (cond
+       ((not (and (equal (cdr (assoc 0 data)) "IMAGE") size)) 2)
+       ((and (not (equal (cdr (assoc 290 data)) 1))
+             (equal (cdr (assoc 71 data)) 1)
+             (= (length points) 2)
+             (equal (min (car p1) (car p2)) -0.5 0.000001)
+             (equal (min (cadr p1) (cadr p2)) -0.5 0.000001)
+             (equal (max (car p1) (car p2)) (- (car size) 0.5) 0.000001)
+             (equal (max (cadr p1) (cadr p2)) (- (cadr size) 0.5) 0.000001)) 0)
+       (T 1)))))
+'@
+    $saved = $Doc.GetVariable('USERI5')
+    try {
+        $Doc.SetVariable('USERI5', [int16]-1)
+        $Doc.SendCommand((($expression -f $handle) -replace '\r?\n', ' ') + "`r")
+        $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
+        do {
+            $result = [int]$Doc.GetVariable('USERI5')
+            if ($result -eq 0 -or $result -eq 1) { return ($result -eq 1) }
+            if ($result -ne -1) { break }
+            Start-Sleep -Milliseconds 100
+        } while ([DateTime]::UtcNow -lt $deadline)
+        throw "Could not read raster clip boundary: $handle"
+    }
+    finally {
+        $Doc.SetVariable('USERI5', $saved)
+    }
+}
+
 function Snapshot-Raster($Raster, [string]$LayoutName, [string]$DwgPath) {
     $imageFile = [string]$Raster.ImageFile
     $resolved = Resolve-ImagePath $imageFile $DwgPath
@@ -100,62 +142,23 @@ function Snapshot-Raster($Raster, [string]$LayoutName, [string]$DwgPath) {
 }
 
 function Set-ActiveLayout($Doc, [string]$LayoutName) {
-    if (-not [string]::IsNullOrWhiteSpace($LayoutName)) {
-        try {
-            $layout = $Doc.Layouts.Item($LayoutName)
-            if ($layout) {
-                if ([bool]$layout.ModelType) {
-                    $Doc.ActiveSpace = 1
-                }
-                else {
-                    $Doc.ActiveSpace = 0
-                    try { $Doc.MSpace = $false } catch { }
-                    try { $Doc.ActiveLayout = $layout } catch { }
-                }
-                return $layout
-            }
-        }
-        catch { }
+    $layout = $Doc.Layouts.Item($LayoutName)
+    if ([bool]$layout.ModelType) {
+        $Doc.ActiveSpace = 1
     }
-
-    for ($i = 0; $i -lt $Doc.Layouts.Count; $i++) {
-        $layout = $Doc.Layouts.Item($i)
-        $isModel = [bool]$layout.ModelType
-        $match = $false
-        if (-not [string]::IsNullOrWhiteSpace($LayoutName)) {
-            if ([string]::Equals([string]$layout.Name, $LayoutName, [System.StringComparison]::OrdinalIgnoreCase)) {
-                $match = $true
-            }
-            elseif ($isModel -and ($LayoutName -eq 'Model' -or $LayoutName -eq '模型')) {
-                $match = $true
-            }
-        }
-        elseif ($isModel) {
-            $match = $true
-        }
-
-        if ($match) {
-            if ($isModel) {
-                $Doc.ActiveSpace = 1
-            }
-            else {
-                $Doc.ActiveSpace = 0
-                try { $Doc.MSpace = $false } catch { }
-                try { $Doc.ActiveLayout = $layout } catch { }
-            }
-            return $layout
-        }
+    else {
+        $Doc.ActiveSpace = 0
+        $Doc.ActiveLayout = $layout
+        if ([bool]$Doc.MSpace) { $Doc.MSpace = $false }
     }
-
-    # Never fall back to another layout. Wrong-space OLE placement is worse than a per-image failure.
-    throw "Layout not found: $LayoutName"
+    return $layout
 }
 
-function Convert-Raster($Acad, $Doc, $Layout, $RasterInfo, [int]$TimeoutSeconds) {
-    if (-not (Test-Path -LiteralPath $RasterInfo.resolved_path)) {
+function Convert-Raster($Acad, $Doc, $RasterInfo, [int]$TimeoutSeconds) {
+    if (-not $RasterInfo.resolved_path -or -not (Test-Path -LiteralPath $RasterInfo.resolved_path -PathType Leaf)) {
         return [ordered]@{ ok=$false; handle=$RasterInfo.handle; reason='missing_image_file'; path=$RasterInfo.resolved_path }
     }
-    if ($RasterInfo.clipping_enabled) {
+    if ($RasterInfo.clipping_enabled -and (Test-RasterClipped $Doc $RasterInfo.handle $TimeoutSeconds)) {
         return [ordered]@{ ok=$false; handle=$RasterInfo.handle; reason='clipped_image_not_supported_v1'; path=$RasterInfo.resolved_path }
     }
     if ($RasterInfo.brightness -ne 50 -or $RasterInfo.contrast -ne 50 -or $RasterInfo.fade -ne 0) {
@@ -165,35 +168,29 @@ function Convert-Raster($Acad, $Doc, $Layout, $RasterInfo, [int]$TimeoutSeconds)
         return [ordered]@{ ok=$false; handle=$RasterInfo.handle; reason='raster_transparency_not_supported_v1'; path=$RasterInfo.resolved_path }
     }
 
+    $rotation = [Math]::IEEERemainder([double]$RasterInfo.rotation, 2 * [Math]::PI)
+    if ([Math]::Abs($rotation) -gt 1e-8) {
+        return [ordered]@{ ok=$false; handle=$RasterInfo.handle; reason='rotated_image_not_supported_v1'; path=$RasterInfo.resolved_path }
+    }
+
     $layoutObj = Set-ActiveLayout $Doc $RasterInfo.layout
     $block = $layoutObj.Block
     $before = Get-CollectionHandles $block 'AcDbOle2Frame'
+    # IMAGE uses its lower-left origin; AcadOle.InsertionPoint is the upper-left in WCS.
+    $insertion = [double[]]@($RasterInfo.origin[0], ($RasterInfo.origin[1] + $RasterInfo.height), $RasterInfo.origin[2])
+    $culture = [System.Globalization.CultureInfo]::InvariantCulture
+    $point = ($insertion | ForEach-Object { $_.ToString('0.###############', $culture) }) -join ','
 
     $image = $null
     $bitmap = $null
+    $clipboardWritten = $false
     try {
         $image = [System.Drawing.Image]::FromFile($RasterInfo.resolved_path)
         $bitmap = New-Object System.Drawing.Bitmap($image)
-        [System.Windows.Forms.Clipboard]::SetImage($bitmap)
-
-        $x = ([double]$RasterInfo.origin[0]).ToString('0.###############', [System.Globalization.CultureInfo]::InvariantCulture)
-        $y = ([double]$RasterInfo.origin[1]).ToString('0.###############', [System.Globalization.CultureInfo]::InvariantCulture)
-        # Wait for quiescent state before sending command
         Wait-Quiescent $Acad $TimeoutSeconds
-        Start-Sleep -Milliseconds 250
-        $pasted = $false
-        for ($r = 0; $r -lt 5 -and -not $pasted; $r++) {
-            try {
-                $Doc.SendCommand("_.PASTECLIP $x,$y`n1`n0`n")
-                $pasted = $true
-            }
-            catch [System.Runtime.InteropServices.COMException] {
-                Start-Sleep -Milliseconds 500
-            }
-        }
-        if (-not $pasted) {
-            $Doc.SendCommand("_.PASTECLIP $x,$y`n1`n0`n")
-        }
+        [System.Windows.Forms.Clipboard]::SetImage($bitmap)
+        $clipboardWritten = $true
+        $Doc.SendCommand("_.PASTECLIP _non *$point`r")
         Wait-Quiescent $Acad $TimeoutSeconds
 
         $after = Get-CollectionHandles $block 'AcDbOle2Frame'
@@ -221,11 +218,10 @@ function Convert-Raster($Acad, $Doc, $Layout, $RasterInfo, [int]$TimeoutSeconds)
             return [ordered]@{ ok=$false; handle=$RasterInfo.handle; reason='new_ole_not_found' }
         }
 
-        try { $ole.LockAspectRatio = $false } catch { }
+        $ole.LockAspectRatio = $false
         $ole.Width = [double]$RasterInfo.width
         $ole.Height = [double]$RasterInfo.height
-        $ole.Rotation = [double]$RasterInfo.rotation
-        $ole.InsertionPoint = [double[]]@([double]$RasterInfo.origin[0], [double]$RasterInfo.origin[1], [double]$RasterInfo.origin[2])
+        $ole.InsertionPoint = $insertion
         $ole.Layer = [string]$RasterInfo.layer
         [void]$ole.Update()
 
@@ -238,7 +234,7 @@ function Convert-Raster($Acad, $Doc, $Layout, $RasterInfo, [int]$TimeoutSeconds)
         return [ordered]@{ ok=$true; handle=$RasterInfo.handle; ole_handle=[string]$ole.Handle; layout=$RasterInfo.layout; path=$RasterInfo.resolved_path }
     }
     finally {
-        try { [System.Windows.Forms.Clipboard]::Clear() } catch { }
+        if ($clipboardWritten) { try { [System.Windows.Forms.Clipboard]::Clear() } catch { } }
         if ($bitmap) { $bitmap.Dispose() }
         if ($image) { $image.Dispose() }
     }
@@ -352,7 +348,7 @@ function Process-Drawing($Acad, $Item, $Job) {
         $results = New-Object System.Collections.Generic.List[object]
         foreach ($snapshotFailure in $snapshotFailures) { [void]$results.Add($snapshotFailure) }
         foreach ($rasterInfo in $rasters) {
-            [void]$results.Add((Convert-Raster $Acad $doc $null $rasterInfo ([int]$Job.command_timeout_seconds)))
+            [void]$results.Add((Convert-Raster $Acad $doc $rasterInfo ([int]$Job.command_timeout_seconds)))
         }
         $failed = @($results | Where-Object { -not $_.ok })
         $boundXrefs = New-Object System.Collections.Generic.List[string]
@@ -542,7 +538,11 @@ try {
         }
         Write-Status $statusPath $status
     }
-    $status.state = if ($status.failed -eq 0 -and $status.partial -eq 0) { 'PASS' } elseif ($status.passed -gt 0 -or $status.partial -gt 0) { 'PARTIAL' } else { 'FAIL' }
+    $status.state = if ($status.failed -eq 0 -and $status.partial -eq 0) {
+        if ($status.passed -gt 0) { 'PASS' } else { 'SKIPPED' }
+    }
+    elseif ($status.passed -gt 0 -or $status.partial -gt 0) { 'PARTIAL' }
+    else { 'FAIL' }
 }
 catch {
     $status.state = 'FAIL'
@@ -557,4 +557,5 @@ finally {
 
 if ($status.state -eq 'PASS') { exit 0 }
 if ($status.state -eq 'PARTIAL') { exit 3 }
+if ($status.state -eq 'SKIPPED') { exit 4 }
 exit 1
