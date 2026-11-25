@@ -1041,7 +1041,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
                 settings.Save();
             }
 
-            var updated = ApplyTextTransform(ed, doc.Database, "\n选择要切换大小写的文字或标注：", raw => ConvertCase(raw, mode!), preserveParagraphs: true);
+            var updated = ApplyTextTransform(ed, doc.Database, "\n选择要切换大小写的文字或标注：", raw => ConvertCase(raw, mode!), preserveParagraphs: true, allowInline: mode != "C");
             ed.WriteMessage($"\n[大小写:{mode}] 已更新 {updated} 个对象。");
         }
 
@@ -1548,7 +1548,7 @@ namespace YangCAD.AutoCADHost.Services.Cad
 
         // ---------- Shared Helpers ----------
         private static int ApplyTextTransform(Editor ed, Database db, string prompt, Func<string, string> transform,
-            bool preserveParagraphs = false)
+            bool preserveParagraphs = false, bool allowInline = true)
         {
             var ids = GetOrPromptTextEntities(ed, "TEXT,MTEXT,DIMENSION,MULTILEADER,INSERT", prompt);
             if (ids == null || ids.Length == 0) return 0;
@@ -1567,46 +1567,71 @@ namespace YangCAD.AutoCADHost.Services.Cad
                     {
                         foreach (ObjectId attId in br.AttributeCollection)
                         {
-                            if (!(tr.GetObject(attId, OpenMode.ForRead) is AttributeReference att) || IsOnLockedLayer(tr, att)) continue;
-                            var oldVal = att.TextString ?? "";
-                            if (att.IsMTextAttribute)
-                            {
-                                skippedFormatting++;
-                                continue;
-                            }
-                            var nextVal = transform(oldVal);
-                            if (!string.Equals(oldVal, nextVal, StringComparison.Ordinal))
-                            {
-                                att.UpgradeOpen();
-                                att.TextString = nextVal;
-                                count++;
-                            }
+                            if (tr.GetObject(attId, OpenMode.ForRead) is AttributeReference att && !IsOnLockedLayer(tr, att))
+                                TransformEntity(att);
                         }
                     }
                     else
                     {
-                        var oldVal = ReadAnyTextContent(tr, ent);
-                        if (oldVal == null) continue;
-                        var formattedType = ent is MText || ent is MLeader || ent is Dimension;
-                        if (formattedType && HasInlineFormatting(oldVal))
-                        {
-                            skippedFormatting++;
-                            continue;
-                        }
-                        var nextVal = formattedType ? TransformParagraphs(oldVal) : transform(oldVal);
-                        if (!string.Equals(oldVal, nextVal, StringComparison.Ordinal) && WriteAnyTextContent(tr, ent, nextVal))
-                            count++;
+                        TransformEntity(ent);
                     }
                 }
                 tr.Commit();
             }
             if (skippedFormatting > 0)
-                ed.WriteMessage($"\n已跳过 {skippedFormatting} 个多行属性或含内联格式、字段的文字。");
+                ed.WriteMessage($"\n已跳过 {skippedFormatting} 个含字段或当前模式无法保留格式的文字。");
             return count;
 
-            string TransformParagraphs(string value) => preserveParagraphs
-                ? string.Join(@"\P", value.Split(new[] { @"\P" }, StringSplitOptions.None).Select(transform))
-                : transform(value);
+            void TransformEntity(Entity entity)
+            {
+                using var embedded = entity switch
+                {
+                    AttributeReference attribute when attribute.IsMTextAttribute => attribute.MTextAttribute,
+                    MLeader leader when leader.ContentType == ContentType.MTextContent => leader.MText,
+                    _ => null
+                };
+                var source = embedded != null ? embedded.Contents : ReadAnyTextContentForTransform(entity);
+                if (source == null) return;
+                if (entity.HasFields || (embedded?.HasFields ?? false) ||
+                    !CadTextFormatting.TryTransform(source, embedded != null || entity is MText || entity is Dimension,
+                        preserveParagraphs, transform, out var result, allowInline))
+                {
+                    skippedFormatting++;
+                    return;
+                }
+                if (string.Equals(source, result, StringComparison.Ordinal)) return;
+
+                entity.UpgradeOpen();
+                switch (entity)
+                {
+                    case AttributeReference attribute when embedded != null:
+                        embedded.Contents = result;
+                        attribute.MTextAttribute = embedded;
+                        break;
+                    case MLeader leader when embedded != null:
+                        embedded.Contents = result;
+                        leader.MText = embedded;
+                        break;
+                    case MText multi:
+                        multi.Contents = result;
+                        break;
+                    case Dimension dimension:
+                        dimension.DimensionText = result;
+                        break;
+                    case DBText single:
+                        single.TextString = result;
+                        break;
+                }
+                count++;
+            }
+
+            string? ReadAnyTextContentForTransform(Entity entity) => entity switch
+            {
+                DBText single => single.TextString,
+                MText multi => multi.Contents,
+                Dimension dim when !string.IsNullOrEmpty(dim.DimensionText) && dim.DimensionText != "<>" => dim.DimensionText,
+                _ => null
+            };
         }
 
         private static string? ReadAnyTextContent(Transaction tr, Entity ent)
@@ -1718,9 +1743,6 @@ namespace YangCAD.AutoCADHost.Services.Cad
             else if (rad <= -Math.PI * 0.5 + 1e-4) rad += Math.PI;
             return rad;
         }
-
-        private static bool HasInlineFormatting(string value)
-            => Regex.IsMatch(value, @"\\(?:[^P]|$)|[{}]|%<|<>");
 
         private static bool IsOnLockedLayer(Transaction tr, Entity entity)
             => ((LayerTableRecord)tr.GetObject(entity.LayerId, OpenMode.ForRead)).IsLocked;
